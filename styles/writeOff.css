@@ -1,0 +1,327 @@
+/* Основной фон страницы */
+body {
+    background-color: #f8f9fa;
+    /* Светло-серый фон всей страницы */
+    padding-bottom: 20px;
+    /* Отступ снизу для всего тела страницы */
+}
+
+/* Стиль для шапки/заголовочной секции */
+.header-section {
+    background-color: white;
+    /* Белый фон */
+    padding: 15px 20px;
+    /* Внутренние отступы: 15px сверху/снизу, 20px слева/справа */
+    border-radius: 8px;
+    /* Скругление углов */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Тень блока: смещение по X, Y, размытие, цвет */
+    margin-bottom: 20px;
+    /* Внешний отступ снизу */
+}
+
+/* Стиль для секции с фильтрами */
+.filter-section {
+    background-color: white;
+    /* Белый фон */
+    padding: 20px;
+    /* Внутренние отступы со всех сторон */
+    border-radius: 8px;
+    /* Скругление углов */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Тень блока */
+    margin-bottom: 20px;
+    /* Внешний отступ снизу */
+}
+
+/* Стиль для секции с таблицей */
+.table-section {
+    background-color: white;
+    /* Белый фон */
+    padding: 20px;
+    /* Внутренние отступы со всех сторон */
+    border-radius: 8px;
+    /* Скругление углов */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Тень блока */
+    margin-bottom: 20px;
+    /* Внешний отступ снизу */
+}
+
+/* Стиль для секции с итоговой информацией */
+.summary-section {
+    background-color: white;
+    /* Белый фон */
+    padding: 15px 20px;
+    /* Внутренние отступы: 15px сверху/снизу, 20px слева/справа */
+    border-radius: 8px;
+    /* Скругление углов */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Тень блока */
+    margin-bottom: 20px;
+    /* Внешний отступ снизу */
+    font-weight: bold;
+    /* Жирный шрифт */
+    font-size: 1.1rem;
+    /* Размер шрифта чуть больше обычного */
+}
+
+/* Стиль для группы фильтров */
+.filter-group {
+    margin-bottom: 15px;
+    /* Внешний отступ снизу */
+    position: relative;
+    /* Относительное позиционирование для дочерних элементов */
+}
+
+/* Стиль для заголовка фильтра */
+.filter-header {
+    display: flex;
+    /* Flex-контейнер */
+    justify-content: space-between;
+    /* Распределение пространства между элементами */
+    align-items: center;
+    /* Выравнивание по центру по вертикали */
+    margin-bottom: 8px;
+    /* Внешний отступ снизу */
+}
+
+/* Стиль для поиска в фильтрах */
+.filter-search {
+    position: relative;
+    /* Относительное позиционирование для дочерних элементов */
+    margin-bottom: 5px;
+    /* Внешний отступ снизу */
+}
+
+/* Стиль для поля ввода в поиске фильтров */
+.filter-search input {
+    padding-right: 40px;
+    /* Внутренний отступ справа для размещения кнопки очистки */
+}
+
+/* Стиль для кнопки очистки поиска */
+.filter-search-clear {
+    position: absolute;
+    /* Абсолютное позиционирование относительно родителя */
+    right: 10px;
+    /* Отступ справа */
+    top: 50%;
+    /* Позиционирование по вертикали по центру */
+    transform: translateY(-50%);
+    /* Смещение для точного центрирования */
+    cursor: pointer;
+    /* Указатель при наведении */
+    color: #6c757d;
+    /* Цвет иконки */
+}
+
+/* Стиль для кнопки очистки поиска при наведении */
+.filter-search-clear:hover {
+    color: #dc3545;
+    /* Красный цвет при наведении */
+}
+
+/* Стиль для контейнера с опциями фильтра */
+.filter-options {
+    max-height: 100px;
+    /* Максимальная высота с прокруткой */
+    overflow-y: auto;
+    /* Вертикальная прокрутка при необходимости */
+    border: 1px solid #dee2e6;
+    /* Граница */
+    border-radius: 4px;
+    /* Скругление углов */
+    padding: 10px;
+    /* Внутренние отступы */
+}
+
+/* Стиль для отдельной опции в фильтре */
+.filter-option {
+    margin-bottom: 5px;
+    /* Внешний отступ снизу между опциями */
+}
+
+/* Стиль для бокового меню */
+.sidebar {
+    position: fixed;
+    /* Фиксированное позиционирование */
+    left: 0;
+    /* Прижато к левому краю */
+    top: 0;
+    /* Прижато к верхнему краю */
+    height: 100%;
+    /* Высота на всю страницу */
+    width: 250px;
+    /* Ширина бокового меню */
+    background-color: #343a40;
+    /* Темный фон */
+    padding-top: 20px;
+    /* Внутренний отступ сверху */
+    z-index: 1000;
+    /* Высокий z-index для отображения поверх других элементов */
+}
+
+/* Стиль для списка меню */
+.sidebar-menu {
+    list-style: none;
+    /* Убираем маркеры списка */
+    padding: 0;
+    /* Убираем внутренние отступы */
+    margin: 0;
+    /* Убираем внешние отступы */
+}
+
+/* Стиль для элементов списка меню */
+.sidebar-menu li {
+    margin-bottom: 10px;
+    /* Внешний отступ снизу между пунктами меню */
+}
+
+/* Стиль для ссылок в меню */
+.sidebar-menu a {
+    display: block;
+    /* Блочное отображение */
+    color: #fff;
+    /* Белый цвет текста */
+    padding: 10px 20px;
+    /* Внутренние отступы: 10px сверху/снизу, 20px слева/справа */
+    text-decoration: none;
+    /* Убираем подчеркивание */
+    transition: background-color 0.3s;
+    /* Плавный переход цвета фона */
+}
+
+/* Стиль для ссылок в меню при наведении */
+.sidebar-menu a:hover {
+    background-color: #495057;
+    /* Цвет фона при наведении */
+    text-decoration: none;
+    /* Убираем подчеркивание */
+    color: #fff;
+    /* Белый цвет текста */
+}
+
+/* Стиль для основного контента */
+.main-content {
+    margin-left: 270px;
+    /* Отступ слева для обхода бокового меню */
+    padding: 20px;
+    /* Внутренние отступы */
+}
+
+/* Стиль для выделенной строки */
+.selected {
+    background-color: #e3f2fd !important;
+    /* Голубой фон выделенной строки с повышенным приоритетом */
+}
+
+/* Стиль для деталей ремонта */
+.repair-details {
+    background-color: #f8f9fa;
+    /* Светло-серый фон */
+    padding: 15px;
+    /* Внутренние отступы */
+    border-radius: 4px;
+    /* Скругление углов */
+    margin-top: 5px;
+    /* Внешний отступ сверху */
+    margin-bottom: 15px;
+    /* Внешний отступ снизу */
+}
+
+/* Стиль для таблицы с деталями ремонта */
+.repair-table {
+    width: 100%;
+    /* Ширина на всю доступную область */
+    font-size: 0.9rem;
+    /* Размер шрифта чуть меньше основного */
+}
+
+/* Стиль для заголовков таблицы с деталями ремонта */
+.repair-table th {
+    background-color: #e9ecef;
+    /* Цвет фона заголовков */
+}
+
+/* Стиль для кнопок действий */
+.action-buttons {
+    white-space: nowrap;
+    /* Запрет переноса текста (кнопки в одну строку) */
+}
+
+/* Стиль для строки с итогами */
+.total-row {
+    font-weight: bold;
+    /* Жирный шрифт */
+    background-color: #f8f9fa;
+    /* Светло-серый фон */
+}
+
+/* Стиль для модального окна отчета */
+.report-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.report-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 1000px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+/*=========== стили для модального окна ========================*/
+
+.report-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.report-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 1000px;
+    border-radius: 5px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}

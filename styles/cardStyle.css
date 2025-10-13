@@ -1,0 +1,98 @@
+:root {
+    --line-clr: #42434a;
+    --hover-clr: #b4b7c0;
+    --text-clr: #222533;
+    --accent-clr: #5e63ff;
+    --secondary-text-clr: #b0b3c1;
+}
+
+/** {
+    margin: 0;
+    padding: 0;
+}*/
+/*
+html {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    line-height: 1.5rem;
+}*/
+/*
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    
+    color: var(--hover-clr);
+
+}*/
+/*
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    padding: 0px;
+    }
+*/
+.auto-expand {
+    /*resize: none;*/ /* Отключаем ручное изменение размера */
+    /*overflow-y: hidden;*/ /* Скрываем вертикальный скролл */
+    min-height: 38px; /* Минимальная высота как у input */
+    max-height: 200px;
+    line-height: 1.5; /* Межстрочный интервал */
+    padding: 0.375rem 0.75rem; /* Такой же отступ как у input */
+}
+
+
+/*Таблица с историей*/
+
+.table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.table-wrapper table {
+    width: 100%;
+    overflow-x: auto;
+    border: none;
+}
+
+.scroll-table-body {
+    /*height: 300px;*/
+    max-height: 40vh;
+    overflow-x: auto;
+    margin-top: 0px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.table-wrapper thead th {
+    font-weight: bold;
+    text-align: left;
+    border: none;
+    padding: 10px 15px;
+    background: var(--hover-clr);
+    font-size: 14px;
+    border-left: 1px solid #d8d8d8;
+    border-right: 1px solid #d8d8d8;
+}
+
+.table-wrapper tbody td {
+    text-align: left;
+    background-color: #fff;
+    border-left: 1px solid #d8d8d8;
+    border-right: 1px solid #d8d8d8;
+    padding: 10px 15px;
+    font-size: 14px;
+    vertical-align: top;
+}
+
+.table-wrapper tbody tr:nth-child(even) {
+    background: #f3f3f3;
+}
+
+/*
+.data-table th:hover {
+
+    background-color: var(--base-clr);
+}*/
+
+.data-table tr:hover {
+    background-color: #f8f9fa;
+}

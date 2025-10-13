@@ -1,0 +1,5 @@
+digraph { 
+    start [label="Начало"]; 
+    end [label="Конец"]; 
+    start -> end 
+}

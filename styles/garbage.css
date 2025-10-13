@@ -1,0 +1,415 @@
+:root {
+    /*--base-clr: #7783df;*/
+    /*--base-clr: #5c6ef3;*/
+    --base-clr: #f8f9fa;
+    --line-clr: #42434a;
+    /*--hover-clr: #222533;*/
+    --hover-clr: #7f8aaa;
+    /*--text-clr: #e6e6ef;*/
+    --text-clr: #222533;
+    --accent-clr: #db3f39;
+    --secondary-text-clr: #b0b3c1;
+    --select-row-clr: #1f93f1;
+
+
+}
+
+:root {
+    --bs-body-bg: var(--my-base-clr);
+    --bs-body-color: var(--my-text-clr);
+    --bs-body-font-family: Verdana, Geneva, Tahoma, sans-serif;
+    --bs-body-line-height: 0.5rem;
+}
+
+.status-NotDistributed {
+    background-color: #e6e6ef;
+}
+
+/* Не распределено*/
+.status-Released {
+    background-color: #a8b7c2;
+}
+
+/*  Выдано на объект */
+.status-Repair {
+    background-color: #cc8411;
+}
+
+/* В ремонте*/
+.status-WrittenOff {
+    background-color: #e23111;
+}
+
+/*  Списано*/
+.status-ConfirmItem {
+    background-color: #e46022;
+}
+
+/*  Подтвердить ТМЦ*/
+.status-AtWorkTMC {
+    background-color: #c0f164;
+}
+
+/*  В работе*/
+.status-OutputTMC {
+    background-color: #e0f2f1;
+}
+
+/* Вернуть с работы */
+.status-ConfirmRepairTMC {
+    background-color: #cc8411;
+}
+
+/* Светло-бирюзовый */
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    line-height: 1.5rem;
+}
+
+body.main-body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--my-base-clr) !important;
+    color: var(--my-text-clr) !important;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+    line-height: 1.5rem !important;
+}
+
+/* Отмена стилей  */
+#sidebar *,
+#sidebar *::before,
+#sidebar *::after {
+    box-sizing: content-box !important;
+    /* Отменяем Bootstrap */
+}
+
+/*
+#main.grid-container {
+    display: grid !important;
+    grid-template-columns: auto 1fr 0fr !important;
+}*/
+
+.grid-container {
+    display: grid;
+    grid-template-columns: auto 35%;
+    gap: .5em;
+    grid-template-areas:
+        "container1 container2";
+}
+
+#resultContainer {
+    position: relative; /* относительное позиционирование */
+    z-index: 1; /* меньший z-index чем у выпадающего окна */
+    /* Ниже чем выпадающие окна (1000) */
+}
+
+body.main-body * {
+    box-sizing: border-box;
+}
+
+#sidebar {
+    box-sizing: border-box;
+    height: 100vh;
+    width: 250px;
+    padding: 4px 1em 4px .1em;
+    background-color: var(--base-clr);
+    border-right: 1px solid var(--line-clr);
+    position: sticky;
+    top: 0;
+    align-self: start;
+    transition: 300ms ease-in-out;
+    overflow: hidden;
+
+}
+
+#sidebar.close {
+    padding: 2px;
+    width: 60px;
+}
+
+#sidebar ul {
+    list-style: none;
+    padding: 5px;
+}
+
+#sidebar>ul>li:first-child {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+
+    .logo {
+        font-weight: 600;
+    }
+}
+
+#sidebar ul li.active a {
+    color: var(--accent-clr);
+
+    svg {
+        fill: var(--accent-clr);
+    }
+}
+
+#sidebar a,
+#sidebar .dropdown-btn,
+#sidebar .logo {
+    border-radius: .5em;
+    padding: .8em;
+    text-decoration: none;
+    color: var(--text-clr);
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.dropdown-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+#sidebar svg {
+    flex-shrink: 0;
+    fill: var(--text-clr);
+}
+
+/*Фиксация боковой панели*/
+#sidebar {
+    flex-shrink: 0;
+    fill: var(--text-clr);
+}
+
+#sidebar a span,
+#sidebar .dropdown-btn span {
+    flex-grow: 1;
+}
+
+#sidebar a:hover,
+#sidebar .dropdown-btn:hover {
+    background-color: var(--hover-clr);
+}
+
+/* панель выпадающее*/
+#sidebar .sub-menu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: 300ms ease-in-out;
+
+    >div {
+        overflow: hidden;
+    }
+}
+
+#sidebar .sub-menu.show {
+    grid-template-rows: 1fr;
+}
+
+.dropdown-btn svg {
+    transition: 200ms ease;
+}
+
+
+.rotate svg:last-child {
+    rotate: -180deg;
+}
+
+#sidebar .sub-menu a {
+    padding-left: 1.5em;
+}
+
+#toggle-btn {
+    margin-left: auto;
+    padding: 1em;
+    border: none;
+    border-radius: .5em;
+    background: none;
+    cursor: pointer;
+
+    svg {
+        transition: rotate 150ms ease;
+    }
+}
+
+#toggle-btn:hover {
+    background-color: var(--hover-clr);
+}
+
+
+#main {
+    padding: min(10px, 3%);
+    background-color: var(--base-clr);
+
+}
+
+#main ul {
+    padding: min(.5em, 3%);
+    font-size: 14px;
+}
+
+/*
+main p{
+    color: var(--secondary-text-clr);
+    margin-top: 5px;
+    margin-bottom: 5px;    
+}*/
+
+
+/*
+.grid-container a {
+    color: var(--text-clr);
+}*/
+
+#scrollContainer {
+    /*height: 900px;*/
+    max-height: 84vh;
+    /*overflow-x: auto;*/
+    margin-top: 0px;
+    /*margin-left: 1%;*/
+    /*margin-bottom: 150px;*/
+    border-bottom: 1px solid var(--text-clr);
+}
+
+.container {
+    list-style: none;
+    border: 1px solid var(--line-clr);
+    border-radius: 1em;
+    margin-bottom: 20px;
+    padding: 2%
+        /*padding: min(1%);  */
+}
+
+#cont1 {
+    z-index: 100;
+    list-style: none;
+    position: relative;
+    /* Нужно для позиционирования выпадающих окон */
+   /* overflow: visible;*/
+    /* Разрешаем выпадающим окнам выходить за пределы */
+    height: 95vh;
+    /* Фиксированная высота контейнера */
+    overflow: hidden;
+}
+
+.row-container,
+.header-container {
+    list-style: none;
+    border-radius: .5em;
+    display: grid;
+    margin-bottom: 4px;
+    /*grid-template-columns: .9fr 2.1fr 1.2fr 1.4fr 1.4fr;*/
+    grid-template-columns: 6% 24% 15% 10% 15% 15% 15%;
+    gap: .1em;
+    grid-template-areas:
+        "cell1 cell2 cell3 cell4 cell5 cell6 cell7";
+    border: 1px solid var(--line-clr);
+}
+
+.row-container:hover {
+    background-color: var(--hover-clr);
+}
+
+.rowGrid,
+.colunmGrid {
+    border-radius: .5em;
+    margin: 4px;
+    padding: .5em;
+}
+
+#cellColunm {
+    /* border: 1px solid var(--line-clr);*/
+    justify-content: center;
+    /*overflow: hidden;*/
+    /*align-items: center;
+    justify-content: center*/
+}
+
+.right-modal {
+    z-index: 9999;
+    display: none;
+    position: fixed;
+    top: 5%;
+    left: 20em;
+    width: auto;
+    max-width: 50%;
+    height: 90%;
+    border-radius: 10px;
+    background: var(--hover-clr);
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow-y: auto;
+    transition: 0.3s;
+}
+
+.modal-content {
+    padding: 20px;
+    font-size: 16px;
+}
+
+.close-btn {
+    cursor: pointer;
+    font-size: 24px;
+    float: right;
+}
+
+.row-container.selected {
+    background: var(--select-row-clr);
+    /*border-left: 3px solid var(--select-row-clr);*/
+}
+
+.auto-expand {
+    /*resize: none;*/
+    /* Отключаем ручное изменение размера */
+    /*overflow-y: hidden;*/
+    /* Скрываем вертикальный скролл */
+    min-height: 38px;
+    /* Минимальная высота как у input */
+    max-height: 200px;
+    line-height: 1.5;
+    /* Межстрочный интервал */
+    padding: 0.375rem 0.75rem;
+    /* Такой же отступ как у input */
+}
+
+#inventoryTable table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+#inventoryTable td {
+    padding: 10px 10px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#inventoryTable th {
+    padding: 10px 10px;
+    text-align: left;
+    background-color: #f1f5f9;
+    font-weight: 600;
+    color: #334155;
+    position: relative;
+}
+
+#inventoryTable tr:hover {
+    background-color: #f8fafc;
+}
+
+#inventoryTable tbody.scroll {
+    display: block;
+    max-height: 84vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-bottom: 1px solid var(--text-clr);
+}

@@ -1,0 +1,463 @@
+/* ======= БАЗОВЫЕ СТИЛИ И ПЕРЕМЕННЫЕ ======= */
+:root {
+  --base-clr: #f8f9fa;
+  --line-clr: #42434a;
+  --hover-clr: #f0f0f0;
+  --text-clr: #222533;
+  --accent-clr: #db3f39;
+  --secondary-text-clr: #b0b3c1;
+  --select-row-clr: #1f93f1;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  line-height: 1.5rem;
+}
+
+/* ======= ОСНОВНОЙ КОНТЕЙНЕР СТРАНИЦЫ ======= */
+body.main-body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--base-clr);
+  color: var(--text-clr);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+  line-height: 1.5rem !important;
+}
+
+/* ======= БОКОВОЕ МЕНЮ (SIDEBAR) ======= */
+#sidebar {
+  box-sizing: border-box;
+  height: 100vh;
+  width: 250px;
+  padding: 4px 1em 4px 0.1em;
+  background-color: var(--base-clr);
+  border-right: 1px solid var(--line-clr);
+  position: sticky;
+  top: 0;
+  align-self: start;
+  transition: 300ms ease-in-out;
+  overflow: hidden;
+}
+
+#sidebar.close {
+  padding: 2px;
+  width: 60px;
+}
+
+#sidebar ul {
+  list-style: none;
+  padding: 5px;
+}
+
+#sidebar > ul > li:first-child {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  .logo {
+    font-weight: 600;
+  }
+}
+
+#sidebar ul li.active a {
+  color: var(--accent-clr);
+  svg {
+    fill: var(--accent-clr);
+  }
+}
+
+#sidebar a,
+#sidebar .dropdown-btn,
+#sidebar .logo {
+  border-radius: 0.5em;
+  padding: 0.8em;
+  text-decoration: none;
+  color: var(--text-clr);
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+
+.dropdown-btn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+#sidebar svg {
+  flex-shrink: 0;
+  fill: var(--text-clr);
+}
+
+/*Фиксация боковой панели*/
+#sidebar {
+  flex-shrink: 0;
+  fill: var(--text-clr);
+}
+
+#sidebar a span,
+#sidebar .dropdown-btn span {
+  flex-grow: 1;
+}
+
+#sidebar a:hover,
+#sidebar .dropdown-btn:hover {
+  background-color: var(--hover-clr);
+}
+
+/* панель выпадающее*/
+#sidebar .sub-menu {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: 300ms ease-in-out;
+
+  > div {
+    overflow: hidden;
+  }
+}
+
+#sidebar .sub-menu.show {
+  grid-template-rows: 1fr;
+}
+
+.dropdown-btn svg {
+  transition: 200ms ease;
+}
+
+.rotate svg:last-child {
+  rotate: -180deg;
+}
+
+#sidebar .sub-menu a {
+  padding-left: 1.5em;
+}
+
+#toggle-btn {
+  margin-left: auto;
+  padding: 1em;
+  border: none;
+  border-radius: 0.5em;
+  background: none;
+  cursor: pointer;
+
+  svg {
+    transition: rotate 150ms ease;
+  }
+}
+
+#toggle-btn:hover {
+  background-color: var(--hover-clr);
+}
+
+/* ======= ОСНОВНОЕ ОКНО (MAIN) ======= */
+#main {
+  padding: min(5px, 10%);
+  background-color: var(--base-clr);
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: auto 33%;
+  grid-template-rows: auto auto;
+  gap: 0.5em;
+  grid-template-areas:
+    "container1 container2"
+    "container3 container3";
+}
+
+.container {
+  border: 1px solid var(--line-clr);
+  border-radius: 1em;
+  margin-bottom: 10px;
+  padding: 2%;
+}
+
+#cont1 {
+  position: relative;
+  height: 94vh;
+  overflow: hidden;
+}
+
+#resultContainer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ======= ТАБЛИЦА ======= */
+#inventoryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em; /* Уменьшенный размер шрифта */
+}
+
+#inventoryTable th {
+  padding: 10px;
+  text-align: left;
+  background-color: #f1f5f9;
+  font-weight: 600;
+  color: #334155;
+  position: relative;
+  font-size: 1.15em; /* Шрифт заголовка чуть больше */
+  border-radius: 8px; /* Скругленные углы */
+}
+
+#inventoryTable td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 1.1em; /* Уменьшенный размер шрифта */
+}
+
+#inventoryTable tbody.scroll {
+  display: block;
+  max-height: 80vh; /* Уменьшена высота для строки состояния */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ======= СТРОКИ И ЯЧЕЙКИ ======= */
+.row-container,
+.header-container {
+  border-radius: 0.5em;
+  display: grid;
+  margin-bottom: 4px;
+  grid-template-columns: 6% 24% 15% 10% 15% 15% 15%;
+  gap: 0.1em;
+  border: 1px solid var(--line-clr);
+  cursor: pointer; /* Добавляем курсор-указатель */
+  user-select: none; /* Запрещаем выделение текста */
+}
+
+.row-container:hover {
+  background-color: var(--hover-clr);
+}
+
+.row-container.selected {
+  background: var(--select-row-clr);
+}
+
+/* ======= МОДАЛЬНОЕ ОКНО ======= */
+.right-modal {
+  display: none;
+  position: fixed;
+  top: 5%;
+ /* left: 20em;*/
+  width: auto;
+ /* max-width: 50%;*/
+ /* height: 90%;*/
+ /* border-radius: 10px;*/
+ /* background: var(--hover-clr);*/
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow-y: auto;
+  transition: 0.3s;
+}
+
+.modal-content {
+  padding: 20px;
+  font-size: 16px;
+}
+
+/* ======= СТРОКА СОСТОЯНИЯ ======= */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 15px;
+  background-color: #f1f5f9;
+  border-top: 1px solid #e0e0e0;
+  font-size: 1em;
+}
+
+/* ======= СТАТУСЫ ТМЦ ======= */
+
+.status-NotDistributed {
+  background-color: #e3f2fd; /* Светло-голубой */
+}
+.status-Released {
+  background-color: #bbdefb; /* Нежно-голубой */
+}
+.status-Repair {
+  background-color: #ffb74d; /* Теплый оранжевый */
+}
+.status-WrittenOff {
+  background-color: #ef9a9a; /* Мягкий красный */
+}
+.status-ConfirmItem {
+  background-color: #96918a; /* Светло-оранжевый */
+}
+.status-AtWorkTMC {
+  background-color: #c8e6c9; /* Светло-зеленый */
+}
+.status-OutputTMC {
+  background-color: #e0f7fa; /* Очень светлый бирюзовый */
+}
+.status-ConfirmRepairTMC {
+  background-color: #9c27b0;
+}
+
+.status-Repair,
+.status-WrittenOff,
+.status-ConfirmItem,
+.status-ConfirmRepairTMC {
+  color: white; /* Белый текст на темных фонах */
+  font-weight: 500; /* Полужирный для лучшей читаемости */
+}
+
+/*.status-NotDistributed {
+  background-color: #e6e6ef;
+}
+.status-Released {
+  background-color: #a8b7c2;
+}
+.status-Repair {
+  background-color: #cc8411;
+}
+.status-WrittenOff {
+  background-color: #e23111;
+}
+.status-ConfirmItem {
+  background-color: #e46022;
+}
+.status-AtWorkTMC {
+  background-color: #c0f164;
+}
+.status-OutputTMC {
+  background-color: #e0f2f1;
+}
+.status-ConfirmRepairTMC {
+  background-color: #9c27b0;
+}*/
+
+/* =====  Стили для всплывающего уведомления ===== */
+.notification-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #ff9800;
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.notification-alert {
+  position: fixed;
+  bottom: 25px;
+  right: 60px;
+  background-color: #ff9800;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+}
+/* =======Для второго уведомления (ремонт)===== */
+.notification-repair-badge {
+  bottom: 120px; /* выше первого */
+  background-color: #9740b9; 
+}
+
+.notification-repair-alert {
+  bottom: 125px; /* выше первого */
+  background-color: #9740b9; 
+}
+
+/* =======Для третьего уведомления (в работе)===== */
+.notification-atwork-badge {
+  bottom: 70px; /* выше первого */
+  background-color: #94d816; 
+}
+
+.notification-atwork-alert {
+  bottom: 75px; /* выше первого */
+  background-color: #94d816; 
+}
+
+/* ========Стили для форм ремонта============= */
+
+.repair-form {
+    display: none;
+    padding: 2%; /* Отдаление 2% */
+    background-color: #a8b7c2;
+    border: 1px solid var(--line-clr, #dee2e6); /* Используем CSS-переменную с fallback */
+    border-radius: 1em; /* Радиус скругления */
+    margin-top: 10px;
+    margin-bottom: 10px; /* Отступ снизу */
+    box-sizing: border-box;
+}
+
+.file-preview {
+  margin-top: 10px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* ===========Стили для группировки=================== */
+        .brigade-group {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .brigade-header {
+            background-color: #f5f5f5;
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .brigade-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .brigade-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .brigade-content {
+            padding: 15px;
+            background-color: #fff;
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .collapsed .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+/* ========= Фильтр ===============================*/
+
+/*
+.dropdown-filter {
+  position: relative; 
+  display: inline-block;
+}*/
