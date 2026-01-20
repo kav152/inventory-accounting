@@ -9,16 +9,14 @@ require_once __DIR__ . '/../../BusinessLogic/PropertyController.php';
 require_once __DIR__ . '/../../Logging/Logger.php';
 
 class CardItemLoader extends ModalLoader
-{
-    private Logger $logger;
+{    
     public function load($params = [])
     {
-        $logger = new Logger(__DIR__ . '/../../storage/logs/CardItemLoader.log');
+        error_log('Мы в ModalLoader');        
         DatabaseFactory::setConfig();
         $controller = new ItemController();
         $propertyController = new PropertyController();
-
-       // $logger->log('','params',$params);
+       
 
         // Получаем параметры из запроса
         $statusItem = $params['statusItem'] == null ? '' : (string)$params['statusItem'];

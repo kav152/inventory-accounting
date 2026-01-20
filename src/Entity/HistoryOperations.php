@@ -15,7 +15,6 @@ class HistoryOperations extends BaseEntity
 
     public function __construct($param1 = null, $idUser = null, string $valueComment = null)
     {
-        $this->setIdFieldName('IDHistoryItem');
         // Конструктор для массива данных
         if (is_array($param1)) {
             $this->initializeFromArray($param1);
@@ -47,12 +46,28 @@ class HistoryOperations extends BaseEntity
 
 
 
-    public function getId(): ?int
+    public function getId():int
     {
         return $this->IDHistoryItem ?? 0;
     }
-    public function setId(int $id): void {
+    public function setId(int $id):void
+    {
         $this->IDHistoryItem = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'IDHistoryItem';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return []; // НАСТРОИТЬ
     }
 
 
@@ -62,12 +77,12 @@ class HistoryOperations extends BaseEntity
      */
     public function getPersistableProperties(): array
     {
-        return [
-            'HistoryData',
+        return [            
             'IDComment',
             'IDUser',
             'ID_TMC',
-            'IDLocation'
+            'IDLocation',
+            'HistoryData'
         ];
     }
 

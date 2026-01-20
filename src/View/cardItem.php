@@ -13,13 +13,15 @@ header('Access-Control-Allow-Origin: *');
 
 try {
 
+    $startTime = microtime(true);
+
     $currentID = $_GET['id'] ?? null;
     if (!$currentID) {
         // Если ID не передан, показываем пустую карточку
         echo '<div class="alert alert-info">Выберите элемент из списка</div>';
         exit;
     }
-    $currentID = (int)$currentID;
+    $currentID = (int) $currentID;
     DatabaseFactory::setConfig();
     $propertyController = new PropertyController();
     $typeTMCs = $propertyController->getTypeTMC();
@@ -32,6 +34,13 @@ try {
     $modelTMCs = $propertyController->getModelsByBrand($inventoryItem->IDBrandTMC);
     $historyController = new HistoryOperationsController();
     $historyOperations = $historyController->getHistoryOperations($inventoryItem->ID_TMC);
+
+    /*$endTime = microtime(true);
+    $loadTime = $endTime - $startTime;
+    error_log("Время загрузки cardItem.php: " . $loadTime . " секунд. Загружено объектов: ");*/
+
+
+
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
@@ -104,8 +113,9 @@ try {
         <!-- Группа Серийный номер -->
         <div class="form-group">
             <label class="lb">Серийный номер:</label>
-            <input type="text" class="form-control" id="txtSerialNum" placeholder="Укажите серийный номер"
-                aria-label="Username" aria-describedby="basic-addon1" value="<?= $inventoryItem->SerialNumber ?? '' ?>">
+            <input type="text" class="form-control" id="txtSerialNum!" placeholder="Укажите серийный номер"
+                aria-label="Username" aria-describedby="basic-addon1"
+                value="<?= $inventoryItem->SerialNumber ? $inventoryItem->SerialNumber : 'Серийный номер отсутствует' ?>">
         </div>
         <!-- Таблица с историей -->
         <div class="box" id="historyBox" style="grid-area: box-4">

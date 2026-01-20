@@ -24,9 +24,14 @@ require_once 'StatusItem.php';
 require_once 'OperationType.php';
 require_once 'StatusUser.php';
 
+require_once __DIR__ . '/CudService/CUDFactory.php';
+require_once __DIR__ . '/../Logging/Logger.php';
+
 class ItemController
 {
     public Container $container;
+    private CUDFactory $cudFactory;
+    private Logger $logger;
 
     public function __construct()
     {
@@ -37,21 +42,13 @@ class ItemController
         $this->container->set(Database::class, function () {
             return DatabaseFactory::create();
         });
-    }
-    /**
-     * Запись действия в лог
-     */
-    private function logAction(string $action, string $message, array $context = []): void
-    {
-        $logMessage = sprintf(
-            "[%s] [%s] %s %s\n",
-            date('Y-m-d H:i:s'),
-            strtoupper($action),
-            $message,
-            json_encode($context, JSON_UNESCAPED_UNICODE)
-        );
 
-        error_log($logMessage, 3, __DIR__ . '/../storage/logs/ItemController.log');
+        $this->container->set(Logger::class, function () {
+            return new Logger(__DIR__ . '/../storage/logs/ItemController.log');
+        });
+        $this->logger = $this->container->get(Logger::class);
+
+        $this->cudFactory = new CUDFactory($this->container->get(Database::class), $this->logger, $this->container);
     }
 
     /**
@@ -62,64 +59,48 @@ class ItemController
         $statusUser = new StatusUser();
         $statusItem = new StatusItem();
         $sql = "";
+
         switch ($statusUser->getDescription($value_statusUser)) {
             case 'Администратор':
                 // Исправлена конкатенация с "+" на "."
-                $sql = "LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = IDRegItem"
-                    . " WHERE InventoryItem.Status != "
-                    . StatusItem::getByDescription('Списано')
-                    . " ORDER BY NameTMC";
+                $sql = " WHERE ii.Status != "
+                    . StatusItem::getByDescription('Списано');
                 break;
             case 'Кладовщик':
                 // Исправлена конкатенация и форматирование
-                $sql = "LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = IDRegItem"
-                    . " WHERE InventoryItem.Status != " . StatusItem::getByDescription('Списано')
-                    . " AND RegistrationInventoryItem.CurrentUser = {$idUser}"
-                    . " ORDER BY NameTMC";
+                $sql = " WHERE ii.Status != " . StatusItem::getByDescription('Списано')
+                    . " AND r.CurrentUser = {$idUser}";
 
                 break;
         }
 
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
-        //$brandTMCRepository = $this->container->get(BrandTMCRepository::class);
-        $modelTMCRepository = $this->container->get(ModelTMCRepository::class);
-        //$locationRepository = $this->container->get(LocationRepository::class);
-        //$registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
-        $userRepository = $this->container->get(UserRepository::class);
 
+        $sql1 = "
+        SELECT 
+            ii.*,
+            b.NameBrand,
+            l.NameLocation,
+            u.IDUser,
+            r.CurrentUser,
+            m.NameModel,
+            u.Surname,
+            u.Name,
+            u.Patronymic
+        FROM InventoryItem ii
+        LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+        LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+        LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
+        LEFT JOIN [User] u ON r.CurrentUser = u.IDUser
+        LEFT JOIN ModelTMC m ON ii.IDModel = m.IDModel
+        {$sql}    
+        ORDER BY ii.NameTMC
+    ";
 
-        /* $inventoryItemRepository->addRelationship(
-            'BrandTMC',                             // Свойство в User для связи
-            $brandTMCRepository,                    // Репозиторий связанной сущности
-            'IDBrandTMC',                               // Внешний ключ в InventoryItem
-            'IDBrandTMC'                             // Первичный ключ в BrandTMC
-        );*/
-
-        $inventoryItemRepository->addRelationship(
-            'ModelTMC',                             // Свойство в User для связи
-            $modelTMCRepository,                    // Репозиторий связанной сущности
-            'IDModel',                               // Внешний ключ в InventoryItem
-            'IDModel '                             // Первичный ключ в ModelTMC
-        );
-        /*
-        $inventoryItemRepository->addRelationship(
-            'Location',                             // Свойство в Location для связи
-            $locationRepository,                    // Репозиторий связанной сущности
-            'IDLocation',                               // Внешний ключ в InventoryItem
-            'IDLocation'                             // Первичный ключ в Location
-        );*/
-
-        $inventoryItemRepository->addRelationship(
-            'User',                     // Свойство в InventoryItem
-            $userRepository,            // Репозиторий User
-            'CurrentUser',              // ID пользователя в InventoryItem
-            'IDUser'                    // Первичный ключ в User
-        );
-
-        $inventoryItems = $inventoryItemRepository->findBy($sql);
-
+        $inventoryItems = $inventoryItemRepository->getAll($sql1);
         return $inventoryItems ?? null;
     }
+
     /**
      * Получить InventoryItem, если idItem===null, то InventoryItem верется пустым
      */
@@ -134,7 +115,7 @@ class ItemController
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $inventoryItem = $inventoryItemRepository->findById((int) $idItem, "ID_TMC");
 
-        
+
         return $inventoryItem;
     }
 
@@ -147,24 +128,24 @@ class ItemController
     {
         // Проверяем аутентификацию пользователя
         if (!isset($_SESSION['IDUser'])) {
-            $this->logAction('ERROR', 'Пользователь не аутентифицирован');
+            $this->logger->log('ERROR', 'Пользователь не аутентифицирован');
             return null;
         }
 
         // Проверяем, что передан ID ТМЦ
         if (empty($data['id'])) {
-            $this->logAction('ERROR', 'ID ТМЦ не указан для обновления');
+            $this->logger->log('ERROR', 'ID ТМЦ не указан для обновления');
             return null;
         }
 
-        $id = (int)$data['id'];
+        $id = (int) $data['id'];
 
         // Получаем текущий ТМЦ
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $currentItem = $inventoryItemRepository->findById($id, "ID_TMC");
 
         if ($currentItem === null) {
-            $this->logAction('ERROR', 'ТМЦ с ID ' . $id . ' не найден');
+            $this->logger->log('ERROR', 'ТМЦ с ID ' . $id . ' не найден');
             return null;
         }
         // Проверяем наличие изменений
@@ -198,7 +179,7 @@ class ItemController
 
         // Если нет изменений, прекращаем выполнение
         if (!$hasChanges) {
-            $this->logAction('INFO', 'Попытка обновления ТМЦ без изменений', ['id' => $id]);
+            $this->logger->log('INFO', 'Попытка обновления ТМЦ без изменений', ['id' => $id]);
             return null;
         }
 
@@ -216,13 +197,13 @@ class ItemController
         $updatedItem = $inventoryItemRepository->save($currentItem, Action::EDIT);
 
         if ($updatedItem !== null) {
-           /* $this->logAction('UPDATE', 'ТМЦ обновлен', [
-                'id' => $updatedItem->ID_TMC,
-                'name' => $updatedItem->NameTMC,
-                'type' => $updatedItem->IDTypesTMC,
-                'brand' => $updatedItem->IDBrandTMC,
-                'model' => $updatedItem->IDModel
-            ]);*/
+            /* $this->logAction('UPDATE', 'ТМЦ обновлен', [
+                 'id' => $updatedItem->ID_TMC,
+                 'name' => $updatedItem->NameTMC,
+                 'type' => $updatedItem->IDTypesTMC,
+                 'brand' => $updatedItem->IDBrandTMC,
+                 'model' => $updatedItem->IDModel
+             ]);*/
 
             // Обновляем дату изменения в RegistrationInventoryItem
             $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
@@ -245,74 +226,77 @@ class ItemController
 
 
 
-    /**
-     * Создание InventoryItem
-     * @param mixed $data
-     */
-    public function createItemInventory($data): ?object
+    public function create($data): ?object
     {
-        // Проверяем аутентификацию пользователя
+        $result = $this->cudFactory->create($data);
+        // Если это InventoryItem, создаем RegistrationInventoryItem
+        if ($result instanceof InventoryItem && $result->getId()) {
+            $this->createRegistrationForInventoryItem($result);
+
+            $userRepository = $this->container->get(UserRepository::class);
+            $userResult = $userRepository->findById($result->RegistrationInventoryItem->CurrentUser, "IDUser");
+            $result->User = $userResult;
+
+            $brandTMCRepository = $this->container->get(BrandTMCRepository::class);
+            $brandResult = $brandTMCRepository->findById($result->IDBrandTMC, "IDBrandTMC");
+            $result->BrandTMC = $brandResult;
+        }
+
+        return $result;
+    }
+
+    public function update($data)
+    {
+        $result = $this->cudFactory->update($data);
+        if ($result instanceof InventoryItem && $result->getId()) {
+            $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
+            $userRepository = $this->container->get(UserRepository::class);
+
+            $registrationInventory = $registrationInventoryItemRepository->findById($result->getId(), 'IDRegItem');
+            $userResult = $userRepository->findById($registrationInventory->CurrentUser, "IDUser");
+            $result->User = $userResult;
+
+            $brandTMCRepository = $this->container->get(BrandTMCRepository::class);
+            $brandResult = $brandTMCRepository->findById($result->IDBrandTMC, "IDBrandTMC");
+            $result->BrandTMC = $brandResult;
+
+            $locationRepository = $this->container->get(LocationRepository::class);
+            $location = $locationRepository->findById($result->IDLocation, "IDLocation");
+            $result->Location = $location;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Создание RegistrationInventoryItem для нового InventoryItem
+     */
+    private function createRegistrationForInventoryItem(InventoryItem $item): void
+    {
         if (!isset($_SESSION['IDUser'])) {
-            $this->logAction('ERROR', 'Пользователь не аутентифицирован' . $_SESSION["Status"]);
-            return null;
+            return;
         }
 
-        $item = new InventoryItem($data);
-        $item->Status = StatusItem::NotDistributed;
-
-        // Получаем основной склад
-        $locationRepo = $this->container->get(LocationRepository::class);
-        $sql = 'WHERE isMainWarehouse = 1';
-        $mainWarehouse = $locationRepo->first($sql);
-
-        if ($mainWarehouse === null) {
-            $str = "Основной склад по запросу " . $sql . " не найден";
-            $this->logAction('CREATE', $str);
-            return null;
-        }
-        // Заносим в InventoryItem
-        $item->IDLocation = $mainWarehouse->IDLocation;
-        // Регистрация InventoryItem
-        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
-
-
-        $resultItem = $inventoryItemRepository->save($item, Action::CREATE);
-       /* $this->logAction('CREATE', 'Объект создан item', [
-            'id' => $resultItem->ID_TMC,
-            'name' => $resultItem->NameTMC,
-            'location' => $resultItem->IDLocation
-        ]);*/
-
-        // Регистрация в RegistrationInventoryItem
-        $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
-        $regItem = new RegistrationInventoryItem([
-            'IDRegItem' => $resultItem->ID_TMC,
-          /*  'CreationDate' => date('Y-m-d\TH:i:s'),*/
+        $registration = new RegistrationInventoryItem([
+            'IDRegItem' => $item->ID_TMC,
             'CreatedUser' => $_SESSION['IDUser'],
             'CurrentUser' => $_SESSION['IDUser'],
-        /*    'ChangeDate' => date('Y-m-d\TH:i:s')*/
         ]);
 
-        $regItem = $registrationInventoryItemRepository->save($regItem, Action::CREATE);
-        if ($regItem === null) {
-            // ВЫполнить откат по созданию resultItem
-            $this->logAction('CREATE', 'Ошибка создания RegistrationInventoryItem');
-            return null;
-        } else {
-           /* $this->logAction('CREATE', 'RegistrationInventory сохранен', [
-                'id' => $regItem->IDRegItem,
-                '[CreationDate]' => $resultItem->CreationDate,
-                '[CreatedUser]' => $regItem->CreatedUser,
-                '[CurrentUser]' => $regItem->CurrentUser,
-                '[ChangeDate]' => $regItem->ChangeDate,
-            ]);*/
-        }
+        $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
+        $result = $registrationInventoryItemRepository->save($registration, Action::CREATE);
 
-        // Регистрация в HistoryOperations
-        $historyOperations = new HistoryOperationsController();
-        $historyOperations->OperationCreateTMC($resultItem);
+        $item->RegistrationInventoryItem = $result;
+    }
 
-        return $this->getInventoryItem($resultItem->ID_TMC);
+    /**
+     * Получить основной склад
+     */
+    public function getMainWarehouse(): ?Location
+    {
+        $locationRepo = $this->container->get(LocationRepository::class);
+        $sql = 'WHERE isMainWarehouse = 1';
+        return $locationRepo->first($sql);
     }
 
 
@@ -341,16 +325,28 @@ class ItemController
     }
     private function getItemsByStatus(int $statusUser, int $idUser, int $status): ?Collection
     {
-        $sql = "LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = IDRegItem"
-            . " WHERE Status = {$status}";
+        $userCondition = $statusUser != 0 ? "AND r.CurrentUser = {$idUser}" : "";
 
-        if ($statusUser != 0) {
-            $sql .= " AND RegistrationInventoryItem.CurrentUser = {$idUser}";
-        }
-        $sql .= " ORDER BY NameTMC";
+        $sql = "
+        SELECT 
+            ii.*,
+            b.NameBrand,
+            l.NameLocation,
+            u.Surname,
+            u.Name,
+            u.Patronymic
+        FROM InventoryItem ii
+        LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
+        LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+        LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+        LEFT JOIN [User] u ON r.CurrentUser = u.IDUser
+        WHERE ii.Status = {$status}
+        {$userCondition}
+        ORDER BY ii.NameTMC
+    ";
 
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
-        return $inventoryItemRepository->findBy($sql) ?? null;
+        return $inventoryItemRepository->getAll($sql) ?? null;
     }
 
     /**
@@ -366,7 +362,7 @@ class ItemController
     }
     public function getAtWorkItemsGrouped(int $statusUser, int $idUser): ?array
     {
-        //GROUP_CONCAT - заменить STRING_AGG при использовании mysql
+        //GROUP_CONCAT - заменить на STRING_AGG(ii.ID_TMC, ',') при использовании mysql
         $brigadesRepository = $this->container->get(BrigadesRepository::class);
         $sql = "SELECT 
                 b.IDBrigade,
@@ -411,6 +407,95 @@ class ItemController
         return $result ?? null;
     }
 
+    // В BrigadesRepository добавьте:
+    /*public function getAtWorkItemsGrouped(int $statusUser, int $idUser): ?array
+    {
+        $brigadesRepository = $this->container->get(BrigadesRepository::class);
+        $sql = "SELECT 
+              b.IDBrigade,
+              b.NameBrigade,
+              CONCAT(u.Surname, ' ', u.Name, ' ', u.Patronymic) AS NameBrigadir,
+              ii.ID_TMC,
+              ii.NameTMC,
+              ii.SerialNumber,
+              ii.Status,
+              b2.NameBrand,
+              l.NameLocation,
+              u2.Surname,
+              u2.Name,
+              m.NameModel
+          FROM Brigades b
+          JOIN User u ON b.IDResponsibleIssuing = u.IDUser
+          JOIN LinkBrigadesToItem lbt ON b.IDBrigade = lbt.IDBrigade
+          JOIN InventoryItem ii ON lbt.ID_TMC = ii.ID_TMC
+          LEFT JOIN BrandTMC b2 ON ii.IDBrandTMC = b2.IDBrandTMC
+          LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+          LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
+          LEFT JOIN User u2 ON r.CurrentUser = u2.IDUser
+          LEFT JOIN ModelTMC m ON ii.IDModel = m.IDModel
+                WHERE ii.Status = " . StatusItem::AtWorkTMC;
+
+        if ($statusUser != 0) {
+            $sql .= " AND RegistrationInventoryItem.CurrentUser = {$idUser}";
+        }
+        $sql .= " GROUP BY b.IDBrigade, b.NameBrigade, CONCAT(u.Surname, ' ', u.Name, ' ', u.Patronymic)";
+
+        $results = $brigadesRepository->getAll_array($sql);
+
+        if (empty($results)) {
+            return null;
+        }
+
+        // Группируем результаты по бригадам
+        $grouped = [];
+        foreach ($results as $row) {
+            $brigadeId = $row['IDBrigade'];
+
+            if (!isset($grouped[$brigadeId])) {
+                $grouped[$brigadeId] = [
+                    'id' => $brigadeId,
+                    'name' => $row['NameBrigade'],
+                    'brigadir' => $row['NameBrigadir'],
+                    'count' => 0,
+                    'items' => []
+                ];
+            }
+
+            // Создаем InventoryItem из данных строки
+            $item = new InventoryItem($row);
+
+            // Вручную устанавливаем связанные объекты
+            if (!empty($row['NameBrand'])) {
+                $brand = new BrandTMC([
+                    'IDBrandTMC' => $row['IDBrandTMC'],
+                    'NameBrand' => $row['NameBrand']
+                ]);
+                $item->BrandTMC = $brand;
+            }
+
+            if (!empty($row['NameLocation'])) {
+                $location = new Location([
+                    'IDLocation' => $row['IDLocation'],
+                    'NameLocation' => $row['NameLocation']
+                ]);
+                $item->Location = $location;
+            }
+
+            if (!empty($row['FIO'])) {
+                $user = new User([
+                    'IDUser' => $row['CurrentUser'],
+                    'FIO' => $row['FIO']
+                ]);
+                $item->User = $user;
+            }
+
+            $grouped[$brigadeId]['items'][] = $item;
+            $grouped[$brigadeId]['count']++;
+        }
+
+        return array_values($grouped);
+    }*/
+
     private function getItemsByIds(array $ids): ?Collection
     {
         if (empty($ids))
@@ -421,30 +506,20 @@ class ItemController
         $idsString = implode(',', $ids);
         $query = "SELECT * FROM InventoryItem "
             . "LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = IDRegItem "
-            . "WHERE ID_TMC IN ($idsString)";
+            . "WHERE InventoryItem.ID_TMC IN ($idsString)";
 
         //$this->logAction('getItemsByIds', $query);
 
-        $inventoryItemRepository->addRelationship(
-            'User',                     // Свойство в InventoryItem
-            $userRepository,            // Репозиторий User
-            'CurrentUser',              // ID пользователя в InventoryItem
-            'IDUser'                    // Первичный ключ в User
-        );
+        // error_log($query);
+
+        /*  $inventoryItemRepository->addRelationship(
+              'User',                     // Свойство в InventoryItem
+              $userRepository,            // Репозиторий User
+              'CurrentUser',              // ID пользователя в InventoryItem
+              'IDUser'                    // Первичный ключ в User
+          );*/
 
         return $result = $inventoryItemRepository->getAll($query) ?? null;
-        /* if($result != null)
-        {
-            error_log("Коллекция получена");
-            foreach($result as $item)
-            {
-                error_log($item->User->FIO);
-            }
-        }   */
-
-
-
-        // return $inventoryItemRepository->getAll_array($query) ?? null;
     }
 
     /**
@@ -523,6 +598,20 @@ class ItemController
         return true;
     }
 
+    /**
+     * Вернуть ТМЦ после списания
+     * @param int $id
+     * @return bool
+     */
+    public function cancelWriteOffTMC(int $id)
+    {
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $inventoryItem = $inventoryItemRepository->findById($id, "ID_TMC");
+        $inventoryItem->Status = StatusItem::NotDistributed;
+        $inventoryItemRepository->save($inventoryItem);
+        return true;
+    }
+
 
     /**
      * Переместить ТМц на новую локацию
@@ -533,6 +622,7 @@ class ItemController
      */
     public function distributeItems(array $tmcIds, int $locationId, int $userId)
     {
+        error_log('Мы в distributeItems');
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
@@ -544,16 +634,20 @@ class ItemController
             $inventoryItem->IDLocation = $locationId;
             $inventoryItem->Status = StatusItem::ConfirmItem;
             $inventoryItemRepository->save($inventoryItem);
+            //error_log('Обновление inventoryItem');
 
             $registrationItem = $registrationInventoryItemRepository->findById((int) $id, "IDRegItem");
             $registrationItem->CurrentUser = $userId;
             $registrationInventoryItemRepository->save($registrationItem);
+            //error_log('Обновление registrationItem');
 
             // Регистрация в HistoryOperations
             $location = $locationRepository->findById($inventoryItem->IDLocation, "IDLocation");
             $inventoryItem->Location = $location;
+            //error_log('Обновление location');
 
             $historyOperations->OperationDistributeTMC($inventoryItem);
+            //error_log('Обновление location');
         }
     }
 
@@ -748,7 +842,7 @@ class ItemController
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $repairs = $repairItemRepository->findBy("where ID_TMC = " . $id . " order by ID_Repair");
         $repairItem = $repairs->last();
-        $repairItem->DateToService =  date("Y-m-d H:i:s");
+        $repairItem->DateToService = date("Y-m-d H:i:s");
         $repair = $repairItemRepository->save($repairItem);
         if (!$repair) {
             throw new Exception("Ошибка указании даты возвращения из сервиса");

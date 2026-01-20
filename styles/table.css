@@ -1,0 +1,93 @@
+/* ======= СТРОКИ И ЯЧЕЙКИ ======= */
+
+/* ============== Таблица usersTableContainer ========== */
+#usersTableContainer .row-user {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    user-select: none;
+    /* Запрещаем выделение текста */
+}
+
+#usersTableContainer .row-user:hover {
+    background-color: var(--hover-clr) !important;
+}
+
+#usersTableContainer .row-user.selected {
+    background-color: var(--select-row-clr) !important;
+    color: white !important;
+}
+
+/* Убедимся, что ячейки тоже меняют цвет */
+#usersTableContainer .row-user.selected td {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: transparent;
+}
+
+/* Переопределяем Bootstrap стили для выделенных строк */
+#usersTableContainer table.table-hover tbody tr.row-user.selected:hover td {
+    background-color: var(--select-row-clr) !important;
+    color: white !important;
+}
+
+/* ============== Таблица locationTableContainer ========== */
+
+#locationTableContainer .row-location {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    user-select: none;
+    /* Запрещаем выделение текста */
+}
+
+#locationTableContainer .row-location:hover {
+    background-color: var(--hover-clr) !important;
+}
+
+#locationTableContainer .row-location.selected {
+    background-color: var(--select-row-clr) !important;
+    color: white !important;
+}
+
+/* Убедимся, что ячейки тоже меняют цвет */
+#locationTableContainer .row-location.selected td {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: transparent;
+}
+
+/* Переопределяем Bootstrap стили для выделенных строк */
+#locationTableContainer table.table-hover tbody tr.row-location.selected:hover td {
+    background-color: var(--select-row-clr) !important;
+    color: white !important;
+}
+
+/* ============== Таблицп serviceCentersTableContainer ========== */
+
+#serviceCentersTableContainer .row-serviceCenters {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    user-select: none;
+    /* Запрещаем выделение текста */
+}
+
+#serviceCentersTableContainer .row-serviceCenters:hover {
+    background-color: var(--hover-clr) !important;
+}
+
+#serviceCentersTableContainer .row-serviceCenters.selected {
+    background-color: var(--select-row-clr) !important;
+    color: white !important;
+}
+
+/* Убедимся, что ячейки тоже меняют цвет */
+#serviceCentersTableContainer .row-serviceCenters.selected td {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: transparent;
+}
+
+/* Переопределяем Bootstrap стили для выделенных строк */
+#serviceCentersTableContainer table.table-hover tbody tr.row-serviceCenters.selected:hover td {
+    background-color: var(--select-row-clr) !important;
+    color: white !important;
+}

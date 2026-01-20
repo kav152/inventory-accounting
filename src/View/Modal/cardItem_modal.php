@@ -2,10 +2,7 @@
 date_default_timezone_set('Europe/Moscow');
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../storage/logs/work_modal.log');
-require __DIR__ . '/../../../vendor/autoload.php';
-require_once __DIR__ . '/../../Repositories/GenericRepository.php';
-require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
+ini_set('error_log', __DIR__ . '/../../storage/logs/cardItem_modal.log');
 
 ?>
 
@@ -53,6 +50,29 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
         overflow: hidden;
         min-height: 38px;
     }
+
+    /*
+    .expandable-section {
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .expandable-section.collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    .expandable-section.expanded {
+        max-height: 500px;
+        opacity: 1;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background-color: #f8f9fa;
+    }*/
 </style>
 
 
@@ -65,7 +85,11 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
 </script>
 
 <script src="/src/constants/properties.js"></script>
-<script src="/src/constants/actions.js"></script>
+<script type="module" src="/src/constants/actions.js"></script>
+
+<?php
+include_once __DIR__ . '/../Templates/expandable_section.php';
+?>
 
 <div class="modal fade" id="cardItemModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -82,7 +106,7 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
                             case Action::CREATE_ANALOG:
                                 echo "Создание ТМЦ по аналогии";
                                 break;
-                            case Action::EDIT:
+                            case Action::UPDATE:
                                 echo "Редактирование ТМЦ";
                                 break;
                             default:
@@ -116,17 +140,21 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary" id="addTypeTMCBtn"
-                                        onclick="openPropertyView(PropertyTMC.TYPE_TMC)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960"
-                                            width="20" fill="currentColor">
-                                            <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-                                        </svg>
+                                    <button type="button" class="btn btn-outline-primary toggle-section-btn"
+                                        data-section-id="typeTMCSection" data-select-id="typeTMCSelect">
+                                        <i class="bi bi-plus toggle-section-icon" data-section-id="typeTMCSection"></i>
                                     </button>
                                 </div>
+
+                                <?php renderExpandableSection(
+                                    'typeTMCSection',
+                                    'typeTMCSelect',
+                                    [['name' => 'NameTypesTMC', 'label' => 'Тип ТМЦ', 'type' => 'text']],
+                                    'тип ТМЦ',
+                                    'Добавить тип ТМЦ'
+                                ); ?>
                             </div>
 
-                            <!-- Группа Бренд -->
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Бренд</label>
                                 <div class="d-flex gap-2 align-items-center">
@@ -134,17 +162,22 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
                                         name="idBrand" disabled>
                                         <option value="0"></option>
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary" id="addBrandBtn" disabled
-                                        onclick="openPropertyView(PropertyTMC.BRAND)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960"
-                                            width="20" fill="currentColor">
-                                            <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-                                        </svg>
+                                    <button type="button" class="btn btn-outline-primary toggle-section-btn"
+                                        id="addBrandBtn" disabled data-section-id="brandTMCSection"
+                                        data-select-id="brandSelect">
+                                        <i class="bi bi-plus toggle-section-icon" data-section-id="brandTMCSection"></i>
                                     </button>
                                 </div>
+
+                                <?php renderExpandableSection(
+                                    'brandTMCSection',
+                                    'brandSelect',
+                                    [['name' => 'NameBrand', 'label' => 'Бренд', 'type' => 'text']],
+                                    'бренд',
+                                    'Добавить бренд'
+                                ); ?>
                             </div>
 
-                            <!-- Группа Модель -->
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Модель</label>
                                 <div class="d-flex gap-2 align-items-center">
@@ -152,14 +185,23 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
                                         name="idModel" disabled>
                                         <option value="0"></option>
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary" id="addModelBtn" disabled
-                                        onclick="openPropertyView(PropertyTMC.MODEL)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960"
-                                            width="20" fill="currentColor">
-                                            <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-                                        </svg>
+
+                                    <button type="button" class="btn btn-outline-primary toggle-section-btn"
+                                        id="addModelBtn" disabled data-section-id="modelTMCSection"
+                                        data-select-id="modelSelect">
+                                        <i class="bi bi-plus toggle-section-icon" data-section-id="modelTMCSection"></i>
                                     </button>
+
                                 </div>
+
+                                <?php renderExpandableSection(
+                                    'modelTMCSection',
+                                    'modelSelect',
+                                    [['name' => 'NameModel', 'label' => 'Модель', 'type' => 'text']],
+                                    'модель',
+                                    'Добавить модель'
+                                ); ?>
+
                             </div>
 
                             <!-- Группа Наименование -->
@@ -181,11 +223,8 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="checkSerialNum"
-                                        name="checkSerialNum" onchange="toggleClass()" <?php
-                                        if (isset($_POST['statusItem']) && $_POST['statusItem'] === Action::EDIT) {
-                                            echo empty($inventoryItem->SerialNumber) ? 'checked' : '';
-                                        }
-                                        ?>>
+                                        name="checkSerialNum" onchange="toggleClass()"
+                                        <?= empty($inventoryItem->SerialNumber) ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="checkSerialNum">
                                         Серийный номер отсутствует
                                     </label>
@@ -193,8 +232,8 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
                             </div>
                         </div>
 
-                        <div class="close" id="propertyContainer" style="grid-area: property-part">
-                        </div>
+                        <!--div class="close" id="propertyContainer" style="grid-area: property-part">
+                        </div-->
                     </div>
                 </div>
 
@@ -228,11 +267,13 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
     document.addEventListener("shown.bs.modal", function () {
         // Включение/выключение кнопок добавления
         document.getElementById("typeTMCSelect").addEventListener("change", function () {
+            //console.log('typeTMCSelect');
             document.getElementById("addBrandBtn").disabled = +this.value === 0;
             document.getElementById("brandSelect").disabled = +this.value === 0;
         });
 
         document.getElementById("brandSelect").addEventListener("change", function () {
+            //console.log('brandSelect');
             document.getElementById("addModelBtn").disabled = +this.value === 0;
             document.getElementById("modelSelect").disabled = +this.value === 0;
         });
@@ -252,19 +293,19 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
     });
 
     // Функция переключения состояния поля серийного номера
-    function toggleClass() {
-        const checkbox = document.getElementById("checkSerialNum");
-        const serialInput = document.getElementById("txtSerialNum");
-
-        if (checkbox.checked) {
-            serialInput.disabled = true;
-            serialInput.placeholder = "Серийный номер отсутствует";
-            serialInput.value = "";
-        } else {
-            serialInput.disabled = false;
-            serialInput.placeholder = "Укажите серийный номер";
-        }
-    }
+    /* function toggleClass() {
+         const checkbox = document.getElementById("checkSerialNum");
+         const serialInput = document.getElementById("txtSerialNum");
+ 
+         if (checkbox.checked) {
+             serialInput.disabled = true;
+             serialInput.placeholder = "Серийный номер отсутствует";
+             serialInput.value = "";
+         } else {
+             serialInput.disabled = false;
+             serialInput.placeholder = "Укажите серийный номер";
+         }
+     }*/
 
     // Инициализация при загрузке
     document.addEventListener('DOMContentLoaded', function () {
@@ -291,8 +332,9 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
         console.log('ID statusItem:', document.getElementById('idstatusItem').value);
         console.log('ID currentID:', document.getElementById('currentID').value);
     }
-
 </script>
+
+<!--script-- src="/js/modals/propertyItemModal.js"></!--script-->
 
 <?php
 include __DIR__ . '/message_modal.php';

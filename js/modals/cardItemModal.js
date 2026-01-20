@@ -1,377 +1,226 @@
-(function () {
-  let statusItem = null;
-  function openCardTMC(action, id = 0) {
-    const url = ActionUrls[action];
-    statusItem = action;
 
-    const selectedRows = document.querySelectorAll(
-      "#inventoryTable tbody tr.row-container.selected"
-    );
-    let validStatuses = [];
-    switch (action) {
-      case Action.CREATE:
-        selectedId = null;
-        break;
-      case Action.EDIT:
-        validStatuses = [StatusItem.Released];
-        if (selectedRows.length === 0) {
-          showNotification(
-            TypeMessage.notification,
-            "Выберите ТМЦ для редактирования"
-          );
-          return;
-        }
-        selectedId = selectedRows[0].cells[0].textContent;
-        break;
-      case Action.CREATE_ANALOG:
-        if (selectedRows.length === 0) {
-          showNotification(
-            TypeMessage.notification,
-            "Выберите ТМЦ в качестве аналога"
-          );
-          return;
-        }
-        selectedId = selectedRows[0].cells[0].textContent;
-        break;
-    }
+import {
+    executeEntityAction,
+    getCollectFormData,
+} from "../templates/entityActionTemplate.js";
+import { executeActionForCUD } from "../templates/cudRowsInTable.js";
+import { showNotification } from "./setting.js";
+import { TypeMessage } from "../../src/constants/typeMessage.js";
 
-    openModalAction(action, null, validStatuses, {
-      statusItem: action,
-      id: selectedId,
-    });
-  }
+// Импортируем константы для работы с селектами
+import { PropertyTMC, PropertySelectID } from "../../src/constants/properties.js";
 
-  function initCardTMCModalHandlers(modalElement) {
+/**
+ * ГЛАВНЫЙ ЭКСПОРТИРУЕМЫЙ ОБРАБОТЧИК
+ * Инициализирует все события для модального окна карточки ТМЦ.
+ * @param {HTMLElement} modalElement - DOM-элемент модального окна (#cardItemModal)
+ */
+export function initCardTMCModalHandlers(modalElement) {
+
+    // 1. Обработчик отправки формы (сохранение ТМЦ)
     modalElement.addEventListener("submit", async function (e) {
-      e.preventDefault();
+        e.preventDefault();
+        await handleFormSubmit(modalElement);
+    });
 
-      const form = document.getElementById("cardItemForm");
-      if (!form) {
+    // 2. Обработчик чекбокса "Серийный номер отсутствует"
+    initSerialNumberToggle(modalElement);
+
+    // 3. Обработчики каскадных селектов (Тип -> Бренд -> Модель)
+    initCascadeSelectHandlers(modalElement);
+}
+
+/**
+ * Обрабатывает отправку формы карточки ТМЦ.
+ * Собирает данные, валидирует и отправляет на сервер.
+ */
+async function handleFormSubmit(modalElement) {
+    const form = document.getElementById("cardItemForm");
+    if (!form) {
         showNotification(TypeMessage.error, "Форма не найдена");
         return;
-      }
+    }
 
-      // Используем FormData для сбора всех данных формы
-      const formData = new FormData(form);
-
-      // Проверка обязательных полей через FormData
-      const requiredFields = {
+    // Валидация обязательных полей
+    const requiredFields = {
         idTypeTMC: "Тип ТМЦ",
         idBrand: "Бренд",
         idModel: "Модель",
         nameTMC: "Наименование",
-      };
+    };
 
-      let hasErrors = false;
-      for (const [fieldName, fieldLabel] of Object.entries(requiredFields)) {
-        if (!formData.get(fieldName) || formData.get(fieldName) === "0") {
-          showNotification(
-            TypeMessage.error,
-            `Поле "${fieldLabel}" обязательно для заполнения`
-          );
-          const fieldElement = document.querySelector(`[name="${fieldName}"]`);
-          if (fieldElement) fieldElement.focus();
-          hasErrors = true;
-          break;
+    let isValid = true;
+    for (const [fieldName, fieldLabel] of Object.entries(requiredFields)) {
+        const field = form.elements[fieldName];
+        if (!field || field.value === "0" || field.value.trim() === "") {
+            showNotification(TypeMessage.error, `Поле "${fieldLabel}" обязательно для заполнения`);
+            field?.focus();
+            isValid = false;
+            break;
         }
-      }
+    }
+    if (!isValid) return;
 
-      if (hasErrors) return;
+    // Подготовка данных
+    const formData = getCollectFormData(form, window.statusEntity);
 
-      let url = "/src/BusinessLogic/ActionsTMC/processCreateItem.php";
-
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          body: formData,
+    try {
+        // Отправка на сервер
+        const result = await executeEntityAction({
+            action: window.statusEntity,
+            formData: formData,
+            url: "/src/BusinessLogic/Actions/processCUDInventoryItem.php",
+            successMessage: "ТМЦ успешно сохранен",
         });
 
-        const result = await response.json();
+        // Обновление таблицы на главной странице
+        executeActionForCUD(
+            window.statusEntity,
+            result.resultEntity,
+            "inventoryTable",
+            result.fields,
+            "row-container",
+            "id"
+        );
 
-        if (result.success) {
-          showNotification(TypeMessage.success, result.message);
+        // Закрытие модального окна
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
 
-          // Закрываем модальное окно
-          const modalInstance = bootstrap.Modal.getInstance(modalElement);
-          modalInstance.hide();
+    } catch (error) {
+        console.error("Ошибка сохранения ТМЦ:", error);
+        showNotification(TypeMessage.error, "Ошибка при сохранении ТМЦ");
+    }
+}
 
-          if (
-            result.statusItem === "create" ||
-            result.statusItem === "create_analog"
-          ) {
-            // Сохраняем ID нового элемента для навигации после перезагрузки
-            if (result.resultItem && result.resultItem.id) {
-              sessionStorage.setItem("newItemId", result.resultItem.id);
-              sessionStorage.setItem("scrollToNewItem", "true");
-            }
-            //window.needFullReload = true;
-            await refreshTableAndNavigate(result.resultItem.id);
-          }
+/**
+ * Инициализирует переключение состояния поля "Серийный номер".
+ */
+function initSerialNumberToggle(modalElement) {
+    const checkbox = modalElement.querySelector("#checkSerialNum");
+    const serialInput = modalElement.querySelector("#txtSerialNum");
 
-          if (result.statusItem === "edit") {
-            if (result.resultItem) {
-              updateSingleInventoryItem(result.resultItem.id, {
-                name: result.resultItem.name,
-                serialNumber: result.resultItem.serialNumber,
-                brand: result.resultItem.brand,
-                responsible: result.resultItem.responsible,
-                status: result.resultItem.status,
-              });
-            }
-          }
+    if (!checkbox || !serialInput) return;
 
-          if (typeof handleSuccess === "function") {
-            handleSuccess();
-          } else if (typeof window.handleSuccess === "function") {
-            window.handleSuccess();
-          }
-
-          // Очищаем форму после успешного сохранения
-          setTimeout(() => {
-            modalElement.querySelector("form").reset();
-          }, 500);
+    const toggleHandler = () => {
+        if (checkbox.checked) {
+            serialInput.disabled = true;
+            serialInput.placeholder = "Серийный номер отсутствует";
+            serialInput.value = "";
         } else {
-          showNotification(TypeMessage.error, result.message);
+            serialInput.disabled = false;
+            serialInput.placeholder = "Укажите серийный номер";
         }
-      } catch (error) {
-        console.error("Ошибка при сохранении ТМЦ:", error);
-        showNotification(TypeMessage.error, "Ошибка сети при сохранении ТМЦ");
-      }
-    });
+    };
 
-    // Обработчик закрытия модального окна
-    modalElement.addEventListener("hidden.bs.modal", function () {
-      // Дополнительные действия при закрытии окна
-      //console.log("Модальное окно ТМЦ закрыто");
-    });
-  }
+    checkbox.addEventListener("change", toggleHandler);
+    // Инициализируем начальное состояние
+    toggleHandler();
+}
 
-  function openPropertyView(propertyTMC) {
-    const propType = propertyTMC;
-    let nameIdSelect;
-    let previousSelect;
+/**
+ * Инициализирует связанные (каскадные) выпадающие списки.
+ * При изменении Типа загружаются Бренды, при изменении Бренда — Модели.
+ */
+function initCascadeSelectHandlers(modalElement) {
 
-    switch (propertyTMC) {
-      case PropertyTMC.TYPE_TMC:
-        nameIdSelect = PropertySelectID[PropertyTMC.TYPE_TMC];
-        break;
-      case PropertyTMC.BRAND:
-        nameIdSelect = PropertySelectID[PropertyTMC.TYPE_TMC];
-        previousSelect = document.getElementById(
-          PropertySelectID[PropertyTMC.TYPE_TMC]
-        );
-        break;
-      case PropertyTMC.MODEL:
-        nameIdSelect = PropertySelectID[PropertyTMC.BRAND];
-        previousSelect = document.getElementById(
-          PropertySelectID[PropertyTMC.BRAND]
-        );
-        break;
+    const typeSelect = modalElement.querySelector(`#${PropertySelectID[PropertyTMC.TYPE_TMC]}`);
+    const brandSelect = modalElement.querySelector(`#${PropertySelectID[PropertyTMC.BRAND]}`);
+
+    if (typeSelect) {
+        typeSelect.addEventListener("change", (e) => handleSelectChange(e, PropertyTMC.TYPE_TMC, PropertyTMC.BRAND));
     }
-
-    const propertyContainer = document.getElementById("propertyContainer");
-    const mainContainer = document.getElementById("mainContainer");
-
-    if (propertyContainer?.classList.contains("show")) {
-      propertyContainer?.classList.remove("show");
-      mainContainer?.classList.remove("expanded");
-      propertyContainer?.classList.toggle("close");
-      if (previousSelect != null) previousSelect.disabled = false;
-    } else {
-      if (previousSelect != null) previousSelect.disabled = true;
-      propertyContainer?.classList.remove("close");
-      propertyContainer?.classList.toggle("show");
-      mainContainer?.classList.toggle("expanded");
-      let url =
-        "/src/View/" +
-        `propertyTMC.php?type=${encodeURIComponent(propType)}&property_id=${
-          document.getElementById(nameIdSelect).value
-        }`;
-
-      fetch(url)
-        .then((response) => response.text())
-        .then((html) => {
-          propertyContainer.innerHTML = html;
-
-          const scripts = propertyContainer.querySelectorAll("script");
-          scripts.forEach((script) => {
-            const newScript = document.createElement("script");
-
-            // Копируем атрибуты (src, async и т.д.)
-            Array.from(script.attributes).forEach((attr) => {
-              newScript.setAttribute(attr.name, attr.value);
-            });
-
-            // Копируем содержимое скрипта
-            newScript.textContent = script.textContent;
-
-            // Вставляем в DOM для выполнения
-            document.body.appendChild(newScript).remove();
-          });
-        });
+    if (brandSelect) {
+        brandSelect.addEventListener("change", (e) => handleSelectChange(e, PropertyTMC.BRAND, PropertyTMC.MODEL));
     }
-  }
+}
 
-  function toggleClass() {
-    const checkbox = document.getElementById("checkSerialNum");
-    const serialInput = document.getElementById("txtSerialNum");
-
-    serialInput.disabled = checkbox.checked;
-
-    if (checkbox.checked) {
-      serialInput.placeholder = "Серийный номер отсутствует";
-      serialInput.value = "";
-    } else {
-      serialInput.placeholder = "Укажите серийный номер";
-    }
-  }
-
-  async function handleSelectChange(event, currentType, nextType) {
-    if (event == null) {
-      console.log("event - пустой");
-      return;
-    } else {
-      console.log(`Значение ${event.target.value}`);
-    }
-
+/**
+ * Обработчик изменения каскадного селекта.
+ * Загружает данные для следующего зависимого селекта.
+ * @param {Event} event - Событие change
+ * @param {string} currentType - Текущий измененный тип (PropertyTMC.TYPE_TMC/BRAND)
+ * @param {string} nextType - Следующий зависимый тип (PropertyTMC.BRAND/MODEL)
+ */
+async function handleSelectChange(event, currentType, nextType) {
     const selectedValue = Number(event.target.value);
     const nextSelect = document.getElementById(PropertySelectID[nextType]);
 
-    // Сбрасываем все зависимые селекты при изменении текущего
-    //resetDependentSelects(currentType);
+    if (!nextSelect) return;
 
+    // Сброс следующего селекта, если текущий не выбран
     if (selectedValue === 0) {
-      console.log(`selectedValue === 0`);
+        nextSelect.disabled = true;
+        nextSelect.innerHTML = `<option value="0">Выберите ${nextType}</option>`;
 
-      nextSelect.disabled = true;
-      nextSelect.innerHTML = `<option value="0">Выберите ${nextType}</option>`;
-      return;
+        // Если сбросили Бренд, сбросим и Модель
+        if (nextType === PropertyTMC.BRAND) {
+            const modelSelect = document.getElementById(PropertySelectID[PropertyTMC.MODEL]);
+            if (modelSelect) {
+                modelSelect.disabled = true;
+                modelSelect.innerHTML = `<option value="0"></option>`;
+            }
+        }
+        return;
     }
 
     nextSelect.disabled = false;
 
+    // Формирование URL для загрузки данных
     let url = "";
     switch (currentType) {
-      case PropertyTMC.TYPE_TMC:
-        url = `/src/BusinessLogic/getBrands.php?type_id=${selectedValue}`;
-
-        const modelSelect = document.getElementById(PropertySelectID[PropertyTMC.MODEL]);
-        modelSelect.disabled = true;
-        modelSelect.innerHTML = `<option value="0"></option>`;
-        document.getElementById("addModelBtn").disabled = true;
-
-        break;
-      case PropertyTMC.BRAND:
-        url = `/src/BusinessLogic/getModels.php?type_id=${selectedValue}`;
-        break;
+        case PropertyTMC.TYPE_TMC:
+            url = `/src/BusinessLogic/getBrands.php?type_id=${selectedValue}`;
+            break;
+        case PropertyTMC.BRAND:
+            url = `/src/BusinessLogic/getModels.php?type_id=${selectedValue}`;
+            break;
     }
 
     try {
-      const response = await fetch(url);
-      const data = await response.json();
-      nextSelect.innerHTML = `<option value="0">Выберите ${nextType}</option>`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-      data.forEach((item) => {
-        nextSelect.add(new Option(item.Name, item.ID));
-      });
+        // Очистка и заполнение следующего селекта
+        nextSelect.innerHTML = `<option value="0">Выберите ${nextType}</option>`;
+        data.forEach((item) => {
+            nextSelect.add(new Option(item.Name, item.ID));
+        });
 
-      // Разблокируем кнопку добавления для следующего типа
-      /* const nextButton = document.getElementById(PropertyButtonID[nextType]);
-      if (nextButton) {
-        nextButton.disabled = false;
-      }*/
     } catch (error) {
-      console.error(`Ошибка загрузки ${nextType}:`, error);
-      nextSelect.innerHTML = `<option value="0">Ошибка загрузки</option>`;
+        console.error(`Ошибка загрузки ${nextType}:`, error);
+        nextSelect.innerHTML = `<option value="0">Ошибка загрузки</option>`;
     }
-  }
+}
 
-  async function initializeSelects() {
-    const typeSelect = document.getElementById(
-      PropertySelectID[PropertyTMC.TYPE_TMC]
-    );
-    const brandSelect = document.getElementById(
-      PropertySelectID[PropertyTMC.BRAND]
-    );
-    const modelSelect = document.getElementById(
-      PropertySelectID[PropertyTMC.MODEL]
-    );
+/**
+ * Инициализирует селекты на основе данных, переданных из PHP.
+ * Вызывается из cardItem_modal.php после загрузки окна.
+ */
+window.initializeSelects = async function () {
+    const typeSelect = document.getElementById(PropertySelectID[PropertyTMC.TYPE_TMC]);
+    const brandSelect = document.getElementById(PropertySelectID[PropertyTMC.BRAND]);
+    const modelSelect = document.getElementById(PropertySelectID[PropertyTMC.MODEL]);
 
-    const typeId = typeSelect.value;
-    // Получаем данные из глобального объекта
-    const brandId = window.cardItemData.brandId;
-    const modelId = window.cardItemData.modelId;
-    //const statusItem = window.cardItemData.statusItem;
-    //console.log("Статус действия: " + statusItem);
-    //console.log("Ид типа - " + typeId + ", бренда - " + brandId + ", модели - " + modelId);
+    const typeId = typeSelect?.value || "0";
+    const brandId = window.cardItemData?.brandId || "0";
+    const modelId = window.cardItemData?.modelId || "0";
 
-    // Сначала сбрасываем все зависимые селекты
-    //resetDependentSelects(PropertyTMC.TYPE_TMC);
 
+
+    // Если выбран тип, загружаем бренды
     if (typeId !== "0") {
-      // Загружаем бренды для выбранного типа
-      await handleSelectChange(
-        { target: typeSelect },
-        PropertyTMC.TYPE_TMC,
-        PropertyTMC.BRAND
-      );
-      if (brandId !== "0") {
-        brandSelect.value = brandId;
-        document.getElementById("addBrandBtn").disabled = +this.value === 0;
-        // Загружаем модели для выбранного бренда
-        await handleSelectChange(
-          { target: brandSelect },
-          PropertyTMC.BRAND,
-          PropertyTMC.MODEL
-        );
-        if (modelId !== "0") {
-          modelSelect.value = modelId;
-          document.getElementById("addModelBtn").disabled = +this.value === 0;
+        await handleSelectChange({ target: typeSelect }, PropertyTMC.TYPE_TMC, PropertyTMC.BRAND);
+
+        // Если в данных есть brandId, выбираем его и загружаем модели
+        if (brandId !== "0" && brandSelect) {
+            brandSelect.value = brandId;
+            await handleSelectChange({ target: brandSelect }, PropertyTMC.BRAND, PropertyTMC.MODEL);
+
+            // Если в данных есть modelId, выбираем его
+            if (modelId !== "0" && modelSelect) {
+                modelSelect.value = modelId;
+            }
         }
-      }
     }
-  }
-
-  function addPropertySelect(typeProperty, newItem) {
-    // Находим соответствующий select на странице
-    const selectElement = document.getElementById(
-      PropertySelectID[typeProperty]
-    );
-
-    if (!selectElement) {
-      console.error("Элемент не найден для типа: ", typeProperty);
-      return;
-    }
-
-    // Создаем новый option
-    const newOption = document.createElement("option");
-    newOption.value = newItem.ID; // Используйте актуальное свойство с ID
-    newOption.textContent = newItem.Name; // Используйте актуальное свойство с именем
-    newOption.selected = true;
-
-    // Добавляем новую опцию в select
-    selectElement.appendChild(newOption);
-
-    // Обновляем данные в объекте cardItemData, если это необходимо
-    switch (typeProperty) {
-      case PropertyTMC.BRAND:
-        window.cardItemData.brandId = newItem.ID;
-        break;
-      case PropertyTMC.MODEL:
-        window.cardItemData.modelId = newItem.ID;
-        break;
-    }
-
-    //console.log(`Добавлен новый элемент в ${PropertySelectID[typeProperty]}:`, newItem);
-  }
-
-
-
-  window.openPropertyView = openPropertyView;
-  window.initializeSelects = initializeSelects;
-  window.initCardTMCModalHandlers = initCardTMCModalHandlers;
-  window.toggleClass = toggleClass;
-  window.openCardTMC = openCardTMC;
-  window.handleSelectChange = handleSelectChange;
-  window.addPropertySelect = addPropertySelect;
-})();
+};

@@ -18,10 +18,12 @@ try {
 
     $result = [];
 
+
+
     foreach ($models as $value) { 
                 $result[] = [ 
-            'ID' => $value->getId(),
-            'Name' => $value->getName()
+            'ID' => $value->ModelTMC->getId(),
+            'Name' => $value->ModelTMC->NameModel
         ];
     }
     echo json_encode($result, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);

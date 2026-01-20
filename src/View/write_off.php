@@ -1,14 +1,16 @@
 <?php
+set_time_limit(0);
+ini_set('memory_limit', '1024M');
 session_start();
 if (!isset($_SESSION['IDUser'])) {
     header('Location: index.php');
     exit();
 }
-
+/*
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 error_reporting(E_ALL);
-ini_set('error_log', __DIR__ . '/../storage/logs/write_off.log');
+ini_set('error_log', __DIR__ . '/../storage/logs/write_off.log');*/
 
 require_once __DIR__ . '/../Entity/InventoryItem.php';
 require_once __DIR__ . '/../BusinessLogic/ItemRepairController.php';
@@ -25,15 +27,20 @@ $statusUser = $_SESSION["Status"];
 $names = [];
 $locations = [];
 
+$startTime = microtime(true);
 
 $repairItems = $repairContainer->writeOffItems();
+/*
+$endTime = microtime(true);
+$loadTime = $endTime - $startTime;
+error_log("Время загрузки repairItems: " . $loadTime . " секунд. Загружено объектов: " . ($repairItems ? count($repairItems) : 0));*/
+
+
+$startTime = microtime(true);
 
 // Формируем уникальные значения для фильтров
 $uniqueNames = [];
 $uniqueLocations = [];
-
-//print_r($repairItems);
-//print_r($repairItems.count());
 
 foreach ($repairItems as $item) {
 
@@ -70,6 +77,11 @@ foreach ($groupedItems as $item) {
         $totalRepairCost = $totalRepairCost + $repair->RepairCost;
     }
 }
+
+/*$endTime = microtime(true);
+$loadTime = $endTime - $startTime;
+error_log("Время группировки данных по ID_TMC для основной таблицы: " . $loadTime . " секунд.");*/
+
 ?>
 
 <!DOCTYPE html>
@@ -83,19 +95,19 @@ foreach ($groupedItems as $item) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="\..\..\styles\writeOff.css" rel="stylesheet">
 
-    <script src="/src/constants/actions.js"></script>
-    <script src="/src/constants/statusItem.js"></script>
-    <script src="/src/constants/statusService.js"></script>
-    <script src="/src/constants/typeMessage.js"></script>
-    <script src="/js/updateFunctions.js"></script>
-    <script src="/js/modals/setting.js"></script>    
+    <script type="module" src="/src/constants/actions.js"></script>
+    <script type="module" src="/src/constants/statusItem.js"></script>
+    <script type="module" src="/src/constants/statusService.js"></script>
+    <script type="module" src="/src/constants/typeMessage.js"></script>
+    <script type="module" src="/js/updateFunctions.js"></script>
+    <script type="module" src="/js/modals/setting.js"></script>
 
 </head>
 
 <body>
     <?php include __DIR__ . '/Modal/message_modal.php'; ?>
     <?php include __DIR__ . '/Modal/report_modal.php'; ?>
-    <?php include __DIR__ . '/Modal/basket_modal.php'; ?>
+    <!--?php include __DIR__ . '/Modal/basket_modal.php'; ?-->
 
 
     <!-- Боковое меню -->
@@ -104,7 +116,9 @@ foreach ($groupedItems as $item) {
             <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil"></i> Редактировать</a></li>
             <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-pdf"></i> Сформировать отчет</a>
             </li>
-            <li><a href="#" onclick="openBasketModal()"><i class="bi bi-cart"></i> Корзина</a></li>
+            <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart"></i> Корзина</a></li>
+            <li><a href="#" onclick="returnToWorkTMC()"><i class="bi bi-arrow-return-left"></i> Вернуть в работу</a>
+            </li>
             <li><a href="home.php"><i class="bi bi-house"></i> На главную</a></li>
         </ul>
     </div>
@@ -197,13 +211,15 @@ foreach ($groupedItems as $item) {
                     <tbody>
                         <?php foreach ($groupedItems as $id => $itemData):
                             $mainItem = $itemData['main'];
-                            $repairs = $itemData['repairs'];
+                            $repairs = $itemData['repairs'];                            
                             $totalCost = 0;
                             foreach ($repairs as $repair) {
                                 $totalCost += $repair->RepairCost;
                             }
                             ?>
                             <tr class="main-row" data-id="<?= $mainItem->ID_TMC ?>"
+                                
+                                data-status="<?= $mainItem->InventoryItem->Status ?>"
                                 data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?>"
                                 data-location="<?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?>"
                                 data-total-cost="<?= $totalCost ?>">
@@ -281,11 +297,11 @@ foreach ($groupedItems as $item) {
     </div>
 
 
-    <script src="/js/writeOffFunctions.js"></script>    
+    <script type="module" src="/js/writeOffFunctions.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        
+
         // Глобальные переменные
         let allItems = <?= json_encode($groupedItems) ?>;
         let selectedRow = null;
@@ -318,10 +334,20 @@ foreach ($groupedItems as $item) {
                 row.style.display = visible ? '' : 'none';
 
                 // Скрываем соответствующий ряд с деталями
-                const id = row.getAttribute('data-id');
+                /*const id = row.getAttribute('data-id');
                 const detailsRow = document.getElementById('details-' + id);
                 if (detailsRow) {
                     detailsRow.style.display = visible ? '' : 'none';
+                }*/
+                const id = row.getAttribute('data-id');
+                const detailsRow = document.getElementById('details-' + id);
+                if (detailsRow) {
+                    // Не показываем детали при фильтрации, если строка не выбрана
+                    if (row.classList.contains('selected') && visible) {
+                        detailsRow.style.display = '';
+                    } else {
+                        detailsRow.style.display = 'none';
+                    }
                 }
 
                 if (visible) {
@@ -391,8 +417,35 @@ foreach ($groupedItems as $item) {
             });
         }
 
-        // Функция выделения строки
+        // Замените функцию selectRow на эту:
         function selectRow(row) {
+            // Снимаем выделение со всех строк
+            document.querySelectorAll('.main-row').forEach(r => {
+                r.classList.remove('selected');
+            });
+
+            // Выделяем текущую строку
+            row.classList.add('selected');
+            selectedRow = row;
+
+            // Показываем/скрываем детали
+            const id = row.getAttribute('data-id');
+
+            // Скрываем все детали
+            document.querySelectorAll('.repair-details-row').forEach(dr => {
+                dr.style.display = 'none';
+            });
+
+            // Показываем детали выбранной строки только если она видима
+            if (row.style.display !== 'none') {
+                const detailsRow = document.getElementById('details-' + id);
+                if (detailsRow) {
+                    detailsRow.style.display = 'table-row';
+                }
+            }
+        }
+        // Функция выделения строки
+        /*function selectRow(row) {
             // Снимаем выделение со всех строк
             document.querySelectorAll('.main-row').forEach(r => {
                 r.classList.remove('selected');
@@ -415,54 +468,12 @@ foreach ($groupedItems as $item) {
             if (detailsRow) {
                 detailsRow.style.display = 'table-row';
             }
-        }
-
-        // Функция удаления строки
-        /*function deleteRow(id) {
-            if (confirm('Вы уверены, что хотите удалить эту запись?')) {
-                const row = document.querySelector(`.main-row[data-id="${id}"]`);
-                const detailsRow = document.getElementById(`details-${id}`);
-
-                if (row) row.style.display = 'none';
-                if (detailsRow) detailsRow.style.display = 'none';
-
-                console.log(row.dataset.id);
-                console.log(row.dataset.name);
-
-                try {
-                    const formData = new FormData(form);
-                    formData.append("ID_TMC", id);
-                    formData.append("NameTMC", row.dataset.name);
-                    const response = await fetch(
-                        "/src/BusinessLogic/ActionsTMC/processRepairInBasket.php",
-                        {
-                            method: "POST",
-                            body: formData,
-                        });
-                    const data = await response.json();
-                    console.log('Ждем результат');
-                    if (data.success) {
-                        showNotification(TypeMessage.success, data.message);
-                        let sum = row.dataset.name;
-                        updateTotalSum(sum);
-                    }
-                    else {
-                        showNotification(TypeMessage.error, data.message);
-                    }
-                }
-                catch {
-
-                }
-
-                // Пересчитываем общую сумму
-                // applyFilters();                
-            }
         }*/
 
         // Функция редактирования выбранной записи
         function editSelected() {
             if (!selectedRow) {
-                showNotification(TypeMessage.error, 'Пожалуйста, выберите запись для редактирования.');
+                showNotification(TypeMessage.notification, 'Пожалуйста, выберите запись для редактирования.');
                 return;
             }
 
@@ -470,20 +481,13 @@ foreach ($groupedItems as $item) {
 
             //validStatuses = [StatusItem.Repair, StatusItem.NotDistributed]; // Добавляем в конец массива
 
-            window.openModalAction("edit_write_off", null, null, 
-            {
-                id:id
-            });
+            window.openModalAction("edit_write_off", null, null,
+                {
+                    id: id
+                });
             // Редирект на страницу редактирования или открытие модального окна
             //alert('Редактирование записи с ID: ' + id);
             // window.location.href = `edit_write_off.php?id=${id}`;
-        }
-
-        // Функция открытия модального окна корзины
-        function openBasketModal() {
-            basketChanges = false;
-            // Показываем модальное окно
-            document.getElementById("basketModal").style.display = "block";
         }
 
 
@@ -532,10 +536,20 @@ foreach ($groupedItems as $item) {
             });
 
             // Обработчики для строк таблицы
+            /*  document.querySelectorAll('.main-row').forEach(row => {
+                  row.addEventListener('click', function (e) {
+                      // Не выделяем строку при клике на кнопку удаления
+                      if (!e.target.closest('.delete-btn')) {
+                          console.log('выделяем строку при клике');
+                          selectRow(this);
+                      }
+                  });
+              });*/
+              
             document.querySelectorAll('.main-row').forEach(row => {
                 row.addEventListener('click', function (e) {
-                    // Не выделяем строку при клике на кнопку удаления
-                    if (!e.target.closest('.delete-btn')) {
+                    // Не выделяем строку при клике на кнопку удаления или если строка скрыта
+                    if (!e.target.closest('.delete-btn') && this.style.display !== 'none') {
                         selectRow(this);
                     }
                 });
@@ -552,7 +566,8 @@ foreach ($groupedItems as $item) {
         });
     </script>
 
-    <script src="/js/modals/modalLoader.js"></script>
+    <script type="module" src="/js/modals/modalLoader.js"></script>
+    <script type="module" src="/js/modals/repairBasketModal.js"></script>
 
     <div id="modalContainer"></div>
 </body>

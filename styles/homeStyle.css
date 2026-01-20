@@ -57,10 +57,11 @@ body.main-body {
   padding: 5px;
 }
 
-#sidebar > ul > li:first-child {
+#sidebar>ul>li:first-child {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+
   .logo {
     font-weight: 600;
   }
@@ -68,6 +69,7 @@ body.main-body {
 
 #sidebar ul li.active a {
   color: var(--accent-clr);
+
   svg {
     fill: var(--accent-clr);
   }
@@ -121,7 +123,7 @@ body.main-body {
   grid-template-rows: 0fr;
   transition: 300ms ease-in-out;
 
-  > div {
+  >div {
     overflow: hidden;
   }
 }
@@ -197,7 +199,8 @@ body.main-body {
 #inventoryTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9em; /* Уменьшенный размер шрифта */
+  font-size: 0.9em;
+  /* Уменьшенный размер шрифта */
 }
 
 #inventoryTable th {
@@ -207,20 +210,24 @@ body.main-body {
   font-weight: 600;
   color: #334155;
   position: relative;
-  font-size: 1.15em; /* Шрифт заголовка чуть больше */
-  border-radius: 8px; /* Скругленные углы */
+  font-size: 1.15em;
+  /* Шрифт заголовка чуть больше */
+  border-radius: 8px;
+  /* Скругленные углы */
 }
 
 #inventoryTable td {
   padding: 10px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 1.1em; /* Уменьшенный размер шрифта */
+  font-size: 1.1em;
+  /* Уменьшенный размер шрифта */
 }
 
 #inventoryTable tbody.scroll {
   display: block;
-  max-height: 80vh; /* Уменьшена высота для строки состояния */
+  max-height: 80vh;
+  /* Уменьшена высота для строки состояния */
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -234,8 +241,10 @@ body.main-body {
   grid-template-columns: 6% 24% 15% 10% 15% 15% 15%;
   gap: 0.1em;
   border: 1px solid var(--line-clr);
-  cursor: pointer; /* Добавляем курсор-указатель */
-  user-select: none; /* Запрещаем выделение текста */
+  cursor: pointer;
+  /* Добавляем курсор-указатель */
+  user-select: none;
+  /* Запрещаем выделение текста */
 }
 
 .row-container:hover {
@@ -251,12 +260,12 @@ body.main-body {
   display: none;
   position: fixed;
   top: 5%;
- /* left: 20em;*/
+  /* left: 20em;*/
   width: auto;
- /* max-width: 50%;*/
- /* height: 90%;*/
- /* border-radius: 10px;*/
- /* background: var(--hover-clr);*/
+  /* max-width: 50%;*/
+  /* height: 90%;*/
+  /* border-radius: 10px;*/
+  /* background: var(--hover-clr);*/
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
   z-index: 1000;
   overflow-y: auto;
@@ -281,26 +290,40 @@ body.main-body {
 /* ======= СТАТУСЫ ТМЦ ======= */
 
 .status-NotDistributed {
-  background-color: #e3f2fd; /* Светло-голубой */
+  background-color: #e3f2fd;
+  /* Светло-голубой */
 }
+
 .status-Released {
-  background-color: #bbdefb; /* Нежно-голубой */
+  background-color: #bbdefb;
+  /* Нежно-голубой */
 }
+
 .status-Repair {
-  background-color: #ffb74d; /* Теплый оранжевый */
+  background-color: #ffb74d;
+  /* Теплый оранжевый */
 }
+
 .status-WrittenOff {
-  background-color: #ef9a9a; /* Мягкий красный */
+  background-color: #ef9a9a;
+  /* Мягкий красный */
 }
+
 .status-ConfirmItem {
-  background-color: #96918a; /* Светло-оранжевый */
+  background-color: #96918a;
+  /* Светло-оранжевый */
 }
+
 .status-AtWorkTMC {
-  background-color: #c8e6c9; /* Светло-зеленый */
+  background-color: #c8e6c9;
+  /* Светло-зеленый */
 }
+
 .status-OutputTMC {
-  background-color: #e0f7fa; /* Очень светлый бирюзовый */
+  background-color: #e0f7fa;
+  /* Очень светлый бирюзовый */
 }
+
 .status-ConfirmRepairTMC {
   background-color: #9c27b0;
 }
@@ -309,8 +332,10 @@ body.main-body {
 .status-WrittenOff,
 .status-ConfirmItem,
 .status-ConfirmRepairTMC {
-  color: white; /* Белый текст на темных фонах */
-  font-weight: 500; /* Полужирный для лучшей читаемости */
+  color: white;
+  /* Белый текст на темных фонах */
+  font-weight: 500;
+  /* Полужирный для лучшей читаемости */
 }
 
 /*.status-NotDistributed {
@@ -370,39 +395,48 @@ body.main-body {
   display: flex;
   align-items: center;
 }
+
 /* =======Для второго уведомления (ремонт)===== */
 .notification-repair-badge {
-  bottom: 120px; /* выше первого */
-  background-color: #9740b9; 
+  bottom: 120px;
+  /* выше первого */
+  background-color: #9740b9;
 }
 
 .notification-repair-alert {
-  bottom: 125px; /* выше первого */
-  background-color: #9740b9; 
+  bottom: 125px;
+  /* выше первого */
+  background-color: #9740b9;
 }
 
 /* =======Для третьего уведомления (в работе)===== */
 .notification-atwork-badge {
-  bottom: 70px; /* выше первого */
-  background-color: #94d816; 
+  bottom: 70px;
+  /* выше первого */
+  background-color: #94d816;
 }
 
 .notification-atwork-alert {
-  bottom: 75px; /* выше первого */
-  background-color: #94d816; 
+  bottom: 75px;
+  /* выше первого */
+  background-color: #94d816;
 }
 
 /* ========Стили для форм ремонта============= */
 
 .repair-form {
-    display: none;
-    padding: 2%; /* Отдаление 2% */
-    background-color: #a8b7c2;
-    border: 1px solid var(--line-clr, #dee2e6); /* Используем CSS-переменную с fallback */
-    border-radius: 1em; /* Радиус скругления */
-    margin-top: 10px;
-    margin-bottom: 10px; /* Отступ снизу */
-    box-sizing: border-box;
+  display: none;
+  padding: 2%;
+  /* Отдаление 2% */
+  background-color: #a8b7c2;
+  border: 1px solid var(--line-clr, #dee2e6);
+  /* Используем CSS-переменную с fallback */
+  border-radius: 1em;
+  /* Радиус скругления */
+  margin-top: 10px;
+  margin-bottom: 10px;
+  /* Отступ снизу */
+  box-sizing: border-box;
 }
 
 .file-preview {
@@ -413,46 +447,46 @@ body.main-body {
 }
 
 /* ===========Стили для группировки=================== */
-        .brigade-group {
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .brigade-header {
-            background-color: #f5f5f5;
-            padding: 12px 15px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .brigade-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .brigade-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .brigade-content {
-            padding: 15px;
-            background-color: #fff;
-        }
-        
-        .collapse-icon {
-            transition: transform 0.3s ease;
-        }
-        
-        .collapsed .collapse-icon {
-            transform: rotate(180deg);
-        }
+.brigade-group {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.brigade-header {
+  background-color: #f5f5f5;
+  padding: 12px 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+}
+
+.brigade-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brigade-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.brigade-content {
+  padding: 15px;
+  background-color: #fff;
+}
+
+.collapse-icon {
+  transition: transform 0.3s ease;
+}
+
+.collapsed .collapse-icon {
+  transform: rotate(180deg);
+}
 
 /* ========= Фильтр ===============================*/
 
@@ -461,3 +495,194 @@ body.main-body {
   position: relative; 
   display: inline-block;
 }*/
+
+/* ======= СТИЛИ ИЗ HOME.PHP ======= */
+
+/* Стили для глобального индикатора загрузки */
+.global-loader-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 9998;
+}
+
+.global-loader-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  text-align: center;
+  min-width: 200px;
+}
+
+#global-loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9997;
+}
+
+/* Стили для панели уведомлений */
+.notifications-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 15px;
+  z-index: 1000;
+  min-width: 400px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  /* Тонкий контур */
+  transition: all 0.3s ease;
+}
+
+.notifications-panel.collapsed {
+  height: 60px;
+  overflow: hidden;
+  min-width: 300px;
+}
+
+.notifications-panel.expanded {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notifications-panel .toggle-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  color: #000000 !important;
+  /* Черный цвет с !important */
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s ease;
+}
+
+.notifications-panel .toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.notifications-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.panel-title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title {
+  color: black !important;
+  ;
+  /* Черный текст */
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+}
+
+.header-badges {
+  display: flex;
+  gap: 5px;
+}
+
+.header-badge {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  width: 25px;
+  height: 25px;
+  font-size: 12px;
+}
+
+.notifications-panel.expanded .header-badges {
+  display: none;
+}
+
+.notifications-panel.collapsed .notifications-container {
+  display: none;
+}
+
+.toggle-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  color: black;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.notifications-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Сохраняем оригинальные стили уведомлений */
+.notification-alert {
+  position: relative;
+  transform: none;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.notification-badge {
+  position: relative;
+  transform: none;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+}
+
+.notification-repair-alert,
+.notification-atwork-alert,
+.notification-repair-badge,
+.notification-atwork-badge {
+  position: relative;
+  transform: none;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}

@@ -92,7 +92,7 @@ class ItemRepairController
             throw new Exception("Запись о ремонте с ID {$repairData->ID_Repair} не найдена");
         }
 
-        $this->logger->log('updateRepair', "3");
+        //$this->logger->log('updateRepair', "3");
         $changed = false;
         $persistableProps = $currentRepair->getPersistableProperties();
         $readOnlyFields = $currentRepair->getReadOnlyFields();
@@ -128,9 +128,9 @@ class ItemRepairController
                 $currentRepair->$prop = $newValue;
             }
         }
-        
+
         // Если есть изменения, сохраняем
-        if ($changed) {            
+        if ($changed) {
             $result = $repairItemRepository->save($currentRepair);
             //$result = true;
             return $result !== null ? true : false;
@@ -146,48 +146,130 @@ class ItemRepairController
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
+        $userRepository = $this->container->get(UserRepository::class);
+        $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
+        $brandTMCRepository = $this->container->get(BrandTMCRepository::class);
 
-        /*$query = " LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem "            
-            . " WHERE inBasket = 0"
-            . " SELECT *FROM InventoryItem WHERE Status = " . StatusItem::Repair . " or Status =" . StatusItem::WrittenOff
-            . " SELECT *FROM Location"            
-            . " SELECT *FROM [User]";*/
+        /* $query = " LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem "            
+             . " WHERE inBasket = 0"
+             . " SELECT *FROM InventoryItem WHERE Status = " . StatusItem::Repair . " or Status =" . StatusItem::WrittenOff
+             . " SELECT *FROM Location"            
+             . " SELECT *FROM [User]";*/
 
-        $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
-          LEFT JOIN InventoryItem ON RegistrationInventoryItem.IDRegItem = InventoryItem.ID_TMC
-          LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation
-          WHERE RepairItem.inBasket = 0";
+        /* $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
+           LEFT JOIN InventoryItem ON RegistrationInventoryItem.IDRegItem = InventoryItem.ID_TMC
+           LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation
+           WHERE RepairItem.inBasket = 0";*/
 
-        $repairItemRepository->addRelationship(
-            'Location',                             // Свойство в Location для связи
-            $locationRepository,                    // Репозиторий связанной сущности
-            'IDLocation',                           // Внешний ключ в InventoryItem
-            'IDLocation'                            // Первичный ключ в Location
-        );
+        /*  $query = "LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
+            LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = RegistrationInventoryItem.IDRegItem
+            LEFT JOIN Location ON InventoryItem.IDLocation = Location.IDLocation
+            LEFT JOIN BrandTMC ON InventoryItem.IDBrandTMC = BrandTMC.IDBrandTMC
+            LEFT JOIN User ON RegistrationInventoryItem.CurrentUser = User.IDUser          
+            WHERE RepairItem.inBasket = 0";*/
 
-        $repairItemRepository->addRelationship(
-            'InventoryItem',
-            $inventoryItemRepository,
-            'ID_TMC',
-            'ID_TMC'
-        );
+        $query = "SELECT 
+            RepairItem.*,
+            InventoryItem.*,
+            Location.*,
+            BrandTMC.*,
+            [User].*,
+            RegistrationInventoryItem.*
+        FROM RepairItem
+        LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
+        LEFT JOIN Location ON InventoryItem.IDLocation = Location.IDLocation
+        LEFT JOIN BrandTMC ON InventoryItem.IDBrandTMC = BrandTMC.IDBrandTMC
+        LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = RegistrationInventoryItem.IDRegItem
+        LEFT JOIN [User] ON RegistrationInventoryItem.CurrentUser = [User].IDUser
+        WHERE RepairItem.inBasket = 0";
+
+        $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+        $repairItemRepository->addRelationship('InventoryItem', $inventoryItemRepository, 'ID_TMC', 'ID_TMC');
 
 
 
-        return $repairItemRepository->findBy($query);
+        /*     $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
+                 LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation
+                 LEFT JOIN User ON RegistrationInventoryItem.CurrentUser = User.IDUser                        
+                 LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC                  
+                 WHERE RepairItem.inBasket = 0";*/
+
+
+        /*   $query = "LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation                                       
+                   LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC                  
+                   WHERE RepairItem.inBasket = 0";*/
+
+        // Добавляем отношения для RepairItem
+        /* $repairItemRepository->addRelationship(
+             'Location',
+             $locationRepository,
+             'IDLocation',
+             'IDLocation'
+         );
+
+         $repairItemRepository->addRelationship(
+             'InventoryItem',
+             $inventoryItemRepository,
+             'ID_TMC',
+             'ID_TMC'
+         );
+
+         // Добавляем отношения для InventoryItem
+         $inventoryItemRepository->addRelationship(
+             'BrandTMC',
+             $brandTMCRepository,
+             'IDBrandTMC',
+             'IDBrandTMC'
+         );
+
+         $inventoryItemRepository->addRelationship(
+             'Location',
+             $locationRepository,
+             'IDLocation',
+             'IDLocation'
+         );
+
+         $inventoryItemRepository->addRelationship(
+             'User',
+             $userRepository,
+             'CurrentUser',
+             'IDUser'
+         );*/
+
+
+        $repairItems = $repairItemRepository->getAll($query);
+
+        //error_log(print_r($repairItems, true));
+
+        return $repairItems;
+
+
     }
 
-    //
+    /**
+     * Summary of RepairInBasket
+     * @param mixed $ID_TMC
+     * @return bool
+     */
     public function RepairInBasket($ID_TMC): bool
-    {
+    {        
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $repairItems = $repairItemRepository->findBy("WHERE ID_TMC = {$ID_TMC}");
+        if(!$repairItems)
+        {            
+            return false;
+        }
+
         foreach ($repairItems as $item) {
             //$this->logger->log("Найден ТМЦ", "", $item);
-            $item->inBasket = true;
+            //error_log(print_r($item, true));
+            $inBasket = $item->inBasket ? false : true;
+            $item->inBasket = $inBasket;
             $result = $repairItemRepository->save($item);
             if ($result == null)
+            {
                 return false;
+            }
         }
         return true;
     }

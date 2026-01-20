@@ -13,7 +13,7 @@ class EditWriteOffModalLoader extends ModalLoader
 
             return '<div class="alert alert-danger">Не указан ID ТМЦ</div>';
         }
-        
+        DatabaseFactory::setConfig();
         $repairController = new ItemRepairController();
         $itemData = $repairController->getItemWithRepairs($idTmc);
         //print_r($itemData);
@@ -22,7 +22,7 @@ class EditWriteOffModalLoader extends ModalLoader
         ob_start();
         include __DIR__ . '/../Modal/edit_write_off_modal.php';
 
-        error_log("ГОТОВО edit_write_off_modal");
+        //error_log("ГОТОВО edit_write_off_modal");
         return ob_get_clean();
     }
 }

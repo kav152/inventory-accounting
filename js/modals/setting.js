@@ -1,4 +1,5 @@
 (function () {
+
   // Функция для открытия панели администратора
   function openAdminPanel() {
     const modal = new bootstrap.Modal(
@@ -62,7 +63,7 @@
     });
   });
 
-  async function saveUsers() {
+  function saveUsers() {
     const form = document.getElementById("users-form");
     const formData = new FormData(form);
 
@@ -95,7 +96,7 @@
     const modal = bootstrap.Modal.getInstance(
       document.getElementById("adminPanelModal")
     );
-
+/*
     const response = await fetch(
       "/src/BusinessLogic/ActionsSetting/processUpdateUser.php",
       {
@@ -114,7 +115,7 @@
       //modal.hide();
     } else {
       showNotification(TypeMessage.error, dataResult.message);
-    }
+    }*/
   }
 
   // Функция для отображения уведомлений
@@ -173,9 +174,68 @@
   }
 
   window.openAdminPanel = openAdminPanel;
+  window.saveUsers = saveUsers;
   window.showNotification = showNotification;
   window.closeNotification = closeNotification;
-  //window.showMessage = showMessage;
-  window.saveUsers = saveUsers;
+  //window.showMessage = showMessage;  
   //window.showMessageAndReload = showMessageAndReload;
+
 })();
+
+
+// Функция для отображения уведомлений
+export function showNotification(type, message) {
+  const container = document.getElementById("notification-container");
+  if (!container) return;
+
+  // Создаем элемент уведомления
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${TypeMessage.getStatusClasses(type)}`;
+
+  // Иконка в зависимости от типа
+  /*const icon =
+    type === "error"
+      ? '<i class="bi bi-exclamation-triangle-fill"></i>'
+      : '<i class="bi bi-check-circle-fill"></i>';*/
+  const icon = TypeMessage.getIconMessage(type);
+
+  // Заголовок в зависимости от типа
+  //const title = type === "error" ? "Ошибка" : "Успешно";
+  const title = TypeMessage.getTitleMessage(type);
+
+  notification.innerHTML = `
+            <div class="notification-icon">${icon}</div>
+            <div class="notification-content">
+                <div class="notification-title">${title}</div>
+                <div class="notification-message">${message}</div>
+            </div>
+            <button class="notification-close">&times;</button>
+        `;
+
+  // Добавляем уведомление в контейнер
+  container.appendChild(notification);
+
+  // Автоматическое скрытие через 5 секунд
+  setTimeout(() => {
+    closeNotification(notification);
+  }, 5000);
+
+  // Обработчик закрытия по клику
+  notification
+    .querySelector(".notification-close")
+    .addEventListener("click", () => {
+      closeNotification(notification);
+    });
+}
+
+// Функция для закрытия уведомления с анимацией
+  function closeNotification(notification) {
+    if (!notification.classList.contains("fade-out")) {
+      notification.classList.add("fade-out");
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+  }
+
+

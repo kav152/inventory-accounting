@@ -9,8 +9,7 @@ class Brigades extends BaseEntity
     public string $NameBrigadir;
 
     public function __construct(array $data = [])
-    {
-        $this->setIdFieldName('IDBrigade');
+    {        
         if(!empty($data))
         {
             $this->IDBrigade= isset($data['IDBrigade']) ? (int)$data['IDBrigade'] : 0;
@@ -20,12 +19,27 @@ class Brigades extends BaseEntity
         }
     }
 
-    public function getId(): ?int {
+    public function getId(): int {
         return $this->IDBrigade ?? 0;
     }
 
     public function setId(int $id): void {
         $this->IDBrigade = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'IDBrigade';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return []; // НАСТРОИТЬ
     }
 
     /**

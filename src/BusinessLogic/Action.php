@@ -3,6 +3,7 @@ class Action {
     const CREATE = 'create';
     const CREATE_ANALOG = 'create_analog';
     const EDIT = 'edit';
+    const UPDATE = 'edit';
     const SEND_TMC = 'sendTMC';
     const WORK_TMC = 'workTMC';
     const RETURN_TMC = 'returnTMC';

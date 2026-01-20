@@ -29,6 +29,10 @@ try {
     } elseif ($action === 'reject') {
         $success = $controller->rejectItem($id);
     }
+    elseif ($action === 'cancelWriteOff') {
+        //$success = $controller->cancelWriteOffTMC($id);
+        $success = true;
+    }
 
     echo json_encode(['success' => $success]);
 } catch (Exception $e) {

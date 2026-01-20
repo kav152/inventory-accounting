@@ -11,7 +11,8 @@ try {
 
     $pdo = $database->getConnection();
 
-    $stmt = $pdo->prepare("SHOW TABLES FROM a1138175_ConstructionAccounting");
+    $stmt = $pdo->prepare("SHOW TABLES FROM a1138175_ConstructionAccounting"); //ConstructionAccounting_test
+    $stmt = $pdo->prepare("SHOW TABLES FROM ConstructionAccounting_test"); //ConstructionAccounting_test
     $stmt->execute();
 
     $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);

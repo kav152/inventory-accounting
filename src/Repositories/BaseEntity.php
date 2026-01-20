@@ -1,28 +1,17 @@
 <?php
-require_once __DIR__.'/../BusinessLogic/Action.php';
 abstract class BaseEntity {
 
+    public abstract function getPersistableProperties();
     /**
-     * Свойства которые можно изменять
+     * метод для получения имени ID-поля
      * @return void
      */
-    public abstract function getPersistableProperties(): array;
+    public abstract function getIdFieldName(): string;
     
-    protected ?int $id = null;
-    private string $idFieldName = 'id'; // Значение по умолчанию
+    abstract function getId(): int;
 
-    public function getId(): ?int {
-        return $this->id;
-    }
+    public abstract function setId(int $id): void;
 
-    public function setId(int $id): void {
-        $this->id = $id;
-    }
-
-    /**
-     * Получать текущую дату для полей
-     * @return array
-     */
     public function getAutoDateFields(): array
     {
         return [];
@@ -35,18 +24,10 @@ abstract class BaseEntity {
     {
         return [];
     }
-
-    // метод для получения имени ID-поля
-    public function getIdFieldName(): string {
-        return $this->idFieldName;
-    }
-
+    
     /**
-     * Метод для установки имени ID-поля
-     * @param string $name
-     * @return void
+     * Получить название сущности
+     * @return string - возращает название сущности
      */
-    public function setIdFieldName(string $name): void {
-        $this->idFieldName = $name;
-    }
+    abstract function getTypeEntity(): string;
 }

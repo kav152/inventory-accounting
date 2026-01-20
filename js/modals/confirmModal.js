@@ -14,6 +14,7 @@ function processItem(id, action) {
         const notification = document.getElementById("confirmNotification");
         const count = parseInt(badge.textContent) - 1;
         needFullReload = true;
+        
 
         if (count > 0) {
           badge.textContent = count;

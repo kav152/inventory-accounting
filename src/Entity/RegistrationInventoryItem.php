@@ -8,19 +8,18 @@ class RegistrationInventoryItem extends BaseEntity
     public string $CreationDate;
     public int $CreatedUser;
     public int $CurrentUser;
-    public string $ChangeDate;
+    public string $СhangeDate;
     public User $User;
 
 
     public function __construct(array $data = [])
     {
-        $this->setIdFieldName('IDRegItem');
         if (!empty($data)) {
             $this->IDRegItem = (int)$data['IDRegItem'] ?? 0;
             $this->CreationDate = $data['CreationDate'] ?? date('Y-m-d H:i:s');
             $this->CreatedUser = $data['CreatedUser'];
             $this->CurrentUser = $data['CurrentUser'];
-            $this->ChangeDate = $data['ChangeDate'] ?? date('Y-m-d H:i:s');
+            $this->СhangeDate = $data['СhangeDate'] ?? date('Y-m-d H:i:s');
         }
     }
 
@@ -36,6 +35,16 @@ class RegistrationInventoryItem extends BaseEntity
         $this->IDRegItem = $id;
     }
 
+    public function getIdFieldName(): string
+    {
+        return 'IDRegItem';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
     /**
      * Получение сохраняемых свойств
      * @return string[]
@@ -44,10 +53,10 @@ class RegistrationInventoryItem extends BaseEntity
     {
         return [
             'IDRegItem',
-          /*  'CreationDate',*/
+            'CreationDate',
             'CreatedUser',
             'CurrentUser',
-           /* 'ChangeDate'*/
+            'СhangeDate'
         ];
     }
 
@@ -59,8 +68,8 @@ class RegistrationInventoryItem extends BaseEntity
     public function getAutoDateFields(): array
     {
         return [
-          /*  'CreationDate',*/
-           /* 'ChangeDate'*/
+            'CreationDate',
+            'СhangeDate'
         ];
     }
 }

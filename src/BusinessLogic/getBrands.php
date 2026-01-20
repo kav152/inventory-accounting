@@ -20,10 +20,12 @@ try {
 
     $result = [];
 
+   // error_log(print_r($brands, true));
+
     foreach ($brands as $value) {
         $result[] = [
-            'ID' => $value->getId(),
-            'Name' => $value->getName()
+            'ID' => $value->BrandTMC->getId(),
+            'Name' => $value->BrandTMC->NameBrand
         ];
     }
     echo json_encode($result, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);

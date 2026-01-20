@@ -38,4 +38,13 @@ class DatabaseFactory
 
         return new Database(self::$config['connections'][$connectionName]);
     }
+
+    public static function create_test(string $connectionName): Database
+    {
+        if (!isset(self::$config['connections'][$connectionName])) {
+            throw new RuntimeException("Connection '$connectionName' не найден в конфигурации.");
+        }
+
+        return new Database(self::$config['connections'][$connectionName]);
+    }
 }

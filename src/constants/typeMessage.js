@@ -1,4 +1,4 @@
-class TypeMessage {
+export class TypeMessage {
     static error = 0;
     static success = 1;
     static notification = 2;
@@ -49,3 +49,5 @@ class TypeMessage {
 
 
 }
+
+window.TypeMessage = TypeMessage;

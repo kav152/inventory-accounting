@@ -11,6 +11,10 @@ require_once __DIR__ . '/../Repositories/GenericRepository.php';
 require_once __DIR__ . '/../Repositories/UserRepository.php';
 require_once __DIR__ . '/../BusinessLogic/CsvImporter.php';
 require_once __DIR__ . '/../Database/DatabaseFactory.php';
+require_once __DIR__ . '/../BusinessLogic/AccessLogger.php';
+
+$logAccess = new AccessLogger();
+$logAccess->logPageAccess('login.php');
 
 DatabaseFactory::setConfig();
 $container = new Container();
@@ -33,6 +37,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
 
     if ($currentUser && $currentUser->isActive) {
         if ($currentUser->verifyPassword($_POST["password"])) {
+            // Успешный вход            
+            $logAccess->logLoginAttempt($currentUser->FIO, true, 'LOGIN_SUCCESS');
+
             session_start();
             session_regenerate_id();
             $_SESSION["IDUser"] = $currentUser->IDUser;
@@ -43,16 +50,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
             $router->dispatch("/home");
             exit;
         } else {
-
+            // Неверный пароль
+            $logAccess->logLoginAttempt($currentUser->FIO, false, 'LOGIN_FAILED_WRONG_PASSWORD');
             $errorMessage = "Неверный пароль";
         }
     } else {
+        $logAccess->logLoginAttempt($currentUser->FIO, false, 'User_Not_Found_Inactive');
         $errorMessage = "Пользователь не найден или деактивирован";
     }
 }
 
 // Выход из системы
 if (isset($_GET['logout'])) {
+
+    $logAccess->logLogout();
+    $logAccess->log('USER_LOGOUT', [
+        'user_id' => $_SESSION['IDUser'] ?? null,
+        'user_name' => $_SESSION['FIO'] ?? null
+    ]);
     session_unset();
     session_destroy();
     header("Location: index.php");
@@ -70,8 +85,8 @@ if (isset($_GET['logout'])) {
     <title>Система учёта ТМЦ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <script src="/js/modals/setting.js"></script>
-    <script src="/src/constants/typeMessage.js"></script>
+    <script type="module" src="/js/modals/setting.js"></script>
+    <script type="module" src="/src/constants/typeMessage.js"></script>
 
     <style>
         /* Сохраняем только стили для формы входа */
@@ -207,7 +222,7 @@ if (isset($_GET['logout'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Закрытие модального окна при клике вне его области
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const modal = document.getElementById('adminPanelModal');
             if (modal && event.target === modal) {
                 const modalInstance = bootstrap.Modal.getInstance(modal);

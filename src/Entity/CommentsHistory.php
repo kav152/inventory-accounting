@@ -29,12 +29,28 @@ class CommentsHistory extends BaseEntity
         $this->ValueComment = $valueComment;
     }
 
-    public function getId(): ?int
+    public function getId():int
     {
         return $this->IDComment ?? 0;
     }
-    public function setId(int $id): void {
+    public function setId(int $id):void
+    {
         $this->IDComment = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'IDComment';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return []; // НАСТРОИТЬ
     }
 
     /**

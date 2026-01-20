@@ -1,4 +1,4 @@
-class StatusItem {
+export class StatusItem {
     static CreateItems = -1;
     static NotDistributed = 0;
     static Released = 1;
@@ -55,3 +55,4 @@ class StatusItem {
 }
 
 window.StatusItem = StatusItem;
+

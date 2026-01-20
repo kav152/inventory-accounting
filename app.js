@@ -24,7 +24,7 @@
       ul.previousElementSibling?.classList.remove("rotate");
     });
   }
-
+  
   async function handleAction(event) {
     const id = event.currentTarget.dataset.id;
     event.preventDefault();
@@ -191,6 +191,7 @@
     }
   }
 
+
   // Функция закрытия
   function closeModal() {
     document.getElementById("rightModal").style.display = "none";
@@ -303,7 +304,7 @@
   window.handleAction = handleAction;
   window.closeModal = closeModal;
   window.saveModal = saveModal;
-  window.autoResize = autoResize;
+  window.autoResize = autoResize;  
 
   window.StatusHelper = {
     getDescription: (status) => {
@@ -333,3 +334,4 @@
     },
   };
 })();
+

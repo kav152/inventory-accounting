@@ -50,6 +50,45 @@ switch ($typeProperty) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--script type="text/javascript" src="\..\..\app_modal.js" defer></script-->
     <title>propertyTMC</title>
+
+    <style>
+        .property-management {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-group-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+        }
+
+        .list-group {
+            margin-bottom: 0;
+        }
+
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .list-group-item:first-child {
+            border-top: none;
+        }
+
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        .input-group {
+            margin-bottom: 0;
+        }
+    </style>
 </head>
 
 <body>
@@ -57,92 +96,38 @@ switch ($typeProperty) {
         <input type="hidden" id="typeProperty" value="<?= $typeProperty ?? '' ?>">
         <input type="hidden" id="propertyId" value="<?= $propertyId ?? 0 ?>">
 
-        <h4 class="mb-4">Добавить <?= ucfirst($typeName) ?></h4>
+        <h4 class="mb-3">Добавить <?= ucfirst($typeName) ?></h4>
 
-        <div class="input-group">
+        <div class="input-group mb-3">
             <input type="text" id="propertyName" class="form-control" placeholder="Введите <?= $typeName ?>">
-            <button class="btn btn-primary py-2" onclick="saveProperty()">Добавить</button>
+            <button type="button" class="btn btn-primary" onclick="event.stopPropagation(); saveProperty()">Добавить</button>
         </div>
 
-        <div class="list-group">
-            <?php foreach ($items as $item): ?>
-                <div class="list-group-item"><?= htmlspecialchars($item->getName()) ?></div>
-            <?php endforeach; ?>
+        <div class="list-group-container">
+            <div class="list-group">
+                <?php foreach ($items as $item): ?>
+                    <div class="list-group-item"><?= htmlspecialchars($item->getName()) ?></div>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
     <script>
 
-        async function saveProperty() {
-            const propertyContainer = document.getElementById('propertyContainer');
-            if (!propertyContainer) return;
-            const input = propertyContainer.querySelector('#propertyName');
-            const panel = propertyContainer.querySelector('.property-management');
 
-            if (!input || !panel) return;
 
-            const valueProp = input.value.trim();
-            if (!valueProp) {
-                alert('Введите название свойства');
-                return;
+        // Автоматическая подстройка высоты контейнера при загрузке
+        document.addEventListener('DOMContentLoaded', function () {
+            const listGroupContainer = document.querySelector('.list-group-container');
+            if (listGroupContainer) {
+                // Устанавливаем максимальную высоту в зависимости от доступного пространства
+                const availableHeight = window.innerHeight * 0.4; // 40% от высоты viewport
+                listGroupContainer.style.maxHeight = Math.min(300, availableHeight) + 'px';
             }
-
-            const type = document.getElementById('typeProperty').value.toUpperCase();
-            const propertyId = document.getElementById('propertyId').value;
-
-            const formData = new FormData();
-            formData.append('typeProperty', PropertyTMC[type]);
-            formData.append('valueProp', valueProp);
-            formData.append('property_id', propertyId);
-
-            const response = await fetch('/src/BusinessLogic/addProperty.php', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            console.log(data);
-
-            data.forEach(element => {
-                console.log(`Тип элемента: ${element.Name}, ID: ${element.ID}`)
-                console.log(`typeProperty: ${PropertyTMC[type]}`)
-                addPropertySelect(PropertyTMC[type], element);
-            });
-        }
-
-        function addPropertySelect(typeProperty, newItem) {
-            // Находим соответствующий select на странице
-            const selectElement = document.getElementById(PropertySelectID[typeProperty]);
-
-            if (!selectElement) {
-                console.error('Элемент не найден для типа: ', typeProperty);
-                return;
-            }
-
-            // Создаем новый option
-            const newOption = document.createElement('option');
-            newOption.value = newItem.ID; // Используйте актуальное свойство с ID
-            newOption.textContent = newItem.Name; // Используйте актуальное свойство с именем
-            newOption.selected = true;
-
-            // Добавляем новую опцию в select
-            selectElement.appendChild(newOption);
-
-            // Обновляем данные в объекте cardItemData, если это необходимо
-            switch (typeProperty) {
-                case PropertyTMC.BRAND:
-                    window.cardItemData.brandId = newItem.ID;
-                    break;
-                case PropertyTMC.MODEL:
-                    window.cardItemData.modelId = newItem.ID;
-                    break;
-            }
-
-            //console.log(`Добавлен новый элемент в ${PropertySelectID[typeProperty]}:`, newItem);
-        }
-
-        function closeProperty() {
-
-        }
+        });
     </script>
+    <script type="module" src="/js/modals/propertyItemModal.js"></script>
+
+
 </body>
 
 </html>

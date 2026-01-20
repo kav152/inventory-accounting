@@ -24,21 +24,32 @@ $controller = new ItemRepairController();
 $success = false;
 
 $response = [
-            'success' => $success,
-            'message' => '',            
-        ];
+    'success' => $success,
+    'message' => '',
+];
 
 try {
     $success = $controller->RepairInBasket($ID_TMC);
-    error_log("RepairInBasket выполнено");
-    error_log($success);
+    //error_log("RepairInBasket выполнено");
+    //error_log($success);
+    // Пересчитываем общую сумму
+    $basketItems = $controller->getBasketItems();
+    $totalRepairCost_Basket = 0;
+    $totalCount = 0;
+    foreach ($basketItems as $item) {
+        $totalRepairCost_Basket += $item->RepairCost;
+        $totalCount++;
+    }
+
+
     $response = [
-            'success' => $success,
-            'message' => `ТМЦ {$NameTMC} c идификатором {$ID_TMC} пермещено в корзину`            
-        ];
-}
-catch(Exception $e)
-{
+        'success' => $success,
+        'message' => `ТМЦ {$NameTMC} c идификатором {$ID_TMC} пермещено в корзину`,
+        'totalCount' => $totalCount,
+        'totalCost' => $totalRepairCost_Basket,
+        'formattedTotalCost' => number_format($totalRepairCost_Basket, 2, ',', ' ')
+    ];
+} catch (Exception $e) {
     $response['message'] = $e->getMessage();
 }
 

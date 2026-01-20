@@ -7,20 +7,18 @@ class InventoryItem extends BaseEntity
     public string $NameTMC;
     public int $Status;
     public $SerialNumber;
-    public int $IDTypesTMC;
-    public int $IDBrandTMC;
-    public int $IDModel;
-    public int $IDLocation;
-    public ModelTMC $ModelTMC;
-    public BrandTMC $BrandTMC;
+    public ?int $IDTypesTMC;
+    public ?int $IDBrandTMC;
+    public ?int $IDModel;
+    public ?int $IDLocation;
+    public ?ModelTMC $ModelTMC = null;
+    public ?BrandTMC $BrandTMC = null;
     public ?Location $Location = null;
-    public User $User;
-    public string $ValueStatus;
-    public ?int $CurrentUser;
+    public ?User $User = null;
+    public ?RegistrationInventoryItem $RegistrationInventoryItem = null;
 
     public function __construct(array $data = [])
     {
-        $this->setIdFieldName('ID_TMC');
         if (!empty($data))
         {
             $this->ID_TMC = isset($data['ID_TMC']) ? (int)$data['ID_TMC'] : 0;
@@ -30,8 +28,7 @@ class InventoryItem extends BaseEntity
             $this->IDTypesTMC = (int)($data['IDTypesTMC'] ?? 0);
             $this->IDBrandTMC = (int)($data['IDBrandTMC'] ?? 0);
             $this->IDModel = (int)($data['IDModel'] ?? 0);
-            $this->IDLocation = (int)($data['IDLocation'] ?? 0);
-            $this->CurrentUser = isset($data['CurrentUser']) ? (int)$data['CurrentUser'] : null;                       
+            $this->IDLocation = (int)($data['IDLocation'] ?? 0);            
         }        
     }
 
@@ -44,12 +41,26 @@ class InventoryItem extends BaseEntity
         $this->Status = -1;
     }
 
-    public function getId(): ?int {
+    public function getId(): int {
         return $this->ID_TMC ?? 0;
     }
 
     public function setId(int $id): void {
         $this->ID_TMC = $id;
+    }
+     public function getIdFieldName(): string
+    {
+        return 'ID_TMC';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return [];
     }
 
     /**

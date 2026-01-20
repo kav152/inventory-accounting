@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__ . '/IProperty.php';
 require_once __DIR__ . '/../Repositories/BaseEntity.php';
-class LinkBrandToModel extends BaseEntity implements IProperty
+class LinkBrandToModel extends BaseEntity
 {
     public int $IDModel;
     public int $IDBrandTMC;
@@ -16,20 +15,35 @@ class LinkBrandToModel extends BaseEntity implements IProperty
         }
     }
 
-    public function getName(): string { return $this->ModelTMC->NameModel; }
-    public function getId(): int { return $this->IDModel ?? 0; }
+    public function getId():int
+    {
+        return $this->IDModel;
+    }
+    public function setId(int $id):void
+    {
+        $this->IDModel = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'IDModel';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return []; // НАСТРОИТЬ
+    }
 
     public function getPersistableProperties(): array
     {
         return [
-            'IDModel',
-            'IDBrandTMC'
+            'IDBrandTMC',
+            'IDModel'            
         ];
     }
-
-    public function setId(int $id): void
-    {  
-              
-    }
-    
 }

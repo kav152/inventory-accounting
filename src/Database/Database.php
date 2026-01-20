@@ -1,8 +1,10 @@
 <?php
 class Database
 {
-    public function __construct(private array $config)
+    public PDO $pdo;
+    public function __construct(private array $config) 
     {
+
     }
 
     public function getConnection(): PDO
@@ -27,7 +29,38 @@ class Database
             default:
                 throw new InvalidArgumentException("Неподдерживаемый драйвер: $driver");
         }
+        
         return new PDO($dsn, $this->config['username'], $this->config['password'], $options);
+    }
+
+    /**
+     * В классе Database
+     * @param string $sql
+     * @param array $params
+     */
+    /*public function execute(string $sql, array $params = [])
+    {
+        $this->pdo = $this->getConnection();
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt;
+    }*/
+
+    /**
+     * Или если у вас уже есть метод query, сделайте его универсальным:
+     * @param string $sql
+     * @param array $params
+     */
+    public function query(string $sql, array $params = [])
+    {
+        $this->pdo = $this->getConnection();
+        if (empty($params)) {
+            return $this->pdo->query($sql);
+        } else {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        }
     }
 
 

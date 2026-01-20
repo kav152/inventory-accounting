@@ -9,6 +9,7 @@ require_once __DIR__ . '/../ModalLoader/DistributeModalLoader.php';
 require_once __DIR__ . '/../ModalLoader/SendToServiceModalLoader.php';
 require_once __DIR__ . '/../ModalLoader/CardItemLoader.php';
 require_once __DIR__ . '/../ModalLoader/EditWriteOffModalLoader.php';
+require_once __DIR__ . '/../ModalLoader/UserModalLoader.php';
 require_once __DIR__ . '/../Modal/message_modal.php';
 
 
@@ -19,10 +20,11 @@ $modalTypes = [
     'confirm' => ConfirmModalLoader::class,
     'confirmRepair' => ConfirmRepairModalLoader::class,
     'sendToService' => SendToServiceModalLoader::class,
-    'create' => CardItemLoader::class,
+    'сardItemLoader' => CardItemLoader::class,
     'create_analog' => CardItemLoader::class,
     'edit' => CardItemLoader::class,
-    'edit_write_off' => EditWriteOffModalLoader::class
+    'edit_write_off' => EditWriteOffModalLoader::class,
+    'userModal' => UserModalLoader::class
 ];
 
 if (isset($_GET['type'])) {

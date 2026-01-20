@@ -12,7 +12,6 @@ class LinkBrigadesToItem extends BaseEntity
 
     public function __construct(array $data = null, int $ID_TMC =null, int $IDBrigade = null)
     {
-        $this->setIdFieldName('ID_TMC');
         // Конструктор для массива данных
         if (is_array($data)) {
             $this->initializeFromArray($data);
@@ -37,8 +36,28 @@ class LinkBrigadesToItem extends BaseEntity
         $this->ID_LBT = 0;
     }
 
-    public function getId(): ?int {
-        return $this->ID_LBT ?? 0;
+    public function getId():int
+    {
+        return $this->ID_LBT;
+    }
+    public function setId(int $id):void
+    {
+        $this->ID_LBT = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'ID_LBT';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return ['']; // НАСТРОИТЬ
     }
 
 

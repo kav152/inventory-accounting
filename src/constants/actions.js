@@ -1,9 +1,11 @@
-const Action = Object.freeze({
+export const Action = Object.freeze({
   CREATE: "create",
   CREATE_ANALOG: "create_analog",
+  UPDATE: "update",
   EDIT: "edit",
   DISTRIBUTE: "distribute",
   WORK_TMC: "work",
+  DELETE: "delete",
 
 
   RETURN_TMC: "returnTMC",
@@ -11,6 +13,8 @@ const Action = Object.freeze({
   RETURN_SERVICE: "returnService",
   edit_write_off: "edit_write_off"
 });
+
+window.Action = Action;
 
 const ActionUrls = {
   [Action.CREATE]: "cardItem_modal.php",
@@ -24,3 +28,5 @@ const ActionUrls = {
   [Action.SEND_SERVICE]: "action_modal.php",
   [Action.RETURN_SERVICE]: "action_modal.php",
 };
+
+window.ActionUrls = ActionUrls;

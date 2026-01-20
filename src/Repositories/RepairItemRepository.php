@@ -14,7 +14,7 @@ class RepairItemRepository extends GenericRepository
             'RegistrationInventoryItem',
             $registrationRepository,
             'ID_TMC', // Поле в RepairItem
-            'IDRegItem' // Поле в RegistrationInventoryItem
+            'IDRegItem' // Поле в RegistrationInventoryItem (должно совпадать с ID_TMC)
         );
     }
 }

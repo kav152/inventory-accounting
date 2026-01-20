@@ -11,7 +11,6 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
 DatabaseFactory::setConfig();
 $controller = new ItemController();
 $brigades = $controller->getBrigades($_SESSION["IDUser"]);
-
 ?>
 
 <div class="modal fade" id="workModal" tabindex="-1" aria-hidden="true">

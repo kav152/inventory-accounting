@@ -172,7 +172,7 @@
         }
     </style>
 
-    
+
     <div class="modal fade" id="atWorkModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -183,7 +183,8 @@
                 <div class="modal-body">
                     <div class="brigade-actions mb-3">
                         <button class="btn btn-primary" id="btnReturnTMC">Вернуть ТМЦ</button>
-                        <button class="btn btn-warning" id="btnSendToService" onclick="sendToService('row-container1', ServiceStatus.sendService)">Отправить в
+                        <button class="btn btn-warning" id="btnSendToService"
+                            onclick="sendToService('row-container1', ServiceStatus.sendService)">Отправить в
                             сервис</button>
                     </div>
 
@@ -218,7 +219,7 @@
                                             <tbody>
                                                 <?php foreach ($group['items'] as $item): ?>
                                                     <tr class="row-container1" data-id="<?= $item->ID_TMC ?>"
-                                                        data-brigade="<?= $group['id'] ?>">
+                                                        data-brigade="<?= $group['id'] ?>" data-status="<?= $item->Status ?>">
                                                         <td><?= $item->ID_TMC ?></td>
                                                         <td><?= $item->NameTMC ?></td>
                                                         <td><?= $item->SerialNumber ?></td>
@@ -241,9 +242,9 @@
     include __DIR__ . '/message_modal.php';
     ?>
 
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {  
+        document.addEventListener('DOMContentLoaded', function () {
             let lastSelectedRow = null;
             const modal = document.getElementById('atWorkModal');
 
@@ -319,157 +320,157 @@
                                 window.updateInventoryStatus(tmcIds, StatusItem.Released); // 0 = NotDistributed
                             }
 
-                            alert(`Возвращено ТМЦ: ${selectedRows.length}`);
+                            showNotification(TypeMessage.notification, `ТМЦ возвращено на склад в кол-ве: ${selectedRows.length}`);
                         } else {
-                            alert('Ошибка: ' + data.message);
+                            showNotification(TypeMessage.error, 'Ошибка: ' + data.message);
                         }
                     });
             });
 
             // Функция обновления счетчиков
-          /*  function updateCounters(removedCount) {
-                // Обновляем общий счетчик в уведомлении
-                const atWorkBadge = document.getElementById('atWorkBadge');
-                const atWorkNotification = document.getElementById('atWorkNotification');
+            /*  function updateCounters(removedCount) {
+                  // Обновляем общий счетчик в уведомлении
+                  const atWorkBadge = document.getElementById('atWorkBadge');
+                  const atWorkNotification = document.getElementById('atWorkNotification');
 
-                if (atWorkBadge && atWorkNotification) {
-                    const currentCount = parseInt(atWorkBadge.textContent);
-                    const newCount = currentCount - removedCount;
+                  if (atWorkBadge && atWorkNotification) {
+                      const currentCount = parseInt(atWorkBadge.textContent);
+                      const newCount = currentCount - removedCount;
 
-                    atWorkBadge.textContent = newCount;
-                    atWorkNotification.textContent = `Выдано в работу ${newCount} ТМЦ`;
+                      atWorkBadge.textContent = newCount;
+                      atWorkNotification.textContent = `Выдано в работу ${newCount} ТМЦ`;
 
-                    if (newCount <= 0) {
-                        atWorkBadge.style.display = 'none';
-                        atWorkNotification.style.display = 'none';
-                    }
-                }
+                      if (newCount <= 0) {
+                          atWorkBadge.style.display = 'none';
+                          atWorkNotification.style.display = 'none';
+                      }
+                  }
 
-                // Обновляем счетчики в группах
-                const groups = modal.querySelectorAll('.brigade-group');
-                groups.forEach(group => {
-                    const groupId = group.getAttribute('data-group-id');
-                    const visibleRows = group.querySelectorAll('.row-container1:not([style*="display: none"])');
-                    const countEl = group.querySelector('.items-count');
+                  // Обновляем счетчики в группах
+                  const groups = modal.querySelectorAll('.brigade-group');
+                  groups.forEach(group => {
+                      const groupId = group.getAttribute('data-group-id');
+                      const visibleRows = group.querySelectorAll('.row-container1:not([style*="display: none"])');
+                      const countEl = group.querySelector('.items-count');
 
-                    if (countEl) {
-                        countEl.textContent = visibleRows.length;
+                      if (countEl) {
+                          countEl.textContent = visibleRows.length;
 
-                        // Скрываем группу если нет видимых строк
-                        if (visibleRows.length === 0) {
-                            group.style.display = 'none';
-                        }
-                    }
-                });
-            }*/
+                          // Скрываем группу если нет видимых строк
+                          if (visibleRows.length === 0) {
+                              group.style.display = 'none';
+                          }
+                      }
+                  });
+              }*/
 
             // Обработчик кнопки "Отправить в сервис"
             // document.getElementById('btnSendToService').addEventListener('click', function()
-           /* document.getElementById('btnSendToService').addEventListener('click', function () {
-                const selectedRows = modal.querySelectorAll('.row-container1.selected');
-                if (selectedRows.length === 0) {
-                    alert('Выберите ТМЦ для отправки в сервис');
-                    return;
-                }
+            /* document.getElementById('btnSendToService').addEventListener('click', function () {
+                 const selectedRows = modal.querySelectorAll('.row-container1.selected');
+                 if (selectedRows.length === 0) {
+                     alert('Выберите ТМЦ для отправки в сервис');
+                     return;
+                 }
 
-                // Очищаем контейнер
-                const container = document.getElementById('serviceItemsContainer');
-                container.innerHTML = '';
+                 // Очищаем контейнер
+                 const container = document.getElementById('serviceItemsContainer');
+                 container.innerHTML = '';
 
-                // Заполняем контейнер выбранными ТМЦ
-                selectedRows.forEach(row => {
-                    const id = row.getAttribute('data-id');
-                    const name = row.cells[1].textContent; // Наименование из второго столбца
+                 // Заполняем контейнер выбранными ТМЦ
+                 selectedRows.forEach(row => {
+                     const id = row.getAttribute('data-id');
+                     const name = row.cells[1].textContent; // Наименование из второго столбца
 
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                                <td>${id}</td>
-                                <td>${name}</td>
-                                <td>
-                                    <textarea class="repair-reason-input" 
-                                            data-id="${id}" 
-                                            required></textarea>
-                                </td>
-                            `;
-                    container.appendChild(tr);
-                });
+                     const tr = document.createElement('tr');
+                     tr.innerHTML = `
+                             <td>${id}</td>
+                             <td>${name}</td>
+                             <td>
+                                 <textarea class="repair-reason-input" 
+                                         data-id="${id}" 
+                                         required></textarea>
+                             </td>
+                         `;
+                     container.appendChild(tr);
+                 });
 
-                // Показываем модальное окно отправки в сервис
-                const serviceModal = new bootstrap.Modal(document.getElementById('serviceModal'));
-                serviceModal.show();
-            });*/
+                 // Показываем модальное окно отправки в сервис
+                 const serviceModal = new bootstrap.Modal(document.getElementById('serviceModal'));
+                 serviceModal.show();
+             });*/
 
 
             // Обработчик кнопки "Отправить" в сервисном окне
-           /* document.getElementById('btnSubmitService').addEventListener('click', function () {
-                const inputs = document.querySelectorAll('#serviceItemsContainer .repair-reason-input');
-                let allFilled = true;
-                const items = [];
+            /* document.getElementById('btnSubmitService').addEventListener('click', function () {
+                 const inputs = document.querySelectorAll('#serviceItemsContainer .repair-reason-input');
+                 let allFilled = true;
+                 const items = [];
 
-                inputs.forEach(input => {
-                    if (!input.value.trim()) {
-                        input.classList.add('error');
-                        allFilled = false;
-                    } else {
-                        input.classList.remove('error');
-                        items.push({
-                            id: input.getAttribute('data-id'),
-                            reason: input.value.trim()
-                        });
-                    }
-                });
+                 inputs.forEach(input => {
+                     if (!input.value.trim()) {
+                         input.classList.add('error');
+                         allFilled = false;
+                     } else {
+                         input.classList.remove('error');
+                         items.push({
+                             id: input.getAttribute('data-id'),
+                             reason: input.value.trim()
+                         });
+                     }
+                 });
 
-                if (!allFilled) {
-                    alert('Заполните причины ремонта для всех выбранных ТМЦ');
-                    return;
-                }
-                let statusService = document.getElementById("serviceModal").getAttribute("data-status");
-                // Отправляем данные на сервер
-                fetch('/src/BusinessLogic/ActionsTMC/processSendToService.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        items: items,
-                        statusService: statusService                       
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Закрываем модальное окно отправки в сервис
-                            const serviceModal = bootstrap.Modal.getInstance(document.getElementById('serviceModal'));
-                            serviceModal.hide();
+                 if (!allFilled) {
+                     alert('Заполните причины ремонта для всех выбранных ТМЦ');
+                     return;
+                 }
+                 let statusService = document.getElementById("serviceModal").getAttribute("data-status");
+                 // Отправляем данные на сервер
+                 fetch('/src/BusinessLogic/ActionsTMC/processSendToService.php', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify({
+                         items: items,
+                         statusService: statusService                       
+                     })
+                 })
+                     .then(response => response.json())
+                     .then(data => {
+                         if (data.success) {
+                             // Закрываем модальное окно отправки в сервис
+                             const serviceModal = bootstrap.Modal.getInstance(document.getElementById('serviceModal'));
+                             serviceModal.hide();
 
-                            const selectedRows = modal.querySelectorAll('.row-container1.selected');
-                            //console.log(selectedRows);
+                             const selectedRows = modal.querySelectorAll('.row-container1.selected');
+                             //console.log(selectedRows);
 
-                            // Скрываем отправленные строки в основном модальном окне
-                            selectedRows.forEach(row => {
-                                row.style.display = 'none';
-                            });
+                             // Скрываем отправленные строки в основном модальном окне
+                             selectedRows.forEach(row => {
+                                 row.style.display = 'none';
+                             });
 
-                            // Обновляем счетчики
-                            updateCounters(selectedRows.length);
+                             // Обновляем счетчики
+                             updateCounters(selectedRows.length);
 
-                            // Обновляем статусы в главной таблице
-                            if (typeof window.updateInventoryStatus === 'function') {
-                                const tmcIds = items.map(item => item.id);
-                                if(statusService == ServiceStatus.sendService){
-                                    window.updateInventoryStatus(tmcIds, StatusItem.ConfirmRepairTMC);                                    
-                                }                                    
+                             // Обновляем статусы в главной таблице
+                             if (typeof window.updateInventoryStatus === 'function') {
+                                 const tmcIds = items.map(item => item.id);
+                                 if(statusService == ServiceStatus.sendService){
+                                     window.updateInventoryStatus(tmcIds, StatusItem.ConfirmRepairTMC);                                    
+                                 }                                    
 
-                                if(statusService == ServiceStatus.returnService)
-                                    window.updateInventoryStatus(tmcIds, StatusItem.Released);
-                            }
+                                 if(statusService == ServiceStatus.returnService)
+                                     window.updateInventoryStatus(tmcIds, StatusItem.Released);
+                             }
 
-                            //alert(`Отправлено в сервис: ${selectedRows.length} ТМЦ`);
-                        } else {
-                            alert('Ошибка: ' + data.message);
-                        }
-                    });
-            });*/
+                             //alert(`Отправлено в сервис: ${selectedRows.length} ТМЦ`);
+                         } else {
+                             alert('Ошибка: ' + data.message);
+                         }
+                     });
+             });*/
         });
     </script>
 <?php endif; ?>

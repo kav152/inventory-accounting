@@ -1,9 +1,7 @@
 <?php
-
-require_once __DIR__ . '/IProperty.php';
 require_once __DIR__.'/../Repositories/BaseEntity.php';
 
-class ModelTMC extends BaseEntity implements IProperty
+class ModelTMC extends BaseEntity
 {
     public int $IDModel;
     public string $NameModel;
@@ -11,22 +9,42 @@ class ModelTMC extends BaseEntity implements IProperty
     public function __construct(array $data = [])
     {
         if (!empty($data)) {
-            $this->IDModel = (int)$data['IDModel'];
+            $this->IDModel = (int)($data['IDModel'] ?? 0);
             $this->NameModel = $data['NameModel'];
         }
     }
 
-    public function getName(): string { return $this->NameModel; }
-    public function getId(): int { return $this->IDModel ?? 0; }
-
-    // Реализация абстрактного метода BaseEntity
-    public function getPersistableProperties(): array {
-        return [
-            'NameModel'
-        ];
+    public function getId():int
+    {
+        return $this->IDModel;
+    }
+    public function setId(int $id):void
+    {
+        $this->IDModel = $id;
     }
 
-    public function setId(int $id): void {
-        $this->IDModel = $id;
+    public function getIdFieldName(): string
+    {
+        return 'IDModel';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return [];
+    }
+    /**
+     * Получение сохраняемых свойств
+     * @return string[]
+     */
+    public function getPersistableProperties(): array
+    {
+        return [
+            'NameModel',
+        ];
     }
 }

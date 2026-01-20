@@ -25,13 +25,21 @@ class InventoryItemRepository extends GenericRepository
             'IDBrandTMC',
             'IDBrandTMC'
         );
-/*
-        $registrationInventoryItemRepository = new RegistrationInventoryItemRepository($database);
+
+        $modelTMCRepository = new ModelTMCRepository($database);
+        $this->addRelationship(
+            'ModelTMC',
+            $modelTMCRepository,
+            'IDModel',
+            'IDModel'
+        );
+
+      /*  $registrationInventoryItemRepository = new RegistrationInventoryItemRepository($database);
         $this->addRelationship(
             'RegistrationInventoryItem',
             $registrationInventoryItemRepository,
-            'IDRegItem',
-            'ID_TMC'
+            'ID_TMC',
+            'IDRegItem'
         );*/
         $userRepository =new UserRepository($database);
         $this->addRelationship(

@@ -18,7 +18,6 @@ class RepairItem extends BaseEntity
 
     public function __construct(array $data = [])
     {
-        $this->setIdFieldName('ID_Repair');
         if (!empty($data)) {
             $this->ID_Repair = isset($data['ID_Repair']) ? (int) $data['ID_Repair'] : 0;
             $this->ID_TMC = isset($data['ID_TMC']) ? (int) $data['ID_TMC'] : 0;
@@ -27,14 +26,18 @@ class RepairItem extends BaseEntity
             $this->InvoiceNumber = $data['InvoiceNumber'] ?? '';
             $this->UPD = $data['UPD'] ?? '';
             $this->RepairDescription = $data['RepairDescription'] ?? '';
-            $this->DateToService = $data['DateToService'] ?? '';
-            $this->DateReturnService = $data['DateReturnService'] ?? '';
-            $this->inBasket = isset($data['inBasket']) ? ($data['inBasket'] != 0) : false;
+            $this->DateToService = isset($data['DateToService']) && !empty($data['DateToService'])
+                ? $this->formatDateForSQL($data['DateToService'])
+                : $this->formatDateForSQL(date("Y-m-d H:i:s"));
 
+            $this->DateReturnService = isset($data['DateReturnService']) && !empty($data['DateReturnService'])
+                ? $this->formatDateForSQL($data['DateReturnService'])
+                : null;
+            $this->inBasket = isset($data['inBasket']) ? ($data['inBasket'] != 0) : false;
         }
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->ID_Repair ?? 0;
     }
@@ -42,6 +45,16 @@ class RepairItem extends BaseEntity
     public function setId(int $id): void
     {
         $this->ID_Repair = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'ID_Repair';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
     }
 
     public function getPersistableProperties(): array
@@ -70,5 +83,20 @@ class RepairItem extends BaseEntity
             'DateToService',
             /*'DateReturnService'*/
         ];
+    }
+
+    private function formatDateForSQL($dateString): ?string
+    {
+        if (empty($dateString)) {
+            return null;
+        }
+
+        try {
+            $date = new DateTime($dateString);
+            return $date->format('Y-m-d\TH:i:s'); // Формат для SQL Server
+        } catch (Exception $e) {
+            // Если не удалось преобразовать, возвращаем null
+            return null;
+        }
     }
 }

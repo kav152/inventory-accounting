@@ -14,50 +14,79 @@ try {
     DatabaseFactory::setConfig();
     $logger = new Logger(__DIR__ . '/../storage/logs/addProperty.log');
 
-    $type = $_POST['typeProperty'] ?? '';
-    $valueProp = $_POST['valueProp'] ?? '';
-    $propertyId = (int)($_POST['property_id'] ?? 0);
+    $dataJson = json_decode(file_get_contents('php://input'), true);
+    if (!$dataJson) {
+        error_log('Необнаружены данные для выполнения дейтсвия для сущости: ');
+        throw new Exception('Необнаружены данные для выполнения дейтсвия для сущости: ');
+    }
 
-    $logger->log('DATA', 'Получение данных из _POST',
-    ['typeProperty' => $type,
-              'valueProp' => $valueProp,
-              'propertyId' => $propertyId]);
+    $type = $dataJson['typeProperty'] ?? '';
+    $valueProp = $dataJson['valueProp'] ?? '';
+    $propertyId = (int) ($dataJson['property_id'] ?? 0);
 
 
-    if (!$valueProp) throw new InvalidArgumentException('Не указано название свойства');
-    if (!$propertyId) throw new InvalidArgumentException('Не указан родительский ID');
+
+ /*   $logger->log(
+        'DATA',
+        'Получение данных из _POST',
+        [
+            'typeProperty' => $type,
+            'valueProp' => $valueProp,
+            'propertyId' => $propertyId
+        ]
+    );*/
 
     $controller = new PropertyController();
     $property = [];
 
+
     switch ($type) {
         case 'type_tmc':
+
+            $result = [
+                'id' => 11,
+                'value' => "type_tmc_00"
+            ];
             break;
         case 'brand':
-            $property = $controller->addBrand($valueProp, $propertyId);
+            // $property = $controller->addBrand($valueProp, $propertyId);
+            $result = [
+                'id' => 11,
+                'value' => "brand_111"
+            ];
             break;
         case 'model':
-            $property = $controller->addModel($valueProp, $propertyId);
+            // $property = $controller->addModel($valueProp, $propertyId);
+            $result = [
+                'id' => 11,
+                'value' => "model_222"
+            ];
             break;
         default:
             throw new InvalidArgumentException('Неизвестный тип свойства /addProperty.php');
     }
 
 
-    $logger->log('addProperty', 'Возвращение данных',
-    ['data' => $property]);
+    /* $logger->log('addProperty', 'Возвращение данных',
+     ['data' => $property]);*/
 
-    $result[] = [ 
-            'ID' => $property->getId(),
-            'Name' => $property->getName()
-        ];   
+    /*   $result[] = [ 
+               'ID' => $property->getId(),
+               'Name' => $property->getName()
+           ];  */
 
-    $logger->log('addProperty', 'Возвращение данных',
-    ['data' => $result]);
+    $response = [
+        'success' => true,
+        'message' => 'Данные успешно созданы',
+        'resultEntity' => $result,
+        'fields' => '',
+        'statusCUD' => 'create'
+    ];
 
+    /* $logger->log('addProperty', 'Возвращение данных',
+     ['data' => $result]);*/
 
-
-    echo json_encode($result);
+    echo json_encode($response);
 
 } catch (Exception $e) {
     http_response_code(400);

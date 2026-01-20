@@ -12,26 +12,42 @@ class Location extends BaseEntity
     public $isMainWarehouse;
     public $FormsJointStockCompanies;
     public bool $IsRepair;
+    public ?City $City = null;
 
     public function __construct(array $data = [])
     {
         if (!empty($data)) {
-            $this->IDLocation = (int)$data['IDLocation'];
-            $this->NameLocation = $data['NameLocation'];
-            $this->IDCity = $data['IDCity'];
-            $this->Address = $data['Address'];
-            $this->isMainWarehouse = $data['isMainWarehouse'];
+            $this->IDLocation = (int)($data['IDLocation'] ?? 0);
+            $this->NameLocation = $data['NameLocation'] ?? null;
+            $this->IDCity = $data['IDCity'] ?? null;
+            $this->Address = $data['Address'] ?? null;
+            $this->isMainWarehouse = $data['isMainWarehouse'] ?? null;
             $this->FormsJointStockCompanies = $data['FormsJointStockCompanies'] ?? '';
-            $this->IsRepair = $data['IsRepair'];
+            $this->IsRepair = (bool)($data['IsRepair'] ?? false);
         }
     }
 
-    public function getId(): ?int {
+    public function getId(): int {
         return $this->IDLocation ?? 0;
     }
 
     public function setId(int $id): void {
-        $this->id = $id;
+        $this->IDLocation = $id;
+    }
+
+    public function getIdFieldName(): string
+    {
+        return 'IDLocation';
+    }
+
+    public function getTypeEntity(): string
+    {
+        return $this::class;
+    }
+
+    public function getReadOnlyFields(): array
+    {
+        return []; // НАСТРОИТЬ
     }
 
     public function getPersistableProperties(): array

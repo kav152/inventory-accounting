@@ -6,19 +6,18 @@ require __DIR__ . '/../Repositories/RepositoryInterface.php';
 require __DIR__ . '/Collection.php';
 require_once __DIR__ . '/../BusinessLogic/Action.php';
 
-//Для sql СЕРВера не путать с mysql
 class GenericRepository implements RepositoryInterface
 {
     private string $entityClass;
     private string $tableName;
     private array $relationships = [];
+    private array $cache = []; // Кэш для связанных сущностей
 
     public function __construct(
         private Database $database,
         string $entityClass,
         string $tableName
     ) {
-        //$this->connection = $connection;
         $this->entityClass = $entityClass;
         $this->tableName = $tableName;
 
@@ -27,6 +26,234 @@ class GenericRepository implements RepositoryInterface
         }
     }
 
+    public function clearCache(): void
+    {
+        $this->cache = [];
+    }
+
+    public function getAll(string $query = null): ?Collection
+    {
+        $pdo = $this->database->getConnection();
+        $finalQuery = $query ?? "SELECT * FROM {$this->tableName}";
+        
+        $startTime = microtime(true);
+        $stmt = $pdo->query($finalQuery);
+        $loadTime = microtime(true) - $startTime;
+        
+        // Логируем только медленные запросы
+        if ($loadTime > 1.0) {
+            $this->logAction('SLOW_QUERY', "Query took {$loadTime}s: {$finalQuery}");
+        }
+
+        $entities = [];
+        $batchData = [];
+        
+        // Собираем все данные для пакетной загрузки связей
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $batchData[] = $row;
+        }
+
+        if (empty($batchData)) {
+            return null;
+        }
+
+        // Пакетная загрузка всех связей
+        $this->preloadRelationships($batchData);
+
+        // Гидратируем сущности с предзагруженными данными
+        foreach ($batchData as $row) {
+            $entities[] = $this->hydrate($row);
+        }
+
+        return new Collection($this->entityClass, $entities);
+    }
+
+    /**
+     * Предзагрузка всех связей для пакета данных
+     */
+    private function preloadRelationships(array &$batchData): void
+    {
+        if (empty($this->relationships) || empty($batchData)) {
+            return;
+        }
+
+        foreach ($this->relationships as $property => $config) {
+            $foreignKeys = [];
+            $keyMap = [];
+
+            // Собираем все внешние ключи
+            foreach ($batchData as $index => $row) {
+                $foreignKeyValue = $row[$config['foreign_key']] ?? null;
+                if ($foreignKeyValue !== null) {
+                    $foreignKeys[$foreignKeyValue] = true;
+                    $keyMap[$foreignKeyValue][] = $index;
+                }
+            }
+
+            if (empty($foreignKeys)) {
+                continue;
+            }
+
+            // Загружаем все связанные сущности одним запросом
+            $relatedEntities = $this->batchLoadRelatedEntities(
+                $config['repository'],
+                array_keys($foreignKeys),
+                $config['target_id_field']
+            );
+
+            // Распределяем связанные сущности по основным данным
+            foreach ($relatedEntities as $relatedId => $relatedEntity) {
+                if (isset($keyMap[$relatedId])) {
+                    foreach ($keyMap[$relatedId] as $index) {
+                        // Сохраняем связанную сущность в кэш для hydrate
+                        $cacheKey = $this->getCacheKey($config['repository']->getEntityClass(), $relatedId);
+                        $this->cache[$cacheKey] = $relatedEntity;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Пакетная загрузка связанных сущностей
+     */
+    private function batchLoadRelatedEntities(RepositoryInterface $repository, array $ids, string $idField): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        $idsString = implode(',', array_map('intval', $ids));
+        $sql = "SELECT * FROM {$repository->tableName} WHERE {$idField} IN ({$idsString})";
+        
+        $result = [];
+        $collection = $repository->getAll($sql);
+        
+        if ($collection) {
+            foreach ($collection as $entity) {
+                $result[$entity->$idField] = $entity;
+            }
+        }
+        
+        return $result;
+    }
+
+    private function getCacheKey(string $entityClass, $id): string
+    {
+        return $entityClass . '_' . $id;
+    }
+
+    private function hydrate(array $data): object
+    {
+        $entity = new $this->entityClass($data);
+
+        // Быстрая гидратация связей из кэша
+        foreach ($this->relationships as $property => $config) {
+            $foreignKeyValue = $data[$config['foreign_key']] ?? null;
+            
+            if ($foreignKeyValue !== null) {
+                $cacheKey = $this->getCacheKey($config['repository']->getEntityClass(), $foreignKeyValue);
+                
+                if (isset($this->cache[$cacheKey])) {
+                    $entity->$property = $this->cache[$cacheKey];
+                }
+            }
+        }
+
+        return $entity;
+    }
+
+    // Остальные методы остаются без изменений...
+    public function getAll_array(string $sql = null): ?array
+    {
+        $pdo = $this->database->getConnection();
+        $finalQuery = $sql ?? "SELECT * FROM {$this->tableName}";
+        
+        $stmt = $pdo->query($finalQuery);
+        $entities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        return empty($entities) ? null : $entities;
+    }
+
+    public function addRelationship(string $property, RepositoryInterface $repository, string $foreignKey, string $targetIdField): void
+    {
+        $this->relationships[$property] = [
+            'repository' => $repository,
+            'foreign_key' => $foreignKey,
+            'target_id_field' => $targetIdField
+        ];
+    }
+
+    public function findBy(string $property): ?Collection
+    {
+        $pdo = $this->database->getConnection();
+        $sql = "SELECT * FROM {$this->tableName} {$property}";
+        
+        $stmt = $pdo->query($sql);
+        $entities = [];
+        $batchData = [];
+        
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $batchData[] = $row;
+        }
+
+        if (empty($batchData)) {
+            return null;
+        }
+
+        // Пакетная загрузка связей
+        $this->preloadRelationships($batchData);
+
+        foreach ($batchData as $row) {
+            $entities[] = $this->hydrate($row);
+        }
+
+        return new Collection($this->entityClass, $entities);
+    }
+
+    public function first(string $property): ?object
+    {
+        $sql = "SELECT * FROM {$this->tableName} {$property}";
+        $pdo = $this->database->getConnection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($data === false) {
+            return null;
+        }
+        
+        return $this->hydrate($data);
+    }
+
+    public function findById(int $id, string $nameID): ?object
+    {
+        $sql = "SELECT * FROM {$this->tableName} WHERE {$nameID} = :id";
+        //error_log('findById - sql:' . $sql);
+        $pdo = $this->database->getConnection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($data === false) {
+            return null;
+        }
+        
+        return $this->hydrate($data);
+    }
+
+    // Остальные методы (save, insert, update, delete) остаются без изменений...
+    
+    public function getEntityClass(): string
+    {
+        return $this->entityClass;
+    }
+    
+    public function getTableName(): string
+    {
+        return $this->tableName;
+    }
+    
     private function logAction(string $action, string $message, array $context = []): void
     {
         $logMessage = sprintf(
@@ -40,113 +267,6 @@ class GenericRepository implements RepositoryInterface
         error_log($logMessage, 3, __DIR__ . '/../storage/logs/GenericRepository.log');
     }
 
-    public function getAll(string $query = null): ?Collection
-    {
-        $pdo = $this->database->getConnection();
-
-        $finalQuery = $query ?? "SELECT * FROM {$this->tableName}";  
-        $sql = $pdo->query($finalQuery); // Всегда выполняем $finalQuery
-
-        $entities = [];
-        while ($row = $sql->fetch(PDO::FETCH_ASSOC)) {
-            // Создаём объект текущего entityClass
-            //$entities[] = new $this->entityClass($row);
-            $entities[] = $this->hydrate($row);
-        }
-        if (empty($entities)) {
-            return null;
-        }
-        // Возвращаем коллекцию с типом 
-        return new Collection($this->entityClass, $entities);
-    }
-
-    public function getAll_array(string $sql = null): ?array
-    {
-        $pdo = $this->database->getConnection();
-
-        if ($sql === null)
-            $stmt = $pdo->query("SELECT * FROM {$this->tableName}");
-        else
-            $stmt = $pdo->query($sql); // Выполняем переданный SQL-запрос
-
-        //$this->logAction('getAll_array', $sql);
-        $entities = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if (empty($entities)) {
-            return null;
-        }
-        return $entities ?? null;
-    }
-
-    public function addRelationship(string $property, RepositoryInterface $repository, string $foreignKey, string $targetIdField): void
-    {
-        $this->relationships[$property] = [
-            'repository' => $repository,
-            'foreign_key' => $foreignKey,
-            'target_id_field' => $targetIdField
-        ];
-    }
-    public function findBy(string $property): ?Collection
-    {
-        $pdo = $this->database->getConnection();
-
-        //$this->logAction('findBy', "SELECT * FROM {$this->tableName} {$property}");
-        $sql = $pdo->query("SELECT * FROM {$this->tableName} {$property}");
-
-        $entities = [];
-        while ($row = $sql->fetch(PDO::FETCH_ASSOC)) {
-            // Создаём объект текущего entityClass
-            //$entities[] = new $this->entityClass($row);
-            $entities[] = $this->hydrate($row);
-        }
-        if (empty($entities)) {
-            return null;
-        }
-
-        // Возвращаем коллекцию с типом 
-        return new Collection($this->entityClass, $entities);
-    }
-
-    /**
-     * Получить первое значение по запросу или null. Обязательно указывать критерий поиска WHERE
-     * @param string $property 
-     * @return object
-     */
-    public function first(string $property): ?object
-    {
-        $sql = "SELECT * FROM {$this->tableName} {$property}";
-        $pdo = $this->database->getConnection();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $data = $stmt->fetch();
-        if ($data === false) {
-            $this->logAction('first', 'Получено значение null');
-            return null;
-        }
-        $entity = new $this->entityClass($data);
-        return $entity;
-    }
-
-
-
-    public function findById(int $id, string $nameID): ?object
-    {
-        $sql = "SELECT * FROM {$this->tableName} WHERE {$nameID} = :id";
-
-        $pdo = $this->database->getConnection();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':id' => $id]);
-
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $data = $stmt->fetch();
-        if ($data === false) {
-            return null;
-        }
-        //$entity = new $this->entityClass($data);
-        $entity = $this->hydrate($data);
-        return $entity;
-    }
-
     public function save(object $entity, string $status = null): ?object
     {
 
@@ -156,42 +276,42 @@ class GenericRepository implements RepositoryInterface
 
         $type = is_object($entity) ? get_class($entity) : gettype($entity);
 
-     /*   $this->logAction(
-            'save',
-            'Проверка типа сущности',
-            [
-                'id' => $entity->getId(),
-                'тип сущности' => $type
-            ]
-        );*/
+        /*   $this->logAction(
+               'save',
+               'Проверка типа сущности',
+               [
+                   'id' => $entity->getId(),
+                   'тип сущности' => $type
+               ]
+           );*/
 
         if ($entity->getId() === 0) {
-           /* $this->logAction(
-                'save',
-                'Запуск метода insert',
-                [
-                    'id' => $entity->getId()
-                ]
-            );*/
+            /* $this->logAction(
+                 'save',
+                 'Запуск метода insert',
+                 [
+                     'id' => $entity->getId()
+                 ]
+             );*/
             $result = $this->insert($entity);
         } else {
             if ($status === 'create') {
-               /* $this->logAction(
-                    'save',
-                    'Запуск метода insert при условии Action::CREATE',
-                    [
-                        'id' => $entity->getId()
-                    ]
-                );*/
+                /* $this->logAction(
+                     'save',
+                     'Запуск метода insert при условии Action::CREATE',
+                     [
+                         'id' => $entity->getId()
+                     ]
+                 );*/
                 $result = $this->insert($entity);
             } else {
-             /*   $this->logAction(
-                    'save',
-                    'Запуск метода update',
-                    [
-                        'id' => $entity->getId()
-                    ]
-                );*/
+                /*   $this->logAction(
+                       'save',
+                       'Запуск метода update',
+                       [
+                           'id' => $entity->getId()
+                       ]
+                   );*/
                 $result = $this->update($entity);
             }
         }
@@ -212,11 +332,7 @@ class GenericRepository implements RepositoryInterface
     }
     private function insert(BaseEntity $entity): ?object
     {
-        /*$this->logAction('START', 'Старт функции insert', [
-            'id' => $entity->getId()
-        ]);*/
         $properties = [];
-       /* $this->logAction('START', 'сбор properties', $properties);*/
         $persistableProps = $entity->getPersistableProperties(); // перечень полей
         $autoDateFields = $entity->getAutoDateFields(); // Получаем поля для авто-дат
 
@@ -239,7 +355,7 @@ class GenericRepository implements RepositoryInterface
         $placeholdersStr = implode(', ', $placeholders);
 
         $sql = "INSERT INTO {$this->tableName} ($columnsStr) VALUES ($placeholdersStr);";
-      //  $this->logAction('DEBUG', $sql, $params);
+        //error_log($sql);
 
 
         try {
@@ -247,21 +363,16 @@ class GenericRepository implements RepositoryInterface
 
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            /*$this->logAction('insert', 'Выполнено подключение к БД');*/
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            //$stmt->execute($properties);
-            /*$this->logAction('insert', 'Переданы параметры properties', $properties);*/
             $id = $pdo->lastInsertId();
-           /* $this->logAction('insert', 'Выполнение функции lastInsertId', [
-                'Получаем ID' => $id
-            ]);*/
+
             if ($id != null) {
                 $entity->setId($id);
             }
-           /* $this->logAction('insert', 'Объект сохранен', [
-                'id' => $id
-            ]);*/
+            /* $this->logAction('insert', 'Объект сохранен', [
+                 'id' => $id
+             ]);*/
 
             return $entity;
         } catch (PDOException $e) {
@@ -280,10 +391,6 @@ class GenericRepository implements RepositoryInterface
 
     private function update(BaseEntity $entity): ?object
     {
-       /* $this->logAction('START', 'Старт функции update', [
-            'id' => $entity->getId()
-        ]);*/
-
         $setParts = [];
         $params = [];
         $readOnlyFields = $entity->getReadOnlyFields();
@@ -323,10 +430,10 @@ class GenericRepository implements RepositoryInterface
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
 
-          /*  $this->logAction('update', 'Объект успешно обновлен', [
-                'id' => $entity->getId(),
-                'affected_rows' => $stmt->rowCount()
-            ]);*/
+            /*  $this->logAction('update', 'Объект успешно обновлен', [
+                  'id' => $entity->getId(),
+                  'affected_rows' => $stmt->rowCount()
+              ]);*/
 
             return $entity;
         } catch (PDOException $e) {
@@ -358,29 +465,12 @@ class GenericRepository implements RepositoryInterface
 
         $nameID = $entity->getIdFieldName();
         $sql = "DELETE FROM {$this->tableName} WHERE {$nameID} = :id";
-        
+
         $pdo = $this->database->getConnection();
-        $stmt = $pdo->prepare($sql
-        /*    "DELETE FROM {$this->tableName} WHERE id = :id"*/
+        $stmt = $pdo->prepare(
+            $sql
+            /*    "DELETE FROM {$this->tableName} WHERE id = :id"*/
         );
         $stmt->execute(['id' => $entity->getId()]);
-    }
-
-    private function hydrate(array $data): object
-    {
-        $entity = new $this->entityClass($data);
-
-        foreach ($this->relationships as $property => $config) {
-            $foreignKeyValue = $data[$config['foreign_key']] ?? null;
-            if ($foreignKeyValue !== null) {
-                $relatedEntity = $config['repository']->findById(
-                    $foreignKeyValue,
-                    $config['target_id_field']
-                );
-                $entity->$property = $relatedEntity;
-            }
-        }
-
-        return $entity;
     }
 }
