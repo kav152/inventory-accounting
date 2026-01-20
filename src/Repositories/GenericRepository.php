@@ -9,7 +9,6 @@ require_once __DIR__ . '/../BusinessLogic/Action.php';
 //Для sql СЕРВера не путать с mysql
 class GenericRepository implements RepositoryInterface
 {
-
     private string $entityClass;
     private string $tableName;
     private array $relationships = [];
