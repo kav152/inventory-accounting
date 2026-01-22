@@ -19,8 +19,8 @@ class CardItemLoader extends ModalLoader
        
 
         // Получаем параметры из запроса
-        $statusItem = $params['statusItem'] == null ? '' : (string)$params['statusItem'];
-        $currentID = $params['id'] == null ? 0 : (int)$params['id'];
+        //$statusItem = $params['statusEntity'] == null ? '' : (string)$params['statusEntity'];
+        $currentID = $params['id'] == null ? 0 : (int)$params['id'];        
 
         $inventoryItem = $controller->getInventoryItem($currentID);
         $typeTMCs = $propertyController->getTypeTMC();

@@ -74,7 +74,7 @@ class ModalConfigRegistry {
             this._configsByEntityType.set(entityConfig.entityType, entityConfig);
             this._stats.registered++;
 
-            console.log(`Зарегистрирована конфигурация: ${entityConfig.toString()}`);
+            //console.log(`Зарегистрирована конфигурация: ${entityConfig.toString()}`);
             return true;
 
         } catch (error) {

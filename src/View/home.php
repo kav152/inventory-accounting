@@ -1043,7 +1043,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <script src="/js/modals/confirmModal.js"></script>
     <script src="/js/modals/confirmRepairModal.js"></script>
     <script type="module" src="/js/modals/serviceModal.js"></script>
-    <script src="/js/writeOffFunctions.js"></script>
+    <script type="module" src="/js/writeOffFunctions.js"></script>
 
     <div id="modalContainer"></div>
 
