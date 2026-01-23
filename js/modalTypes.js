@@ -1,6 +1,7 @@
 import { initUserModalHandlers } from '../js/modals/userModal.js';
 import { initCardTMCModalHandlers } from '../js/modals/cardItemModal.js';
-import { initDistributeHandlers } from '../js/modals/distributeModal.js';
+//import { initDistributeHandlers } from '../js/modals/distributeModal.js';
+import { initDistributeModalHandlers } from '../js/modals/distributeModal.js';
 import { initWorkModalHandlers } from '../js/modals/workModal.js';
 import { initSendToServiceModalHandlers } from '../js/modals/serviceModal.js';
 import { initLocationModalHandlers } from '../js/modals/locationModal.js';
@@ -45,7 +46,7 @@ modalRegistry.register({
 modalRegistry.register({
     modalType: 'distributeModal',
     modalId: 'distributeModal',
-    handler: initDistributeHandlers,
+    handler: initDistributeModalHandlers,
     entityType: 'inventoryItem_distributeModal',
     tableContainerId: 'inventoryTable',
     rowClass: 'row-container',

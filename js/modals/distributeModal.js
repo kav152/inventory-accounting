@@ -2,7 +2,8 @@ import { showNotification } from "../modals/setting.js";
 import { TypeMessage } from "../../src/constants/typeMessage.js";
 import { StatusItem } from "../../src/constants/statusItem.js";
 import { Action } from "../../src/constants/actions.js";
-import { executeEntityAction, getCollectFormData,} from "../templates/entityActionTemplate.js";
+import { executeEntityAction, getCollectFormData, } from "../templates/entityActionTemplate.js";
+import { updateInventoryStatus } from "../updateFunctions.js";
 
 
 // Обработчик клика на "Передать ТМЦ"
@@ -26,14 +27,14 @@ import { executeEntityAction, getCollectFormData,} from "../templates/entityActi
 
     //console.log(`selectedRows - ${selectedRows}`);
     window.openModalAction("distributeModal", selectedRows, validStatuses);
-    window.removingSelection();
+    //window.removingSelection();
   }
 
 
   window.openDistributeModal = openDistributeModal;
   //window.initDistributeHandlers = initDistributeHandlers;
 })();
-
+/*
 export function initDistributeHandlers(modalElement) {
     const form = document.getElementById("distributeForm");
     if (!form) return;
@@ -76,4 +77,57 @@ export function initDistributeHandlers(modalElement) {
          showNotification(TypeMessage.error, "Ошибка сети");
        }
     };
+  }*/
+
+/**
+* Обработчик работы модального окна распределения
+* @param {HTMLElement} modalElement 
+*/
+export function initDistributeModalHandlers(modalElement) {
+  // 1. Инициализация обработчиков формы
+  modalElement.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    await handleDistributeFormSubmit(modalElement);
+  });
+
+}
+
+
+
+
+/**
+ * Обработчик отправки формы распределения
+ */
+async function handleDistributeFormSubmit(modalElement) {
+  const form = modalElement.querySelector("#distributeForm");
+  const formData = getCollectFormData(form, Action.UPDATE);
+  let tmc_ids = window.selectedTMCIds;
+  formData['tmc_ids'] = JSON.stringify(tmc_ids);
+
+  try {
+    const result = await executeEntityAction({
+      action: Action.UPDATE,
+      formData: formData,
+      url: "/src/BusinessLogic/Actions/processCUDDistribute.php",
+      successMessage: "ТМЦ успешно переданы",
+    });
+
+    // Обновляем статусы в таблице ТМЦ
+    if (tmc_ids) {      
+      // Вызываем функцию обновления статусов в таблице
+      updateInventoryStatus(tmc_ids, StatusItem.ConfirmItem);
+      // Снимаем выделение с строк
+      window.removingSelection();
+    }
+
+    // Закрываем модальное окно
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+    modalInstance.hide();
+
+
+
+  } catch (error) {
+    console.error("Ошибка при передаче ТМЦ:", error);
+    showNotification(TypeMessage.error, "Ошибка при передаче ТМЦ: " + error.message);
   }
+}

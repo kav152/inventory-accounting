@@ -41,7 +41,7 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
                         </div>
                     </div>
 
-                    <table class="table">
+                    <table class="table" >
                         <thead>
                             <tr>
                                 <th>ID</th>

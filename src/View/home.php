@@ -1032,7 +1032,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
 
     </script>
 
-    <script src="/js/updateFunctions.js"></script>    
+    <script type="module" src="/js/updateFunctions.js"></script>    
     <script type="module" src="/js/templates/expandableSection.js"></script>
     <script type="module" src="/js/templates/entityActionTemplate.js"></script>
     <script type="module" src="/js/modalTypes.js"></script>

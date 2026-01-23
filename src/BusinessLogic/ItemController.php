@@ -622,7 +622,7 @@ class ItemController
      */
     public function distributeItems(array $tmcIds, int $locationId, int $userId)
     {
-        error_log('Мы в distributeItems');
+        //error_log('Мы в distributeItems: ' . print_r($tmcIds, true));
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);

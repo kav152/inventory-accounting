@@ -4,3 +4,4 @@
 .env
 vendor/
 .log
+/src/storage/logs/

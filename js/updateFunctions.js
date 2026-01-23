@@ -87,7 +87,7 @@
   }*/
 
   // Функция для обновления статуса в главной таблице
-  function updateInventoryStatus(tmcIds, newStatus) {
+  /*function updateInventoryStatus(tmcIds, newStatus) {
     //console.log(`Перечень tmcIds: ${tmcIds}`);
     tmcIds.forEach((id) => {
       const row = document.querySelector(`.row-container[data-id="${id}"]`);
@@ -107,21 +107,8 @@
 
       }
     });
-  }
+  }*/
 
-  // Обновление CSS-классов статуса
-  function updateStatusClasses(row, newStatus) {
-    // Удаляем все существующие классы статуса
-    Object.values(StatusItem.statusClasses).forEach((className) => {
-      row.classList.remove(className);
-    });
-
-    // Добавляем новый класс статуса
-    const statusClass = StatusItem.statusClasses[newStatus];
-    if (statusClass) {
-      row.classList.add(statusClass);
-    }
-  }
 
   /**
    * Обновляет конкретный ТМЦ в таблице после редактирования
@@ -204,9 +191,8 @@
 
     // Создаем новую строку
     const newRow = document.createElement("tr");
-    newRow.className = `row-container ${
-      StatusItem.statusClasses[newItem.status] || ""
-    }`;
+    newRow.className = `row-container ${StatusItem.statusClasses[newItem.status] || ""
+      }`;
     newRow.setAttribute("data-id", newItem.id);
     newRow.setAttribute("data-status", newItem.status);
     newRow.onclick = handleAction;
@@ -218,8 +204,8 @@
       <td class="rowGrid1">${newItem.serialNumber || ""}</td>
       <td class="rowGrid1">${newItem.brand || ""}</td>
       <td class="rowGrid1">${StatusItem.getDescription(
-        StatusItem.NotDistributed
-      )}</td>
+      StatusItem.NotDistributed
+    )}</td>
       <td class="rowGrid1">${newItem.responsible || ""}</td>
       <td class="rowGrid1">${newItem.location || ""}</td>
     `;
@@ -283,7 +269,7 @@
     document.body.appendChild(loader);
   }
 
-  
+
   // Функция для скрытия индикатора
   function hideGlobalLoader() {
     const loader = document.getElementById("global-loader-overlay");
@@ -307,7 +293,7 @@
 
       window.needFullReload = false;
     }
-  }  
+  }
 
   // Функция для измерения времени перезагрузки
   function measureReloadTime() {
@@ -340,9 +326,56 @@
   window.measureReloadTime = measureReloadTime;
 
 
-  window.updateInventoryStatus = updateInventoryStatus;
+  //window.updateInventoryStatus = updateInventoryStatus;
   window.updateCounters = updateCounters;
   window.updateSingleInventoryItem = updateSingleInventoryItem;
   window.insertNewInventoryItem = insertNewInventoryItem;
   window.updateRowCounter = updateRowCounter;
 })();
+
+import { StatusItem } from "../src/constants/statusItem.js";
+
+/**
+ * Функция для обновления статуса в главной таблице
+ * @param {*} tmcIds 
+ * @param {*} newStatus 
+ */
+export function updateInventoryStatus(tmcIds, newStatus) {
+  //console.log(`Перечень tmcIds: ${tmcIds}`);
+  tmcIds.forEach((id) => {
+    const row = document.querySelector(`.row-container[data-id="${id}"]`);
+    if (row) {
+      // Обновляем ячейку статуса (5-я ячейка в строке)
+      const statusCell = row.cells[4];
+      //console.log(statusCell.textContent);
+      //console.log(`Новый статус: ${StatusItem.getDescription(newStatus)}`);
+      statusCell.textContent = StatusItem.getDescription(newStatus);
+
+      // Обновляем классы статуса
+      updateStatusClasses(row, newStatus);
+
+      // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
+      row.setAttribute('data-status', newStatus);
+
+
+    }
+  });
+}
+
+/**
+ * Обновление CSS-классов статуса
+ * @param {*} row 
+ * @param {*} newStatus 
+ */
+function updateStatusClasses(row, newStatus) {
+  // Удаляем все существующие классы статуса
+  Object.values(StatusItem.statusClasses).forEach((className) => {
+    row.classList.remove(className);
+  });
+
+  // Добавляем новый класс статуса
+  const statusClass = StatusItem.statusClasses[newStatus];
+  if (statusClass) {
+    row.classList.add(statusClass);
+  }
+}

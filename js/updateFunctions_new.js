@@ -2,6 +2,7 @@
 
 (function () {
 
+    
 });
 
 
@@ -156,7 +157,7 @@ function handleSuccess(action, updatedIds, newStatus, counters) {
 }
 
 // Функция для обновления статуса в главной таблице
-function updateInventoryStatus(tmcIds, newStatus) {
+export function updateInventoryStatus(tmcIds, newStatus) {
     //console.log(`Перечень tmcIds: ${tmcIds}`);
     tmcIds.forEach((id) => {
         const row = document.querySelector(`.row-container[data-id="${id}"]`);
