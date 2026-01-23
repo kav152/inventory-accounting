@@ -1,3 +1,49 @@
+import { StatusItem } from "../src/constants/statusItem.js";
+
+/**
+ * Функция для обновления статуса в главной таблице
+ * @param {*} tmcIds 
+ * @param {*} newStatus 
+ */
+export function updateInventoryStatus(tmcIds, newStatus) {
+  //console.log(`Перечень tmcIds: ${tmcIds}`);
+  tmcIds.forEach((id) => {
+    const row = document.querySelector(`.row-container[data-id="${id}"]`);
+    if (row) {
+      // Обновляем ячейку статуса (5-я ячейка в строке)
+      const statusCell = row.cells[4];
+      //console.log(statusCell.textContent);
+      //console.log(`Новый статус: ${StatusItem.getDescription(newStatus)}`);
+      statusCell.textContent = StatusItem.getDescription(newStatus);
+
+      // Обновляем классы статуса
+      updateStatusClasses(row, newStatus);
+
+      // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
+      row.setAttribute('data-status', newStatus);
+
+    }
+  });
+}
+
+/**
+ * Обновление CSS-классов статуса
+ * @param {*} row 
+ * @param {*} newStatus 
+ */
+function updateStatusClasses(row, newStatus) {
+  // Удаляем все существующие классы статуса
+  Object.values(StatusItem.statusClasses).forEach((className) => {
+    row.classList.remove(className);
+  });
+
+  // Добавляем новый класс статуса
+  const statusClass = StatusItem.statusClasses[newStatus];
+  if (statusClass) {
+    row.classList.add(statusClass);
+  }
+}
+
 (function () {
   /**
    * Обновляет счетчики в верхней панели уведомлений
@@ -54,60 +100,6 @@
       }
     }
   }
-
-  /**
-   * Обновляет статусы ТМЦ в главной таблице
-   * @param {Array<number>} tmcIds - Массив ID ТМЦ
-   * @param {number} newStatus - Новый статус
-   */
-  /*function updateInventoryStatus(tmcIds, newStatus) {
-    tmcIds.forEach((id) => {
-      const row = document.querySelector(`.row-container[data-id="${id}"]`);
-      if (row) {
-        // Обновляем текст статуса (5-я ячейка)
-        const statusCell = row.cells[4];
-        console.log("Статус ячейки");
-        console.log(statusCell);
-        statusCell.textContent = StatusItem.getDescription(newStatus);
-
-        // Обновляем CSS-классы
-        Object.values(StatusItem.statusClasses).forEach((className) => {
-          row.classList.remove(className);
-        });
-
-        const statusClass = StatusItem.statusClasses[newStatus];
-        if (statusClass) {
-          row.classList.add(statusClass);
-        }
-
-        // Обновляем data-атрибут
-        row.dataset.status = newStatus;
-      }
-    });
-  }*/
-
-  // Функция для обновления статуса в главной таблице
-  /*function updateInventoryStatus(tmcIds, newStatus) {
-    //console.log(`Перечень tmcIds: ${tmcIds}`);
-    tmcIds.forEach((id) => {
-      const row = document.querySelector(`.row-container[data-id="${id}"]`);
-      if (row) {
-        // Обновляем ячейку статуса (5-я ячейка в строке)
-        const statusCell = row.cells[4];
-        console.log(statusCell.textContent);
-        console.log(`Новый статус: ${StatusItem.getDescription(newStatus)}`);
-        statusCell.textContent = StatusItem.getDescription(newStatus);
-
-        // Обновляем классы статуса
-        updateStatusClasses(row, newStatus);
-
-        // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
-            row.setAttribute('data-status', newStatus);
-
-
-      }
-    });
-  }*/
 
 
   /**
@@ -325,57 +317,9 @@
   window.showGlobalLoader = showGlobalLoader;
   window.measureReloadTime = measureReloadTime;
 
-
-  //window.updateInventoryStatus = updateInventoryStatus;
   window.updateCounters = updateCounters;
   window.updateSingleInventoryItem = updateSingleInventoryItem;
   window.insertNewInventoryItem = insertNewInventoryItem;
   window.updateRowCounter = updateRowCounter;
 })();
 
-import { StatusItem } from "../src/constants/statusItem.js";
-
-/**
- * Функция для обновления статуса в главной таблице
- * @param {*} tmcIds 
- * @param {*} newStatus 
- */
-export function updateInventoryStatus(tmcIds, newStatus) {
-  //console.log(`Перечень tmcIds: ${tmcIds}`);
-  tmcIds.forEach((id) => {
-    const row = document.querySelector(`.row-container[data-id="${id}"]`);
-    if (row) {
-      // Обновляем ячейку статуса (5-я ячейка в строке)
-      const statusCell = row.cells[4];
-      //console.log(statusCell.textContent);
-      //console.log(`Новый статус: ${StatusItem.getDescription(newStatus)}`);
-      statusCell.textContent = StatusItem.getDescription(newStatus);
-
-      // Обновляем классы статуса
-      updateStatusClasses(row, newStatus);
-
-      // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
-      row.setAttribute('data-status', newStatus);
-
-
-    }
-  });
-}
-
-/**
- * Обновление CSS-классов статуса
- * @param {*} row 
- * @param {*} newStatus 
- */
-function updateStatusClasses(row, newStatus) {
-  // Удаляем все существующие классы статуса
-  Object.values(StatusItem.statusClasses).forEach((className) => {
-    row.classList.remove(className);
-  });
-
-  // Добавляем новый класс статуса
-  const statusClass = StatusItem.statusClasses[newStatus];
-  if (statusClass) {
-    row.classList.add(statusClass);
-  }
-}
