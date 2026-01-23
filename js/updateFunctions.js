@@ -312,6 +312,8 @@ function updateStatusClasses(row, newStatus) {
 
   /* ================================================================================== */
 
+  window.updateInventoryStatus = updateInventoryStatus;
+
   window.handleSuccess = handleSuccess;
   window.hideGlobalLoader = hideGlobalLoader;
   window.showGlobalLoader = showGlobalLoader;
