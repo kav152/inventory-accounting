@@ -11,8 +11,7 @@ require_once __DIR__ . '/../../Logging/Logger.php';
 class CardItemLoader extends ModalLoader
 {    
     public function load($params = [])
-    {
-        error_log('Мы в ModalLoader');        
+    {        
         DatabaseFactory::setConfig();
         $controller = new ItemController();
         $propertyController = new PropertyController();

@@ -9,6 +9,7 @@ export function updateInventoryStatus(tmcIds, newStatus) {
   //console.log(`Перечень tmcIds: ${tmcIds}`);
   tmcIds.forEach((id) => {
     const row = document.querySelector(`.row-container[data-id="${id}"]`);
+    //console.log(`.row-container[data-id="${id}"]`);
     if (row) {
       // Обновляем ячейку статуса (5-я ячейка в строке)
       const statusCell = row.cells[4];
@@ -21,7 +22,9 @@ export function updateInventoryStatus(tmcIds, newStatus) {
 
       // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
       row.setAttribute('data-status', newStatus);
-
+    }
+    else{
+      console.log(`Строка с id = ${id} не найдена - статус не изменен`);
     }
   });
 }
@@ -294,9 +297,9 @@ function updateStatusClasses(row, newStatus) {
       const reloadEndTime = Date.now();
       const reloadDuration = reloadEndTime - parseInt(reloadStartTime);
 
-      console.log(
+     /* console.log(
         `🕒 Время перезагрузки страницы: ${reloadDuration / 1000} сек`
-      );
+      );*/
 
       if (reloadDuration > 1000) {
         showNotification(

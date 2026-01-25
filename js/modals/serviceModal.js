@@ -1,15 +1,15 @@
-import { ServiceStatus } from '../../src/constants/statusService.js';
+import { ServiceStatus } from "../../src/constants/statusService.js";
 
 (function () {
   // Отправить в сервис
   function sendToService(NameClassContainer, serviceStatus) {
     const selectedRows = document.querySelectorAll(
-      `.${NameClassContainer}.selected`
+      `.${NameClassContainer}.selected`,
     );
     if (selectedRows.length === 0) {
       showNotification(
         TypeMessage.notification,
-        "Выберите ТМЦ для отправки в сервис"
+        "Выберите ТМЦ для отправки в сервис",
       );
       return;
     }
@@ -37,26 +37,25 @@ import { ServiceStatus } from '../../src/constants/statusService.js';
         break;
     }
 
-    console.log(selectedRows);
+    //console.log(selectedRows);
     // serviceModal
     // sendToService
     openModalAction("serviceModal", selectedRows, validStatuses);
   }
 
   window.sendToService = sendToService;
-  //window.initSendToServiceModalHandlers = initSendToServiceModalHandlers;
 })();
 
 /**
  * Обработчик serviceModal
- * @param {*} modalElement 
+ * @param {*} modalElement
  */
 export function initSendToServiceModalHandlers(modalElement) {
   document
     .getElementById("btnSubmitService")
     .addEventListener("click", async function () {
       const inputs = document.querySelectorAll(
-        "#selectedServiceItemsContainer .repair-reason-input"
+        "#selectedServiceItemsContainer .repair-reason-input",
       );
       // .repair-reason-input
       let allFilled = true;
@@ -81,7 +80,7 @@ export function initSendToServiceModalHandlers(modalElement) {
         if (ServiceStatus.sendService == statusService) {
           showNotification(
             TypeMessage.notification,
-            "Заполните причину ремонта для выбранных ТМЦ"
+            "Заполните причину ремонта для выбранных ТМЦ",
           );
           return;
         }
@@ -99,7 +98,7 @@ export function initSendToServiceModalHandlers(modalElement) {
               items: items,
               statusService: statusService,
             }),
-          }
+          },
         );
 
         const data = await response.json();
@@ -111,17 +110,29 @@ export function initSendToServiceModalHandlers(modalElement) {
               ? StatusItem.ConfirmRepairTMC
               : ServiceStatus.returnService == statusService
                 ? StatusItem.Released
-                : -1
+                : -1,
           );
 
           hideRowsInAtWorkModal(items);
 
           // ОБНОВЛЕНИЕ СЧЕТЧИКОВ: только для статуса "Отправить в сервис"
-          if (statusService === ServiceStatus.sendService) {            
-            updateCounters({ confirmRepairCount: items.length, });
+          if (statusService === ServiceStatus.sendService) {
+            updateCounters({ confirmRepairCount: items.length });
           }
 
           const modal = bootstrap.Modal.getInstance(modalElement);
+          // Добавляем обработчик для восстановления предыдущего модального окна
+          modalElement.addEventListener(
+            "hidden.bs.modal",
+            function onHidden() {
+              // Восстанавливаем atWorkModal если он был открыт
+              restoreAtWorkModal();
+
+              // Удаляем обработчик
+              modalElement.removeEventListener("hidden.bs.modal", onHidden);
+            },
+            { once: true },
+          );
           modal.hide();
         }
       } catch (error) {
@@ -137,22 +148,47 @@ export function initSendToServiceModalHandlers(modalElement) {
  */
 function hideRowsInAtWorkModal(items) {
   // Проверяем, открыто ли модальное окно atWorkModal
-  const atWorkModal = document.getElementById('atWorkModal');
+  const atWorkModal = document.getElementById("atWorkModal");
   const modalInstance = bootstrap.Modal.getInstance(atWorkModal);
-  
+
   // Если модальное окно не открыто, выходим
   if (!modalInstance || !modalInstance._isShown) {
     return;
   }
 
   // Скрываем строки в atWorkModal
-  items.forEach(item => {
-    const row = atWorkModal.querySelector(`.row-container1[data-id="${item.id}"]`);
+  items.forEach((item) => {
+    const row = atWorkModal.querySelector(
+      `.row-container1[data-id="${item.id}"]`,
+    );
     if (row) {
-      row.style.display = 'none';
+      row.style.display = "none";
     }
   });
 
   // Обновляем счетчики в группах atWorkModal
   updateAtWorkGroupCounters();
+}
+
+/**
+ * Восстанавливает atWorkModal после закрытия serviceModal
+ */
+function restoreAtWorkModal() {
+  // Ищем активное модальное окно atWorkModal
+  const atWorkModal = document.getElementById("atWorkModal");
+  if (atWorkModal && atWorkModal.classList.contains("show")) {
+    // Если atWorkModal уже показан, ничего не делаем
+    return;
+  }
+
+  // Проверяем, был ли открыт atWorkModal перед serviceModal
+  if (window.previousModal === "atWorkModal") {
+    const modalInstance = bootstrap.Modal.getInstance(atWorkModal);
+    if (modalInstance) {
+      setTimeout(() => {
+        modalInstance.show();
+      }, 300);
+    }
+    window.previousModal = null;
+  }
 }

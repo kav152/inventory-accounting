@@ -183,9 +183,9 @@
                 <div class="modal-body">
                     <div class="brigade-actions mb-3">
                         <button class="btn btn-primary" id="btnReturnTMC">Вернуть ТМЦ</button>
-                        <button class="btn btn-warning" id="btnSendToService"
+                        <!--button-- class="btn btn-warning" id="btnSendToService"
                             onclick="sendToService('row-container1', ServiceStatus.sendService)">Отправить в
-                            сервис</button>
+                            сервис</!--button-->
                     </div>
 
                     <div class="brigade-list">
@@ -207,7 +207,7 @@
 
                                 <div class="collapse" id="collapseGroup<?= $group['id'] ?>">
                                     <div class="brigade-content">
-                                        <table>
+                                        <table id="atWorkTable">
                                             <thead>
                                                 <tr>
                                                     <th>Ид.</th>
@@ -224,6 +224,45 @@
                                                         <td><?= $item->NameTMC ?></td>
                                                         <td><?= $item->SerialNumber ?></td>
                                                         <td><?= $item->User->FIO ?></td>
+                                                        <td>
+                                                            <button type="button"
+                                                                class="btn btn-warning btn-sm btn-service"
+                                                                data-tmc-id="<?= $item->ID_TMC ?>"
+                                                                onclick="showServiceForm(this, <?= $item->ID_TMC ?>)">
+                                                                <i class="bi bi-tools me-1"></i>В сервис
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="service-form-row" style="display: none;">
+                                                        <td colspan="5">
+                                                            <div class="service-form-section collapsed" id="serviceForm-<?= $item->ID_TMC ?>">
+                                                                <form class="service-form" data-tmc-id="<?= $item->ID_TMC ?>">
+                                                                    <div class="row">
+                                                                        <div class="col-md-12">
+                                                                            <label for="reason-<?= $item->ID_TMC ?>" class="form-label">
+                                                                                Причина ремонта
+                                                                            </label>
+                                                                            <textarea class="form-control repair-reason-input"
+                                                                                id="reason-<?= $item->ID_TMC ?>"
+                                                                                name="reason"
+                                                                                placeholder="Укажите причину ремонта"
+                                                                                rows="3"
+                                                                                required></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="mt-3">
+                                                                        <button type="button" class="btn btn-primary btn-sm" onclick="sendServiceForm(<?= $item->ID_TMC ?>)">
+                                                                            <i class="bi bi-check-lg me-1"></i>Отправить
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-secondary btn-sm"
+                                                                            onclick="hideServiceForm(<?= $item->ID_TMC ?>)">
+                                                                            <i class="bi bi-x-lg me-1"></i>Отмена
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -244,12 +283,12 @@
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             let lastSelectedRow = null;
             const modal = document.getElementById('atWorkModal');
 
             // Обработчик выделения строк
-            modal.addEventListener('click', function (e) {
+            modal.addEventListener('click', function(e) {
                 const row = e.target.closest('.row-container1');
                 if (!row) return;
 
@@ -279,7 +318,7 @@
             });
 
             // Обработчик возврата ТМЦ
-            document.getElementById('btnReturnTMC').addEventListener('click', function () {
+            document.getElementById('btnReturnTMC').addEventListener('click', function() {
                 const selectedRows = modal.querySelectorAll('.row-container1.selected');
                 if (selectedRows.length === 0) {
                     alert('Выберите ТМЦ для возврата');
@@ -293,184 +332,28 @@
                 // Получаем brigade_id из первой выбранной строки
                 const brigadeId = selectedRows[0].getAttribute('data-brigade');
 
-                // Передаем оба параметра
-                fetch('/src/BusinessLogic/ActionsTMC/processReturnFromWork.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        tmc_ids: tmcIds,
-                        brigade_id: brigadeId
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Скрываем возвращенные строки
-                            selectedRows.forEach(row => {
-                                row.style.display = 'none';
-                            });
-
-                            // Обновляем счетчики
-                            updateCounters(selectedRows.length);
-
-
-                            if (typeof window.updateInventoryStatus === 'function') {
-                                window.updateInventoryStatus(tmcIds, StatusItem.Released); // 0 = NotDistributed
-                            }
-
-                            showNotification(TypeMessage.notification, `ТМЦ возвращено на склад в кол-ве: ${selectedRows.length}`);
-                        } else {
-                            showNotification(TypeMessage.error, 'Ошибка: ' + data.message);
-                        }
+                try {
+                    const result = executeEntityAction({
+                        action: Action.UPDATE,
+                        formData: data,
+                        url: "/src/BusinessLogic/Actions/processCUDReturnFromWork.php",
+                        successMessage: "ТМЦ успешно переданы на склад",
                     });
+
+                    updateInventoryStatus(window.selectedTMCIds, StatusItem.AtWorkTMC);
+                    updateCounters({
+                        brigadesToItemsCount: window.selectedTMCIds.length,
+                    });
+
+                    modal.hide();
+                } catch (error) {
+                    console.error("Error:", error);
+                    showNotification(
+                        TypeMessage.error,
+                        "Произошла ошибка при передаче ТМЦ на склад",
+                    );
+                }
             });
-
-            // Функция обновления счетчиков
-            /*  function updateCounters(removedCount) {
-                  // Обновляем общий счетчик в уведомлении
-                  const atWorkBadge = document.getElementById('atWorkBadge');
-                  const atWorkNotification = document.getElementById('atWorkNotification');
-
-                  if (atWorkBadge && atWorkNotification) {
-                      const currentCount = parseInt(atWorkBadge.textContent);
-                      const newCount = currentCount - removedCount;
-
-                      atWorkBadge.textContent = newCount;
-                      atWorkNotification.textContent = `Выдано в работу ${newCount} ТМЦ`;
-
-                      if (newCount <= 0) {
-                          atWorkBadge.style.display = 'none';
-                          atWorkNotification.style.display = 'none';
-                      }
-                  }
-
-                  // Обновляем счетчики в группах
-                  const groups = modal.querySelectorAll('.brigade-group');
-                  groups.forEach(group => {
-                      const groupId = group.getAttribute('data-group-id');
-                      const visibleRows = group.querySelectorAll('.row-container1:not([style*="display: none"])');
-                      const countEl = group.querySelector('.items-count');
-
-                      if (countEl) {
-                          countEl.textContent = visibleRows.length;
-
-                          // Скрываем группу если нет видимых строк
-                          if (visibleRows.length === 0) {
-                              group.style.display = 'none';
-                          }
-                      }
-                  });
-              }*/
-
-            // Обработчик кнопки "Отправить в сервис"
-            // document.getElementById('btnSendToService').addEventListener('click', function()
-            /* document.getElementById('btnSendToService').addEventListener('click', function () {
-                 const selectedRows = modal.querySelectorAll('.row-container1.selected');
-                 if (selectedRows.length === 0) {
-                     alert('Выберите ТМЦ для отправки в сервис');
-                     return;
-                 }
-
-                 // Очищаем контейнер
-                 const container = document.getElementById('serviceItemsContainer');
-                 container.innerHTML = '';
-
-                 // Заполняем контейнер выбранными ТМЦ
-                 selectedRows.forEach(row => {
-                     const id = row.getAttribute('data-id');
-                     const name = row.cells[1].textContent; // Наименование из второго столбца
-
-                     const tr = document.createElement('tr');
-                     tr.innerHTML = `
-                             <td>${id}</td>
-                             <td>${name}</td>
-                             <td>
-                                 <textarea class="repair-reason-input" 
-                                         data-id="${id}" 
-                                         required></textarea>
-                             </td>
-                         `;
-                     container.appendChild(tr);
-                 });
-
-                 // Показываем модальное окно отправки в сервис
-                 const serviceModal = new bootstrap.Modal(document.getElementById('serviceModal'));
-                 serviceModal.show();
-             });*/
-
-
-            // Обработчик кнопки "Отправить" в сервисном окне
-            /* document.getElementById('btnSubmitService').addEventListener('click', function () {
-                 const inputs = document.querySelectorAll('#serviceItemsContainer .repair-reason-input');
-                 let allFilled = true;
-                 const items = [];
-
-                 inputs.forEach(input => {
-                     if (!input.value.trim()) {
-                         input.classList.add('error');
-                         allFilled = false;
-                     } else {
-                         input.classList.remove('error');
-                         items.push({
-                             id: input.getAttribute('data-id'),
-                             reason: input.value.trim()
-                         });
-                     }
-                 });
-
-                 if (!allFilled) {
-                     alert('Заполните причины ремонта для всех выбранных ТМЦ');
-                     return;
-                 }
-                 let statusService = document.getElementById("serviceModal").getAttribute("data-status");
-                 // Отправляем данные на сервер
-                 fetch('/src/BusinessLogic/ActionsTMC/processSendToService.php', {
-                     method: 'POST',
-                     headers: {
-                         'Content-Type': 'application/json'
-                     },
-                     body: JSON.stringify({
-                         items: items,
-                         statusService: statusService                       
-                     })
-                 })
-                     .then(response => response.json())
-                     .then(data => {
-                         if (data.success) {
-                             // Закрываем модальное окно отправки в сервис
-                             const serviceModal = bootstrap.Modal.getInstance(document.getElementById('serviceModal'));
-                             serviceModal.hide();
-
-                             const selectedRows = modal.querySelectorAll('.row-container1.selected');
-                             //console.log(selectedRows);
-
-                             // Скрываем отправленные строки в основном модальном окне
-                             selectedRows.forEach(row => {
-                                 row.style.display = 'none';
-                             });
-
-                             // Обновляем счетчики
-                             updateCounters(selectedRows.length);
-
-                             // Обновляем статусы в главной таблице
-                             if (typeof window.updateInventoryStatus === 'function') {
-                                 const tmcIds = items.map(item => item.id);
-                                 if(statusService == ServiceStatus.sendService){
-                                     window.updateInventoryStatus(tmcIds, StatusItem.ConfirmRepairTMC);                                    
-                                 }                                    
-
-                                 if(statusService == ServiceStatus.returnService)
-                                     window.updateInventoryStatus(tmcIds, StatusItem.Released);
-                             }
-
-                             //alert(`Отправлено в сервис: ${selectedRows.length} ТМЦ`);
-                         } else {
-                             alert('Ошибка: ' + data.message);
-                         }
-                     });
-             });*/
         });
     </script>
 <?php endif; ?>

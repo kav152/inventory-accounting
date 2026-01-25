@@ -15,7 +15,7 @@ export function executeActionForCUD(
   tableId,
   fields,
   rowClassName,
-  dataIdField = "id"
+  dataIdField = "id",
 ) {
   switch (statusEntity) {
     case Action.CREATE:
@@ -25,7 +25,7 @@ export function executeActionForCUD(
       updateRowsInTable(entity, tableId, fields, rowClassName, dataIdField);
       break;
     case Action.DELETE:
-      deleteRowsInTable(tableId, rowClassName, dataIdField);
+      deleteRowsInTable(entity, tableId, dataIdField);
       break;
   }
 }
@@ -39,7 +39,13 @@ export function executeActionForCUD(
  * @param {string} [dataIdField='id'] - Поле объекта, которое будет использоваться как data-id атрибут
  * @returns {void}
  */
-function createRowsInTable(entity, tableId, fields, rowClassName, dataIdField = "id") {
+function createRowsInTable(
+  entity,
+  tableId,
+  fields,
+  rowClassName,
+  dataIdField = "id",
+) {
   const tableBody = document.querySelector(`#${tableId} tbody`);
 
   if (!tableBody) {
@@ -51,7 +57,7 @@ function createRowsInTable(entity, tableId, fields, rowClassName, dataIdField = 
   const newRow = document.createElement("tr");
 
   //console.log(`Получаемый статус`);
- /* console.log(
+  /* console.log(
     StatusItem.getStatusClasses(StatusItem.getByDescription(entity["Status"]))
   );*/
   // Устанавливаем классы строки
@@ -61,12 +67,12 @@ function createRowsInTable(entity, tableId, fields, rowClassName, dataIdField = 
       statusClass =
         " " +
         StatusItem.getStatusClasses(
-          StatusItem.getByDescription(entity["Status"])
+          StatusItem.getByDescription(entity["Status"]),
         );
       newRow.setAttribute("onclick", "handleAction(event)");
       newRow.setAttribute(
         "data-status",
-        StatusItem.getByDescription(entity["Status"])
+        StatusItem.getByDescription(entity["Status"]),
       );
     }
     //console.log("Статус строки");
@@ -136,25 +142,27 @@ function updateRowsInTable(
   tableId,
   fields,
   rowClassName,
-  dataIdField = "id"
+  dataIdField = "id",
 ) {
   const tableBody = document.querySelector(`#${tableId} tbody`);
   if (!tableBody) {
     console.error(`Таблица с id ${tableId} не найдена`);
     return;
   }
-  
+
   // Находим существующую строку по data-id
-  const existingRow = tableBody.querySelector(`tr[data-id="${entity[dataIdField]}"]`);
+  const existingRow = tableBody.querySelector(
+    `tr[data-id="${entity[dataIdField]}"]`,
+  );
   if (!existingRow) {
     console.error(`Строка с data-id ${entity[dataIdField]} не найдена`);
     return;
   }
-  console.log(existingRow);  
+  console.log(existingRow);
 
   // Обновляем ячейки
   fields.forEach((column, index) => {
-    console.log(column);    
+    console.log(column);
     const td = existingRow.cells[index];
     console.log(`Строка - ${td}`);
     if (td) {
@@ -180,7 +188,7 @@ function updateRowsInTable111(
   tableId,
   fields,
   rowClassName,
-  dataIdField = "id"
+  dataIdField = "id",
 ) {
   const tableBody = document.querySelector(`#${tableId} tbody`);
   if (!tableBody) {
@@ -189,7 +197,9 @@ function updateRowsInTable111(
   }
 
   // Находим существующую строку по data-id
-  const existingRow = tableBody.querySelector(`tr[data-id="${entity[dataIdField]}"]`);
+  const existingRow = tableBody.querySelector(
+    `tr[data-id="${entity[dataIdField]}"]`,
+  );
   if (!existingRow) {
     console.error(`Строка с data-id ${entity[dataIdField]} не найдена`);
     return;
@@ -200,9 +210,11 @@ function updateRowsInTable111(
     // Если entity это массив (старый формат), берем первый элемент
     const userData = Array.isArray(entity) ? entity[0] : entity;
     const userId = userData[dataIdField];
-    
+
     // Находим индекс пользователя в коллекции
-    const userIndex = window.users.findIndex(user => user[dataIdField] == userId);
+    const userIndex = window.users.findIndex(
+      (user) => user[dataIdField] == userId,
+    );
     if (userIndex !== -1) {
       // Заменяем старые данные на новые
       window.users[userIndex] = { ...window.users[userIndex], ...userData };
@@ -224,6 +236,8 @@ function updateRowsInTable111(
   });
 }
 
+//deleteRowsInTable(tableId, rowClassName, dataIdField);
+
 /**
  * Функция для удаления строки из таблицы
  * @param {Array<Object>} entity - Объект с данными для удаления
@@ -233,13 +247,13 @@ function updateRowsInTable111(
 function deleteRowsInTable(entity, tableId, dataIdField = "id") {
   const tableBody = document.querySelector(`#${tableId} tbody`);
   if (!tableBody) {
-    console.error(`Таблица с id ${tableId} не найдена`);
+    console.error(`Таблица с id = ${tableId} не найдена`);
     return;
   }
 
   // Находим и удаляем строку по data-id
   const rowToDelete = tableBody.querySelector(
-    `tr[data-id="${entity[dataIdField]}"]`
+    `tr[data-id="${entity[dataIdField]}"]`,
   );
   if (rowToDelete) {
     rowToDelete.remove();
@@ -278,7 +292,7 @@ export class RowSelectionManager {
 
     // Добавляем обработчик событий
     tableContainer.addEventListener("click", (e) =>
-      this.handleTableClick(e, tableContainerId)
+      this.handleTableClick(e, tableContainerId),
     );
 
     //console.log(`Инициализировано выделение строк для таблицы: ${tableContainerId}`);

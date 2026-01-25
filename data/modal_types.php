@@ -39,4 +39,8 @@ return [
         'loader' => EditWriteOffModalLoader::class,
         'modalId' => 'edit_write_off'
     ],
+    'atWorkModal' => [
+        'loader' => AtWorkModalLoader::class,
+        'modalId' => 'atWorkModal'
+    ]
 ];

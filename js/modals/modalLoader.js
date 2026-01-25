@@ -11,55 +11,6 @@ import { Action } from '../../src/constants/actions.js';
 (function () {
 
   const statusEntity = Action.CREATE;
-  // Типы индификторов модального окна
-  /*function getModalIdByType(type) {
-    const modalIds = {
-      workModal: "workModal",
-      at_work: "atWorkModal",
-      confirm: "confirmModal",
-      confirmRepair: "confirmRepairModal",
-      distribute: "distributeModal",
-      serviceModal: "serviceModal",
-      create: "cardItemModal",
-      create_analog: "cardItemModal",
-      edit: "cardItemModal",
-      edit_write_off: "edit_write_off",
-      userModal: "userModal",
-    };
-    return modalIds[type] || null;
-  }
-*/
-
-  /*function initModalHandlers(type, modalElement) {
-    switch (type) {
-      case "workModal":
-        initWorkModalHandlers(modalElement);
-        break;
-      case "at_work":
-        initAtWorkModalHandlers(modalElement);
-        break;
-      case "confirm":
-        initConfirmModalHandlers(modalElement);
-        break;
-      case "confirmRepair":
-        initConfirmRepairModalHandlers(modalElement);
-        break;
-      case "distribute":
-        initDistributeHandlers(modalElement);
-        break;
-      case "serviceModal":
-        initSendToServiceModalHandlers(modalElement);
-      case "create":
-      case "create_analog":
-      case "edit":
-        initCardTMCModalHandlers(modalElement);
-      case "edit_write_off":
-        initCardWriteOffHandlers(modalElement);
-      case "userModal":
-        initUserModalHandlers(modalElement);
-        break;
-    }
-  }*/
 
   window.openModalAction = openModalAction;
   window.openEntityModal = openEntityModal;

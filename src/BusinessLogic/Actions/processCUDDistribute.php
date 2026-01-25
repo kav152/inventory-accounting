@@ -20,7 +20,7 @@ class processCUDDistribute extends CUDHandler
     protected function prepareData($postData)
     {
         $this->currentData = $postData;
-        error_log("Данные распределения: " . print_r($this->currentData, true));
+        //error_log("Данные распределения: " . print_r($this->currentData, true));
 
         return [
             'selectedTMCIds' => json_decode($postData['selectedTMCIds'] ?? '[]', true),

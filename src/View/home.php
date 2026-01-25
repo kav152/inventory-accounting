@@ -286,8 +286,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             <div class="notifications-container">
                 <!-- Всплывающее уведомление для ConfirmItem -->
                 <?php if ($confirmCount > 0): ?>
-                    <div class="notification-alert" id="confirmNotification" data-bs-toggle="modal"
-                        data-bs-target="#confirmModal">
+                    <div class="notification-alert" id="confirmNotification" onclick="openAtWorkModalModal()">
                         Принять <?= $confirmCount ?> ТМЦ
                     </div>
                 <?php endif; ?>
@@ -296,7 +295,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     <!-- Всплывающее уведомление для ConfirmRepairTMC -->
                     <?php if ($confirmRepairCount > 0): ?>
                         <div class="notification-alert notification-repair-alert" id="confirmRepairNotification"
-                            data-bs-toggle="modal" data-bs-target="#confirmRepairModal">
+                            onclick="openAtWorkModalModal()">
                             Подтвердить ремонт <?= $confirmRepairCount ?> ТМЦ
                         </div>
                     <?php endif; ?>
@@ -304,8 +303,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
 
                 <!-- Всплывающее уведомление для AtWorkTMC -->
                 <?php if ($brigadesToItemsCount > 0): ?>
-                    <div class="notification-alert notification-atwork-alert" id="atWorkNotification" data-bs-toggle="modal"
-                        data-bs-target="#atWorkModal">
+                    <div class="notification-alert notification-atwork-alert" id="atWorkNotification" onclick="openAtWorkModalModal()">
                         Выдано в работу <span id="atWorkCount"> <?= $brigadesToItemsCount ?> </span> ТМЦ
                     </div>
                 <?php endif; ?>
@@ -314,9 +312,9 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <?php endif; ?>
 
     <?php
-    include __DIR__ . '/Modal/at_work_modal.php';
-    include __DIR__ . '/Modal/confirm_modal.php';
-    include __DIR__ . '/Modal/confirmRepair_modal.php';
+    //include __DIR__ . '/Modal/at_work_modal.php';
+    //include __DIR__ . '/Modal/confirm_modal.php';
+    //include __DIR__ . '/Modal/confirmRepair_modal.php';
     ?>
 
     <nav id="sidebar">
@@ -575,19 +573,18 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-
         //import {rowSelectionManager } from '../../js/templates/cudRowsInTable.js';
         // Инициализация выделения строк для пользователей
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             if (window.rowSelectionManager) {
                 window.rowSelectionManager.initializeTable('inventoryTable', 'row-container');
             }
-        });        
+        });
     </script>
 
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             setupModalHandlers();
             setupNotificationsPanel();
         });
@@ -603,7 +600,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             panel.classList.add('expanded');
             toggleBtn.textContent = 'Свернуть';
 
-            toggleBtn.addEventListener('click', function () {
+            toggleBtn.addEventListener('click', function() {
                 if (panel.classList.contains('expanded')) {
                     panel.classList.remove('expanded');
                     panel.classList.add('collapsed');
@@ -616,104 +613,6 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             });
         }
 
-        // функция для обновления таблицы без перезагрузки
-       /* async function refreshTableAndNavigate(newItemId) {
-            showGlobalLoader("Обновление таблицы...");
-
-            try {
-                const response = await fetch("/src/BusinessLogic/getUpdatedTable.php");
-
-                if (!response.ok) {
-                    throw new Error(`Ошибка сервера: ${response.status}`);
-                }
-
-                const html = await response.text();
-
-                const tableBody = document.querySelector("#inventoryTable tbody");
-                if (tableBody) {
-                    tableBody.innerHTML = html;
-                    reattachTableEventHandlers();
-                    navigateToNewItemAJAX(newItemId);
-                }
-            } catch (error) {
-                console.error("Ошибка при обновлении таблицы:", error);
-                window.needFullReload = true;
-                handleSuccess();
-            } finally {
-                hideGlobalLoader();
-            }
-        }*/
-
-        // Функция для восстановления обработчиков событий
-      /*  function reattachTableEventHandlers() {
-            const rows = document.querySelectorAll(".row-container");
-
-            rows.forEach((row) => {
-                row.addEventListener("click", function (e) {
-                    e.preventDefault();
-
-                    if (e.ctrlKey) {
-                        this.classList.toggle("selected");
-                        lastSelectedRow = this;
-                        return;
-                    }
-
-                    if (e.shiftKey && lastSelectedRow) {
-                        const allRows = Array.from(document.querySelectorAll(".row-container"));
-                        const startIndex = allRows.indexOf(lastSelectedRow);
-                        const endIndex = allRows.indexOf(this);
-                        const [start, end] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
-
-                        removingSelection();
-                        for (let i = start; i <= end; i++) {
-                            allRows[i].classList.add("selected");
-                        }
-                    } else {
-                        removingSelection();
-                        this.classList.add("selected");
-                        lastSelectedRow = this;
-                    }
-                });
-            });
-
-            console.log(`Обработчики событий восстановлены для ${rows.length} строк`);
-        }*/
-
-
-
-        /* ================================================================================*/
-
-        // Обработчик клика по строке
-        /* let lastSelectedRow = null;
-         document.querySelectorAll(".row-container").forEach((row) => {
-             row.addEventListener("click", function(e) {
-                 e.preventDefault();
-
-                 if (e.ctrlKey) {
-                     this.classList.toggle("selected");
-                     lastSelectedRow = this;
-                 }
-
-                 if (e.shiftKey && lastSelectedRow) {
-                     const rows = Array.from(document.querySelectorAll(".row-container"));
-                     const startIndex = rows.indexOf(lastSelectedRow);
-                     const endIndex = rows.indexOf(this);
-
-                     const [start, end] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
-
-                     removingSelection();
-                     for (let i = start; i <= end; i++) {
-                         rows[i].classList.add("selected");
-                     }
-
-                 } else {
-                     removingSelection();
-                     this.classList.add("selected");
-                     lastSelectedRow = this;
-                 }
-             });
-         });*/
-
         // Снимаем выделение со всех строк
         function removingSelection() {
             document.querySelectorAll(".row-container").forEach(r =>
@@ -724,35 +623,27 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
         function setupModalHandlers() {
             const confirmModal = document.getElementById('confirmModal');
             if (confirmModal) {
-                confirmModal.addEventListener('hidden.bs.modal', function () {
+                confirmModal.addEventListener('hidden.bs.modal', function() {
                     handleSuccess();
                 });
             }
 
             const confirmRepairModal = document.getElementById('confirmRepairModal');
             if (confirmRepairModal) {
-                confirmRepairModal.addEventListener('hidden.bs.modal', function () {
+                confirmRepairModal.addEventListener('hidden.bs.modal', function() {
                     handleSuccess();
                 });
             }
 
             const atWorkModal = document.getElementById('atWorkModal');
             if (atWorkModal) {
-                atWorkModal.addEventListener('hidden.bs.modal', function () {
+                atWorkModal.addEventListener('hidden.bs.modal', function() {
                     handleSuccess();
                 });
             }
         }
 
-      /*  document.addEventListener('click', function (event) {
-            const modal = document.getElementById('adminPanelModal');
-            if (modal && event.target === modal) {
-                const modalInstance = bootstrap.Modal.getInstance(modal);
-                modalInstance.hide();
-            }
-        });*/
-
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             navigateToNewItem();
             measureReloadTime();
 
@@ -829,7 +720,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     selectAllItem.appendChild(selectAllLabel);
                     filterList.appendChild(selectAllItem);
 
-                    selectAllCheckbox.addEventListener('change', function () {
+                    selectAllCheckbox.addEventListener('change', function() {
                         const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
                         checkboxes.forEach(checkbox => {
                             checkbox.checked = this.checked;
@@ -879,11 +770,11 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 const columnValues = getColumnValues(columnIndex);
                 populateList(columnValues);
 
-                searchInput.addEventListener('input', function () {
+                searchInput.addEventListener('input', function() {
                     populateList(columnValues, this.value);
                 });
 
-                applyBtn.addEventListener('click', function () {
+                applyBtn.addEventListener('click', function() {
                     const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
                     const selectedValues = [];
 
@@ -901,7 +792,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     currentDropdown = null;
                 });
 
-                cancelBtn.addEventListener('click', function () {
+                cancelBtn.addEventListener('click', function() {
                     const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
                     dropdownContainer.classList.remove('show');
                     currentDropdown = null;
@@ -933,7 +824,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             }
 
             document.querySelectorAll('.filter-btn').forEach(button => {
-                button.addEventListener('click', function (e) {
+                button.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const columnIndex = this.getAttribute('data-column');
                     const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
@@ -960,7 +851,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 });
             });
 
-            document.addEventListener('click', function (e) {
+            document.addEventListener('click', function(e) {
                 if (currentDropdown && !currentDropdown.contains(e.target)) {
                     currentDropdown.classList.remove('show');
                     currentDropdown.innerHTML = '';
@@ -1029,9 +920,8 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 }
             }, 100);
         }
-
     </script>
-    
+
     <script type="module" src="/js/templates/expandableSection.js"></script>
     <script type="module" src="/js/templates/entityActionTemplate.js"></script>
     <script type="module" src="/js/modalTypes.js"></script>

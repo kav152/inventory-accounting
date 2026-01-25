@@ -1,29 +1,16 @@
-// Обработчик открытия модального окна "В работу ТМЦ"
-(function () {
-  function openWorkModal() {
-    const selectedRows = document.querySelectorAll(
-      "#inventoryTable tbody tr.row-container.selected"
-    );
-    
-    if (selectedRows.length === 0) {
-      showNotification(
-        TypeMessage.notification,
-        "Выберите ТМЦ для передачи в работу"
-      );
-      return;
-    }
-    let validStatuses = [StatusItem.Released];
-    openModalAction("workModal", selectedRows, validStatuses);
-    window.removingSelection();
-  }
-
-  window.openWorkModal = openWorkModal;
-  //window.initWorkModalHandlers = initWorkModalHandlers;
-})();
+import { showNotification } from "../modals/setting.js";
+import { TypeMessage } from "../../src/constants/typeMessage.js";
+import { StatusItem } from "../../src/constants/statusItem.js";
+import { Action } from "../../src/constants/actions.js";
+import {
+  executeEntityAction,
+  getCollectFormData,
+} from "../templates/entityActionTemplate.js";
+import { updateInventoryStatus } from "../updateFunctions.js";
 
 /**
  * Обработкчик workModal
- * @param {*} modalElement 
+ * @param {*} modalElement
  */
 export function initWorkModalHandlers(modalElement) {
   // Обработчики для кнопок расширения/сворачивания
@@ -45,16 +32,12 @@ export function initWorkModalHandlers(modalElement) {
     document.getElementById("createBrigadeSection").style.display = "none";
   });
 
-  document
-    .getElementById("btnCancelCreate")
-    .addEventListener("click", function () {
+  document.getElementById("btnCancelCreate").addEventListener("click", function () {
       document.getElementById("createBrigadeSection").style.display = "none";
     });
 
   // Обработчик создания бригады
-  document
-    .getElementById("createBrigadeForm")
-    .addEventListener("submit", async function (e) {
+  document.getElementById("createBrigadeForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const formData = new FormData(this);
@@ -73,7 +56,7 @@ export function initWorkModalHandlers(modalElement) {
           const option = document.createElement("option");
           option.value = data.id;
           option.textContent = `${formData.get("brigade_name")} (${formData.get(
-            "brigadir"
+            "brigadir",
           )})`;
           option.selected = true;
           select.appendChild(option);
@@ -82,7 +65,7 @@ export function initWorkModalHandlers(modalElement) {
           document.getElementById("createBrigadeSection").style.display =
             "none";
 
-            needFullReload = true;
+          needFullReload = true;
 
           // Очищаем форму
           this.reset();
@@ -93,15 +76,13 @@ export function initWorkModalHandlers(modalElement) {
         console.error("Error:", error);
         showNotification(
           TypeMessage.error,
-          "Произошла ошибка при создании бригады"
+          "Произошла ошибка при создании бригады",
         );
       }
     });
 
   // Обработчик передачи ТМЦ в работу
-  document
-    .getElementById("workForm")
-    .addEventListener("submit", async function (e) {
+  document.getElementById("workForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const brigadeId = document.getElementById("brigadeSelect").value;
@@ -113,7 +94,7 @@ export function initWorkModalHandlers(modalElement) {
       if (!window.selectedTMCIds || window.selectedTMCIds.length === 0) {
         showNotification(
           TypeMessage.notification,
-          "Не выбрано ни одного ТМЦ для передачи"
+          "Не выбрано ни одного ТМЦ для передачи",
         );
         return;
       }
@@ -121,49 +102,65 @@ export function initWorkModalHandlers(modalElement) {
       const modalElement = document.getElementById("workModal");
       const modal = bootstrap.Modal.getInstance(modalElement);
 
-      const formData = new FormData(this);
-      formData.append("tmc_ids", JSON.stringify(window.selectedTMCIds));
-      formData.append("brigade_id", JSON.stringify(brigadeId));
-      /*
-      
-      */
+      const form = new FormData(this);
+      form.append("tmc_ids", JSON.stringify(window.selectedTMCIds));
+      form.append("brigade_id", JSON.stringify(brigadeId));
+      //const formData = getCollectFormData(form, Action.UPDATE);
+
+      const data = {
+        statusEntity: statusEntity,
+        tmc_ids: JSON.stringify(window.selectedTMCIds),
+        brigade_id: JSON.stringify(brigadeId),
+      };
 
       try {
-        const response = await fetch(
-          "/src/BusinessLogic/ActionsTMC/processWorkTMC.php",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tmc_ids: window.selectedTMCIds,
-              brigade_id: brigadeId,
-            }),
-          }
-        );
+        const result = await executeEntityAction({
+          action: Action.UPDATE,
+          formData: data,
+          url: "/src/BusinessLogic/Actions/proccessCUDWorkTMC.php",
+          successMessage: "ТМЦ успешно переданы в работу",
+        });
 
-        const data = await response.json();
-
-        if (data.success) {
-          // Обновляем статусы в таблице
-          updateInventoryStatus(window.selectedTMCIds, StatusItem.AtWorkTMC);
-          // Обновляем счетчики
-          updateCounters({
-            brigadesToItemsCount: window.selectedTMCIds.length,
-          });
-
-          modal.hide();
-          //location.reload();
-        } else {
-          showNotification(TypeMessage.error, data.message);
-        }
+        updateInventoryStatus(window.selectedTMCIds, StatusItem.AtWorkTMC);
+        updateCounters({
+          brigadesToItemsCount: window.selectedTMCIds.length,
+        });
+        modal.hide();
       } catch (error) {
         console.error("Error:", error);
         showNotification(
           TypeMessage.error,
-          "Произошла ошибка при передаче ТМЦ в работу"
+          "Произошла ошибка при передаче ТМЦ в работу",
         );
       }
     });
+  
 }
+
+
+
+// Обработчик открытия модального окна "В работу ТМЦ"
+(function () {
+  function openWorkModal() {
+    const selectedRows = document.querySelectorAll(
+      "#inventoryTable tbody tr.row-container.selected",
+    );
+
+    if (selectedRows.length === 0) {
+      showNotification(
+        TypeMessage.notification,
+        "Выберите ТМЦ для передачи в работу",
+      );
+      return;
+    }
+    let validStatuses = [StatusItem.Released];
+    openModalAction("workModal", selectedRows, validStatuses);
+    window.removingSelection();
+  }
+  function openAtWorkModalModal() {
+    openEntityModal(Action.CREATE, "atWorkModal");
+  }
+
+  window.openAtWorkModalModal = openAtWorkModalModal;
+  window.openWorkModal = openWorkModal;  
+})();
