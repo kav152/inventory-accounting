@@ -44,7 +44,7 @@
                                                     <input type="text" name="InvoiceNumber" class="form-control">
                                                 </div>
                                                 <div class="col">
-                                                    <label class="form-label">Сумма</label>
+                                                    <label class="form-label">Сумма ремонта/списания</label>
                                                     <input type="number" name="RepairCost" class="form-control" step="0.01">
                                                 </div>
                                             </div>

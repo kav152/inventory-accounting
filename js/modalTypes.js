@@ -8,6 +8,8 @@ import { EntityModalConfig, ModalConfigRegistry } from "../js/index.js";
 import { initRepairBasketModalHandlers } from "../js/modals/repairBasketModal.js";
 import { initCardWriteOffHandlers } from "../js/writeOffFunctions.js";
 import { initAtWorkModalModalHandlers } from "../js/modals/atWorkModal.js";
+import { initСonfirmModalHandlers } from '../js/modals/confirmModal.js';
+import { initConfirmRepairModalHandlers } from '../js/modals/confirmRepairModal.js';
 
 /**
  * Глобальный реестр конфигураций модальных окон
@@ -76,6 +78,29 @@ modalRegistry.register({
   actions: ["update"],
 });
 
+modalRegistry.register({
+  modalType: "confirmModal",
+  modalId: "confirmModal",
+  handler: initСonfirmModalHandlers,
+  entityType: "inventoryItem_confirmModal",
+  tableContainerId: "inventoryTable",
+  rowClass: "row-container",
+  entityName: "ТМЦ",
+  title: "Передача/возврат ТМЦ от склада к складу",
+  actions: ["create", "update", "delete"],
+});
+
+modalRegistry.register({
+  modalType: "confirmRepairModal",
+  modalId: "confirmRepairModal",
+  handler: initConfirmRepairModalHandlers,
+  entityType: "inventoryItem_confirmRepairModal",
+  tableContainerId: "inventoryTable",
+  rowClass: "row-container",
+  entityName: "ТМЦ",
+  title: "Принять/отказать в ремонте ТМЦ",
+  actions: ["create", "update", "delete"],
+});
 
 modalRegistry.register({
   modalType: "atWorkModal",

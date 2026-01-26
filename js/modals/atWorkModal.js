@@ -6,6 +6,7 @@ import { Action } from "../../src/constants/actions.js";
 import { openEntityModal } from "../modals/modalLoader.js";
 import { executeActionForCUD } from "../templates/cudRowsInTable.js";
 import { TypeMessage } from "../../src/constants/typeMessage.js";
+import { showNotification } from "./setting.js";
 import { updateInventoryStatus } from "../updateFunctions.js";
 import { StatusItem } from "../../src/constants/statusItem.js";
 import { ServiceStatus } from "../../src/constants/statusService.js";
@@ -14,12 +15,16 @@ import { ServiceStatus } from "../../src/constants/statusService.js";
  * Отправить в сервис
  * @param {*} tmcId
  */
-async function  sendServiceForm(tmcId) {
+async function sendServiceForm(tmcId) {
   const items = [];
   const formRow = document
     .querySelector(`form[data-tmc-id="${tmcId}"]`)
     ?.closest("tr");
   const reason = formRow.querySelector('textarea[name="reason"]').value.trim();
+  if (reason === "") {
+    showNotification(TypeMessage.error, `Поле "Причина ремонта" обязательно для заполнения`);
+    return;
+  }
   items.push({ id: tmcId, reason: reason });
 
   const statusService = ServiceStatus.sendService;
@@ -38,19 +43,11 @@ async function  sendServiceForm(tmcId) {
 
   const data = await response.json();
   if (data.success) {
-    console.log('updateInventoryStatus');
-    /*updateInventoryStatus([tmcId],
-      ServiceStatus.sendService == statusService
-        ? StatusItem.ConfirmRepairTMC
-        : ServiceStatus.returnService == statusService
-          ? StatusItem.Released
-          : -1,
-    );*/
 
     if (formRow) {
-     /* console.log(
-        `Отправляем тмц в ремонт его ид="${tmcId}", причина -  ${reason}`,
-      );*/
+      /* console.log(
+         `Отправляем тмц в ремонт его ид="${tmcId}", причина -  ${reason}`,
+       );*/
 
       const tableBody = formRow.closest("tbody");
       //console.log(tableBody);

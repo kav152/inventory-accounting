@@ -1,6 +1,27 @@
-(function () {
+import {
+  executeEntityAction,
+  getCollectFormData
+} from "../templates/entityActionTemplate.js";
+import { Action } from "../../src/constants/actions.js";
+import { openEntityModal } from "../modals/modalLoader.js";
+import { executeActionForCUD } from "../templates/cudRowsInTable.js";
+import { updateInventoryStatus } from "../updateFunctions.js";
+import { TypeMessage } from "../../src/constants/typeMessage.js";
+import { showNotification } from "./setting.js";
+
+/**
+* Обработчик работы модального окна [yourEntity]
+* @param {HTMLElement} modalElement 
+*/
+export function initConfirmRepairModalHandlers(modalElement) {
+  // 1. Инициализация обработчиков формы
+  modalElement.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    await handleConfirmRepairFormSubmit(modalElement);
+  });
+
   // Обработчики для кнопок "В ремонт" и "Списать"
-  document.querySelectorAll(".itemRepair-row").forEach((btn) => {
+  modalElement.querySelectorAll(".itemRepair-row").forEach((btn) => {
     btn.addEventListener("click", function () {
       const id = this.getAttribute("data-id");
       const isRepair = this.classList.contains("btn-repair");
@@ -20,18 +41,57 @@
     });
   });
 
-  async function sendForRepair(idTMC, action) {
+  // 2. Инициализация динамических элементов (если нужны)
+  //initDynamicElements(modalElement);
+}
 
-    console.log(action);
+/**
+* Инициализация динамических элементов
+*/
+function initDynamicElements(modalElement) {
+
+}
+
+/**
+* Обработчик отправки формы
+*/
+async function handleConfirmRepairFormSubmit(modalElement) {
+
+}
+
+
+(function () {
+
+  async function sendForRepair(idTMC, action) {
     const repairFormContainer = document.getElementById(`repairForm${idTMC}`);
     // Извлекаем саму форму внутри контейнера
     const form = repairFormContainer.querySelector("form.repair-data-form");
     const formData = new FormData(form);
     formData.append("action", action);
 
-   /* for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }*/
+    // Валидация обязательных полей
+    const requiredFields = {
+      IDLocation: "Организация",
+      InvoiceNumber: "Счет",
+      RepairCost: "Сумма ремонта/списания",
+      RepairDescription: "Описание ремонта",
+    };
+
+    let isValid = true;
+    for (const [fieldName, fieldLabel] of Object.entries(requiredFields)) {
+      const field = form.elements[fieldName];
+      if (!field || field.value === "0" || field.value.trim() === "") {
+        showNotification(TypeMessage.error, `Поле "${fieldLabel}" обязательно для заполнения`);
+        field?.focus();
+        isValid = false;
+        break;
+      }
+    }
+    if (!isValid) return;
+
+    /* for (let [key, value] of formData.entries()) {
+       console.log(`${key}: ${value}`);
+     }*/
 
     try {
       const response = await fetch(
@@ -66,7 +126,7 @@
         const notification = document.getElementById(
           "confirmRepairNotification"
         );
-        const count = parseInt(badge.textContent)-1;
+        const count = parseInt(badge.textContent) - 1;
         //console.log("Кол-во");
         //console.log(count);
         badge.textContent = count;
@@ -80,7 +140,7 @@
             document.getElementById("confirmRepairModal")
           );
           modal.hide();
-          
+
         }
 
         /* === */
@@ -98,5 +158,10 @@
     //console.log(`ИД:${idTMC}. ${action}. ${IDLocation}`);
   }
 
+  function openConfirmRepairModal() {
+    openEntityModal(Action.CREATE, "confirmRepairModal");
+  }
+
   window.sendForRepair = sendForRepair;
+  window.openConfirmRepairModal = openConfirmRepairModal;
 })();

@@ -286,7 +286,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             <div class="notifications-container">
                 <!-- Всплывающее уведомление для ConfirmItem -->
                 <?php if ($confirmCount > 0): ?>
-                    <div class="notification-alert" id="confirmNotification" onclick="openAtWorkModalModal()">
+                    <div class="notification-alert" id="confirmNotification" onclick="openConfirmModal()">
                         Принять <?= $confirmCount ?> ТМЦ
                     </div>
                 <?php endif; ?>
@@ -295,7 +295,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     <!-- Всплывающее уведомление для ConfirmRepairTMC -->
                     <?php if ($confirmRepairCount > 0): ?>
                         <div class="notification-alert notification-repair-alert" id="confirmRepairNotification"
-                            onclick="openAtWorkModalModal()">
+                            onclick="openConfirmRepairModal()">
                             Подтвердить ремонт <?= $confirmRepairCount ?> ТМЦ
                         </div>
                     <?php endif; ?>
@@ -930,8 +930,8 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <script type="module" src="/js/modals/cardItemModal.js"></script>
     <script type="module" src="/js/modals/distributeModal.js"></script>
     <script type="module" src="/js/modals/workModal.js"></script>
-    <script src="/js/modals/confirmModal.js"></script>
-    <script src="/js/modals/confirmRepairModal.js"></script>
+    <script type="module" src="/js/modals/confirmModal.js"></script>
+    <script type="module" src="/js/modals/confirmRepairModal.js"></script>
     <script type="module" src="/js/modals/serviceModal.js"></script>
     <script type="module" src="/js/writeOffFunctions.js"></script>
 

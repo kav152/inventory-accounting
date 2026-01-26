@@ -42,5 +42,13 @@ return [
     'atWorkModal' => [
         'loader' => AtWorkModalLoader::class,
         'modalId' => 'atWorkModal'
+    ],
+    'confirmModal' => [
+        'loader' => ConfirmModalLoader::class,
+        'modalId' => 'confirmModal'
+    ],
+    'confirmRepairModal' => [
+        'loader' => ConfirmRepairModalLoader::class,
+        'modalId' => 'confirmRepairModal'
     ]
 ];
