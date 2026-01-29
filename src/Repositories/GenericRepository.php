@@ -457,7 +457,7 @@ class GenericRepository implements RepositoryInterface
         return false;
     }
 
-    public function delete(object $entity): void
+    public function delete(object $entity): bool
     {
         if (!$entity instanceof BaseEntity || !$entity->getId()) {
             throw new InvalidArgumentException("Invalid entity for deletion");
@@ -471,6 +471,6 @@ class GenericRepository implements RepositoryInterface
             $sql
             /*    "DELETE FROM {$this->tableName} WHERE id = :id"*/
         );
-        $stmt->execute(['id' => $entity->getId()]);
+        return $stmt->execute(['id' => $entity->getId()]);
     }
 }

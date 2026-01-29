@@ -4,5 +4,5 @@ interface RepositoryInterface {
     public function findBy(string $property): ?Collection;
     public function findById(int $id, string $nameID): ?object;
     public function save(object $entity, string $status = null): ?object;
-    public function delete(object $entity): void;
+    public function delete(object $entity): bool;
 }

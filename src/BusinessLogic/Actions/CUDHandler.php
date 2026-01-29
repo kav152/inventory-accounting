@@ -21,7 +21,7 @@ abstract class CUDHandler
      * Основной метод обработки запроса
      */
     public function handleRequest()
-    {        
+    {
         header('Content-Type: application/json');
 
         try {
@@ -30,7 +30,7 @@ abstract class CUDHandler
                 throw new Exception('Метод не разрешен');
             }
 
-            
+
             $dataJson = json_decode(file_get_contents('php://input'), true);
             if (!$dataJson) {
                 error_log('Необнаружены данные для выполнения дейтсвия для сущости: ' . $this->entityClass);
@@ -47,9 +47,9 @@ abstract class CUDHandler
 
 
             //error_log('выполнение действия - executeAction');
-           // error_log(`action -`. print_r($action, true));
-           // error_log(`data -`. print_r($data, true));
-           // error_log(`id -`. print_r($id, true));
+            // error_log(`action -`. print_r($action, true));
+            // error_log(`data -`. print_r($data, true));
+            // error_log(`id -`. print_r($id, true));
             // Выполнение действия
             $result = $this->executeAction($action, $data, $id, $patofID);
 
@@ -66,7 +66,6 @@ abstract class CUDHandler
      */
     protected function prepareData($postData)
     {
-        //error_log(print_r($postData, true));
         return $postData;
     }
 
@@ -79,7 +78,7 @@ abstract class CUDHandler
      * @throws \Exception
      */
     protected function executeAction($action, $data, $id, $patofID)
-    {        
+    {
         switch ($action) {
             case 'create':
                 //error_log('Создаем сущность!');
@@ -88,7 +87,7 @@ abstract class CUDHandler
                 //error_log('Обновляем сущность!');
                 return $this->update($id, $data);
             case 'delete':
-                return $this->delete($id);
+                return $this->delete($data);
             default:
                 throw new Exception('Неизвестное действие: ' . $action);
         }
@@ -108,7 +107,8 @@ abstract class CUDHandler
      * Обновление сущности
      */
     protected function update($id, $data, int $patofID = null)
-    {       
+    {
+        //error_log(print_r($data));
         $entity = new $this->entityClass($data);
         $entity->{$this->getIdFieldName()} = $id;
         return $this->controller->update($entity);
@@ -117,9 +117,12 @@ abstract class CUDHandler
     /**
      * Удаление сущности
      */
-    protected function delete($id)
+    protected function delete($data):bool
     {
-        return $this->controller->delete($id);
+        //error_log('delete-HHHHH');
+        //error_log(print_r($data));
+        $entity = new $this->entityClass($data);
+        return $this->controller->delete($entity);
     }
 
     /**

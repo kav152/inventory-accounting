@@ -268,6 +268,15 @@ class ItemController
         return $result;
     }
 
+    public function delete($data): bool
+    {
+        //error_log(print_r($data, true));
+       // $brigadesRepository = new BrigadesRepository(DatabaseFactory::create());
+       // $brigades = $brigadesRepository->findById($data->getID(), 'IDBrigade');
+
+        return $this->cudFactory->delete($data);
+    }
+
     /**
      * Создание RegistrationInventoryItem для нового InventoryItem
      */
@@ -660,7 +669,7 @@ class ItemController
         $brigadesRepository = $this->container->get(BrigadesRepository::class);
         $sql = " WHERE IDResponsibleIssuing = $idUser";
         $brigades = $brigadesRepository->findBy($sql);
-        return $brigades;
+        return $brigades ?? null;
     }
 
     /**
@@ -687,15 +696,6 @@ class ItemController
         }
     }
 
-    /**
-     * Создать бригаду
-     * @param Brigades $brigades
-     */
-    public function createBrigade(Brigades $brigades): ?Brigades
-    {
-        $brigadesRepository = $this->container->get(BrigadesRepository::class);
-        return $brigadesRepository->save($brigades);
-    }
 
     public function returnTMCtoWork($tmcId, $brigadeId): bool
     {
@@ -828,7 +828,8 @@ class ItemController
             case OperationType::ACCEPT_FOR_REPAIR:
                 $historyOperations->AcceptForRepairTMC($inventoryItem, $note);
                 break;
-        };
+        }
+        ;
     }
 
     /**

@@ -238,11 +238,11 @@ function initDynamicElements(modalElement) {
           successMessage: "ТМЦ успешно переданы на склад",
         });
 
-        const tableBody = modalElement.querySelector(`#atWorkTable tbody`);
         let brigadesToItemsCount = 0;
         tmcIds.forEach((id) => {
           // Находим и удаляем строку по data-id
-          const rowToDelete = tableBody.querySelector(`tr[data-id="${id}"]`);
+          const rowToDelete = modalElement.querySelector(`tr.row-container1[data-id="${id}"]`);
+          //const rowToDelete = tableBody.querySelector(`tr[data-id="${id}"]`);
           if (rowToDelete) {
             rowToDelete.remove();
             brigadesToItemsCount = -1;

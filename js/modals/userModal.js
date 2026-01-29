@@ -9,6 +9,7 @@ import { showNotification } from "./setting.js";
 import { TypeMessage } from "../../src/constants/typeMessage.js";
 
 
+
 (function () {
   /**
    * Открыть модальное окно Пользователя
@@ -81,7 +82,7 @@ async function handleUserFormSubmit(modalElement) {
       action: window.statusEntity,
       formData: userData,
       url: "/src/BusinessLogic/Actions/processCUDUsers.php",
-      successMessage: "Пользователь добавлен успешно",
+      successMessage: statusEntity === Action.CREATE ? "Пользователь добавлен" : "Параметры пользователя обновлены",
     });
 
     executeActionForCUD(
@@ -118,12 +119,12 @@ async function saveUsersStatuses() {
       // Получаем все данные из data-атрибутов
       const id = row.getAttribute("data-id");
       const name = row.getAttribute("data-name");
-      const patronymic = row.getAttribute("data-patronymic");    
+      const patronymic = row.getAttribute("data-patronymic");
       const activeCheckbox = row.querySelector('input[name="active[]"]');
       const statusSelect = row.querySelector('select[name="Status"]');
 
       //console.log(row);
-      
+
       // Сохраняем данные пользователя
       const usersData = {
         statusEntity: Action.UPDATE,

@@ -158,7 +158,7 @@ function updateRowsInTable(
     console.error(`Строка с data-id ${entity[dataIdField]} не найдена`);
     return;
   }
-  console.log(existingRow);
+  //console.log(existingRow);
 
   // Обновляем ячейки
   fields.forEach((column, index) => {

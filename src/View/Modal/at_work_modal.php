@@ -207,7 +207,7 @@
 
                                 <div class="collapse" id="collapseGroup<?= $group['id'] ?>">
                                     <div class="brigade-content">
-                                        <table id="atWorkTable">
+                                        <table class="atWorkTable">
                                             <thead>
                                                 <tr>
                                                     <th>Ид.</th>

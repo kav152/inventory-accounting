@@ -96,6 +96,13 @@ class CUDFactory
                 City::class,
                 'City'
             ),
+            'Brigades' => fn() => new CUDGenericService(
+                $this->db,
+                $this->logger,
+                $this->container->get(BrigadesRepository::class),
+                Brigades::class,
+                'Brigades'
+            ),
         ];
     }
 
@@ -104,10 +111,9 @@ class CUDFactory
      */
     private function getCUDHandler($entityObject): CUDGenericService
     {
-
+        //error_log('entityObject');
+        //error_log(print_r($entityObject, true));
         $entityType = $entityObject->getTypeEntity();
-        //error_log('entityType');
-        //error_log($entityType);
 
         if (!isset($this->handlers[$entityType])) {
             throw new ValidationException(

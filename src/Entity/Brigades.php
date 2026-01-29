@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/../Repositories/BaseEntity.php';
+require_once __DIR__ . '/../Repositories/BaseEntity.php';
 
 class Brigades extends BaseEntity
 {
@@ -9,21 +9,23 @@ class Brigades extends BaseEntity
     public string $NameBrigadir;
 
     public function __construct(array $data = [])
-    {        
-        if(!empty($data))
-        {
-            $this->IDBrigade= isset($data['IDBrigade']) ? (int)$data['IDBrigade'] : 0;
-            $this->NameBrigade = (string)($data['NameBrigade'] ?? '');
-            $this->IDResponsibleIssuing= isset($data['IDResponsibleIssuing']) ? (int)$data['IDResponsibleIssuing'] : -10;
-            $this->NameBrigadir = (string)($data['NameBrigadir'] ?? '');
+    {
+        if (!empty($data)) {
+
+            $this->IDBrigade = isset($data['IDBrigade']) ? (int) $data['IDBrigade'] : 0;
+            $this->NameBrigade = (string) ($data['NameBrigade'] ?? '');
+            $this->IDResponsibleIssuing = isset($data['IDResponsibleIssuing']) ? (int) $data['IDResponsibleIssuing'] : -10;
+            $this->NameBrigadir = (string) ($data['NameBrigadir'] ?? '');
         }
     }
 
-    public function getId(): int {
+    public function getId(): int
+    {
         return $this->IDBrigade ?? 0;
     }
 
-    public function setId(int $id): void {
+    public function setId(int $id): void
+    {
         $this->IDBrigade = $id;
     }
 
