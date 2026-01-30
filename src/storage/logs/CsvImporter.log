@@ -1,0 +1,10 @@
+[30-Jan-2026 10:38:47 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[30-Jan-2026 10:38:47 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:38:50 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[30-Jan-2026 10:38:51 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[30-Jan-2026 11:13:07 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[30-Jan-2026 11:13:07 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:08 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[30-Jan-2026 11:13:08 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:12 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[30-Jan-2026 11:13:12 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1

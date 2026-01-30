@@ -1,0 +1,63 @@
+[30-Jan-2026 10:37:41 Europe/Moscow] Данные RepairItem: Array
+(
+    [ID_TMC] => 188
+    [statusEntity] => update
+)
+
+[30-Jan-2026 10:37:41 Europe/Moscow] findBy: SELECT * FROM RepairItem WHERE ID_TMC = 0
+[30-Jan-2026 10:37:41 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:38:51 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:38:53 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:38:57 Europe/Moscow] Данные RepairItem: Array
+(
+    [ID_TMC] => 140
+    [statusEntity] => update
+)
+
+[30-Jan-2026 10:39:14 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:39:28 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:40:14 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:40:18 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:40:45 Europe/Moscow] Данные RepairItem: Array
+(
+    [ID_TMC] => 188
+    [statusEntity] => update
+)
+
+[30-Jan-2026 10:40:50 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:41:18 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:42:26 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:42:32 Europe/Moscow] Данные RepairItem: Array
+(
+    [ID_TMC] => 82
+    [statusEntity] => update
+)
+
+[30-Jan-2026 10:42:32 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:03 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:10 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:12 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:15 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:16 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:24 Europe/Moscow] Данные RepairItem: Array
+(
+    [ID_TMC] => 25
+    [statusEntity] => update
+)
+
+[30-Jan-2026 10:43:24 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:43:32 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 10:49:01 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:06 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:12 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:23 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:26 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:30 Europe/Moscow] Данные RepairItem: Array
+(
+    [ID_TMC] => 518
+    [statusEntity] => update
+)
+
+[30-Jan-2026 11:13:31 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:34 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[30-Jan-2026 11:13:35 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
