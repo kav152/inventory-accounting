@@ -79,6 +79,10 @@ class LocationController
     public function create($object): ?object
     {
         $result = $this->cudFactory->create($object);
+        $cityRepository = $this->container->get(CityRepository::class);
+        $city = $cityRepository->findById($result->IDCity, "IDCity");
+
+        $result->City = $city;
         return $result;
     }
     /**
@@ -111,6 +115,4 @@ class LocationController
 
         return null;
     }
-
-    
 }

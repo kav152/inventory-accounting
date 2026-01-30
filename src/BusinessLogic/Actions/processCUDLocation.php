@@ -54,9 +54,9 @@ class processCUDLocation extends CUDHandler
             'City' => [
                 'NameCity' => $location->City->NameCity,
             ],
-            'isMainWarehouse' => $location->isMainWarehouse,
+            /*'isMainWarehouse' => $location->isMainWarehouse,
             'FormsJointStockCompanies' => $location->FormsJointStockCompanies,
-            'IsRepair' => $location->IsRepair,
+            'IsRepair' => $location->IsRepair,*/
         ];
     }
 }

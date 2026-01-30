@@ -119,6 +119,7 @@ async function saveUsersStatuses() {
       // Получаем все данные из data-атрибутов
       const id = row.getAttribute("data-id");
       const name = row.getAttribute("data-name");
+      const surname = row.getAttribute("data-surname")
       const patronymic = row.getAttribute("data-patronymic");
       const activeCheckbox = row.querySelector('input[name="active[]"]');
       const statusSelect = row.querySelector('select[name="Status"]');

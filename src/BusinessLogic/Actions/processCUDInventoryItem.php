@@ -110,17 +110,17 @@ class processCUDInventoryItem extends CUDHandler
         }
     }
 
-    protected function delete($id)
+    protected function delete($data):bool
     {
         try {
             // Получаем существующий элемент
-            $existingItem = $this->itemController->getInventoryItem($id);
+            $existingItem = $this->itemController->getInventoryItem($data->getId());
             if (!$existingItem) {
-                throw new Exception("InventoryItem с ID {$id} не найден");
+                throw new Exception("InventoryItem с ID {$data->getId()} не найден");
             }
 
             // Используем фабрику через контроллер для удаления
-            return $this->itemController->delete($existingItem);
+            return $this->itemController->delete($data);
 
         } catch (Exception $e) {
             error_log("Ошибка при удалении InventoryItem: " . $e->getMessage());

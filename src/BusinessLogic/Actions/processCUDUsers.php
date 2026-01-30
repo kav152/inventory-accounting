@@ -68,67 +68,15 @@ class processCUDUsers extends CUDHandler
         ];
     }
 
-    /*  protected function executeAction($action, $data, $id, $patofID)
-    {
-        error_log('Выполняем массовое обновление пользователей');
-
-        if ($action !== 'update') {
-            throw new Exception('Для массового обновления доступно только действие UPDATE');
-        }
-
-        // Получаем все данные пользователей из исходного POST
-        $jsonData = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($jsonData['users']) || empty($jsonData['users'])) {
-            throw new Exception('Нет данных для обновления');
-        }
-
-        $results = [];
-        $userController = new UserController();
-
-        foreach ($jsonData['users'] as $userId => $userData) {
-            try {
-                // Создаем полный объект пользователя
-                $userUpdateData = [
-                    'IDUser' => (int)$userId,
-                    'Surname' => $userData['Surname'] ?? '',
-                    'Name' => $userData['Name'] ?? '',
-                    'Patronymic' => $userData['Patronymic'] ?? '',
-                    'Password' => '', // Пароль не меняем при массовом обновлении
-                    'Status' => isset($userData['Status']) ? (int)$userData['Status'] : 1,
-                    'isActive' => in_array($userId, $jsonData['active'] ?? [])
-                ];
-
-                // Получаем текущие данные пользователя для сохранения пароля
-                $currentUser = $userController->getUser($userId);
-                if ($currentUser && !empty($currentUser->Password)) {
-                    $userUpdateData['Password'] = $currentUser->Password;
-                }
-
-                $user = new User($userUpdateData);
-                $result = $userController->update($user);
-                $results[] = $result;
-
-                error_log("Обновлен пользователь ID: {$userId}, Статус: {$userUpdateData['Status']}, Активен: " . ($userUpdateData['isActive'] ? 'Да' : 'Нет'));
-            } catch (Exception $e) {
-                error_log("Ошибка при обновлении пользователя ID {$userId}: " . $e->getMessage());
-                throw new Exception("Ошибка при обновлении пользователя ID {$userId}: " . $e->getMessage());
-            }
-        }
-
-        return $results;
-    }*/
-
     protected function prepareResultEntity($user)
     {
         return [
                 'id' => $user->getId(),
                 'Surname' => $user->Surname,
-                'Name' => $user->Name,
-                'Patronymic' => $user->Patronymic,
+                'Name' => $user->Name,        
+                'Patronymic' => $user->Patronymic,        
                 'Status' => $user->Status,
                 'isActive' => $user->isActive,
-                'FIO' => $user->FIO
             ];
     }
 }

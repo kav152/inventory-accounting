@@ -13,13 +13,12 @@
 
         protected function prepareData($postData)
         {
-            error_log("Данные City: " . print_r($postData, true));
+            //error_log("Данные City: " . print_r($postData, true));
             
             return [
                 // НАСТРОИТЬ ПОЛЯ ПОД КОНКРЕТНУЮ СУЩНОСТЬ
                 'IDCity' => (int)$postData['IDCity'] ?? 0,
                 'NameCity' => $postData['NameCity'] ?? 'Наименвоание города не указано',
-                // Добавить другие поля
             ];
         }
 
@@ -32,8 +31,8 @@
         protected function prepareResultEntity($city)
         {
             return [
-                'IDCity' => $city->getId(),
-                'NameCity' => $city->name,
+                'id' => $city->getId(),
+                'NameCity' => $city->NameCity,
             ];
         }
     }

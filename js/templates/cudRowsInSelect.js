@@ -56,8 +56,8 @@ function createOptionInSelect(
   if (!select) {
     console.error(`Select с id ${selectId} не найден`);
     return;
-  }
-
+  }  
+  
   // Проверяем, существует ли уже option с таким value
   const existingOption = select.querySelector(`option[value="${entity.id}"]`);
   if (existingOption) {

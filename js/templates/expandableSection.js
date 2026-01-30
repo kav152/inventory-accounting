@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const config = entityConfig[sectionId];
             if (config) {
                 createEntity(sectionId, selectId, config.fields, config.url, config.entityName, config.patofIDSelectId);
+
+                
+
             } else {
                 console.error('Конфигурация не найдена для секции:', sectionId);
                 showNotification(TypeMessage.error, 'Конфигурация для создания сущности не найдена');

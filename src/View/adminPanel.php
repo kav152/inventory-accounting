@@ -247,7 +247,7 @@ $importResults = null;
             </a>
             <div class="ms-auto d-flex align-items-center">
                 <span class="navbar-text me-3">Привет, <?= htmlspecialchars($_SESSION["FIO"]) ?></span>
-                <a href="/src/View//home.php" class="btn btn-outline-light btn-sm me-2">
+                <a href="/src/View/home.php" class="btn btn-outline-light btn-sm me-2">
                     <i class="bi bi-house me-1"></i>На главную
                 </a>
             </div>
@@ -308,6 +308,11 @@ $importResults = null;
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="error-logs-tab" data-bs-toggle="tab" data-bs-target="#error-logs" type="button">
+                        <i class="bi bi-exclamation-triangle"></i> Логи - ошибок
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports"
                         type="button">
                         <i class="bi bi-bar-chart"></i> Отчеты
@@ -351,6 +356,9 @@ $importResults = null;
                 <?php include __DIR__ . '/AdminTabs/logs_tab.php'; ?>
             </div>
 
+            <div class="tab-pane fade" id="error-logs" role="tabpanel">
+                <?php include __DIR__ . '/AdminTabs/error_logs_tab.php'; ?>
+            </div>
             <!--div class="tab-pane fade" id="logs" role="tabpanel">
                 <div class="card">
                     <div class="card-body">
@@ -404,7 +412,7 @@ $importResults = null;
         }
 
         // Инициализация скролла вкладок
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Обновление кнопок скролла
             updateScrollButtons();
 
@@ -415,7 +423,7 @@ $importResults = null;
             }
 
             // Автоматическая прокрутка к активной вкладке
-            setTimeout(function () {
+            setTimeout(function() {
                 const activeTab = document.querySelector('#adminTabs .nav-link.active');
                 if (activeTab && tabsContainer) {
                     activeTab.scrollIntoView({
@@ -455,7 +463,7 @@ $importResults = null;
             // Обработчик переключения вкладок
             const tabButtons = document.querySelectorAll('#adminTabs button[data-bs-toggle="tab"]');
             tabButtons.forEach(button => {
-                button.addEventListener('shown.bs.tab', function (event) {
+                button.addEventListener('shown.bs.tab', function(event) {
                     const target = event.target.getAttribute('data-bs-target');
                     saveActiveTab(target);
 
@@ -474,7 +482,7 @@ $importResults = null;
             loadActiveTab();
 
             // Подтверждение перед деактивацией текущего пользователя
-            document.getElementById('users-form')?.addEventListener('submit', function (e) {
+            document.getElementById('users-form')?.addEventListener('submit', function(e) {
                 const selfCheckbox = this.querySelector('input[value="<?= $currentUser->idUser ?? '' ?>"]');
                 if (selfCheckbox && !selfCheckbox.checked) {
                     if (!confirm('Вы деактивируете свой аккаунт! Продолжить?')) {
@@ -486,7 +494,7 @@ $importResults = null;
         });
 
         // Обработка клавиш для навигации по вкладкам
-        document.addEventListener('keydown', function (e) {
+        document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'PageUp') {
                 scrollTabs(-150);
                 e.preventDefault();

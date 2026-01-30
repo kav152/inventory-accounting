@@ -250,6 +250,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     </div>
 
     <?php include __DIR__ . '/Modal/message_modal.php'; ?>
+    <?php include __DIR__ . '/Modal/help_modal.php'; ?>
 
 
     <!-- Панель уведомлений -->
@@ -303,7 +304,8 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
 
                 <!-- Всплывающее уведомление для AtWorkTMC -->
                 <?php if ($brigadesToItemsCount > 0): ?>
-                    <div class="notification-alert notification-atwork-alert" id="atWorkNotification" onclick="openAtWorkModalModal()">
+                    <div class="notification-alert notification-atwork-alert" id="atWorkNotification"
+                        onclick="openAtWorkModalModal()">
                         Выдано в работу <span id="atWorkCount"> <?= $brigadesToItemsCount ?> </span> ТМЦ
                     </div>
                 <?php endif; ?>
@@ -440,6 +442,17 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 </li>
             <?php endif ?>
 
+            <li>
+                <a href="#" onclick="openHelpModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                        fill="#1f1f1f">
+                        <path
+                            d="M478-240q21 0 35.5-14.5T528-290q0-21-14.5-35.5T478-340q-21 0-35.5 14.5T428-290q0 21 14.5 35.5T478-240Zm-36-154h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-708l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-600q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+                    </svg>
+                    <span>Справка</span>
+                </a>
+            </li>
+
             <li class="active">
                 <a href="/../../index.php">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
@@ -573,9 +586,8 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        //import {rowSelectionManager } from '../../js/templates/cudRowsInTable.js';
         // Инициализация выделения строк для пользователей
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             if (window.rowSelectionManager) {
                 window.rowSelectionManager.initializeTable('inventoryTable', 'row-container');
             }
@@ -584,11 +596,15 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
 
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             setupModalHandlers();
             setupNotificationsPanel();
         });
 
+        function openHelpModal() {
+            const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
+            helpModal.show();
+        }
         // Настройка панели уведомлений
         function setupNotificationsPanel() {
             const panel = document.getElementById('notificationsPanel');
@@ -600,7 +616,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             panel.classList.add('expanded');
             toggleBtn.textContent = 'Свернуть';
 
-            toggleBtn.addEventListener('click', function() {
+            toggleBtn.addEventListener('click', function () {
                 if (panel.classList.contains('expanded')) {
                     panel.classList.remove('expanded');
                     panel.classList.add('collapsed');
@@ -623,27 +639,27 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
         function setupModalHandlers() {
             const confirmModal = document.getElementById('confirmModal');
             if (confirmModal) {
-                confirmModal.addEventListener('hidden.bs.modal', function() {
+                confirmModal.addEventListener('hidden.bs.modal', function () {
                     handleSuccess();
                 });
             }
 
             const confirmRepairModal = document.getElementById('confirmRepairModal');
             if (confirmRepairModal) {
-                confirmRepairModal.addEventListener('hidden.bs.modal', function() {
+                confirmRepairModal.addEventListener('hidden.bs.modal', function () {
                     handleSuccess();
                 });
             }
 
             const atWorkModal = document.getElementById('atWorkModal');
             if (atWorkModal) {
-                atWorkModal.addEventListener('hidden.bs.modal', function() {
+                atWorkModal.addEventListener('hidden.bs.modal', function () {
                     handleSuccess();
                 });
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             navigateToNewItem();
             measureReloadTime();
 
@@ -720,7 +736,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     selectAllItem.appendChild(selectAllLabel);
                     filterList.appendChild(selectAllItem);
 
-                    selectAllCheckbox.addEventListener('change', function() {
+                    selectAllCheckbox.addEventListener('change', function () {
                         const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
                         checkboxes.forEach(checkbox => {
                             checkbox.checked = this.checked;
@@ -770,11 +786,11 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 const columnValues = getColumnValues(columnIndex);
                 populateList(columnValues);
 
-                searchInput.addEventListener('input', function() {
+                searchInput.addEventListener('input', function () {
                     populateList(columnValues, this.value);
                 });
 
-                applyBtn.addEventListener('click', function() {
+                applyBtn.addEventListener('click', function () {
                     const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
                     const selectedValues = [];
 
@@ -792,7 +808,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     currentDropdown = null;
                 });
 
-                cancelBtn.addEventListener('click', function() {
+                cancelBtn.addEventListener('click', function () {
                     const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
                     dropdownContainer.classList.remove('show');
                     currentDropdown = null;
@@ -824,7 +840,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             }
 
             document.querySelectorAll('.filter-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
+                button.addEventListener('click', function (e) {
                     e.stopPropagation();
                     const columnIndex = this.getAttribute('data-column');
                     const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
@@ -851,7 +867,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 });
             });
 
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (currentDropdown && !currentDropdown.contains(e.target)) {
                     currentDropdown.classList.remove('show');
                     currentDropdown.innerHTML = '';
