@@ -24,6 +24,7 @@ class ItemRepairController
 {
     private Container $container;
     private Logger $logger;
+    private CUDFactory $cudFactory;
     public function __construct()
     {
         $this->container = new Container();
@@ -35,7 +36,22 @@ class ItemRepairController
             return new Logger(__DIR__ . '/../storage/logs/ItemRepairController.log');
         });
         $this->logger = $this->container->get(Logger::class);
+
+        $this->cudFactory = new CUDFactory($this->container->get(Database::class), $this->logger, $this->container);
     }
+
+    public function create($data): ?object
+    {
+        $result = $this->cudFactory->create($data);
+        return $result;
+    }
+    public function update($data): ?object
+    {
+        $result = $this->cudFactory->update($data);
+        return $result;
+    }
+
+
 
     public function sendForRepair($data, $filename): bool
     {
@@ -252,11 +268,10 @@ class ItemRepairController
      * @return bool
      */
     public function RepairInBasket($ID_TMC): bool
-    {        
+    {
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $repairItems = $repairItemRepository->findBy("WHERE ID_TMC = {$ID_TMC}");
-        if(!$repairItems)
-        {            
+        if (!$repairItems) {
             return false;
         }
 
@@ -266,8 +281,7 @@ class ItemRepairController
             $inBasket = $item->inBasket ? false : true;
             $item->inBasket = $inBasket;
             $result = $repairItemRepository->save($item);
-            if ($result == null)
-            {
+            if ($result == null) {
                 return false;
             }
         }
@@ -351,6 +365,8 @@ class ItemRepairController
 
         return $repairItemRepository->findBy($query);
     }
+
+
 
 
 }

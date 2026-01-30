@@ -103,9 +103,16 @@ class CUDFactory
                 Brigades::class,
                 'Brigades'
             ),
+            'RepairItem' => fn() => new CUDGenericService(
+                $this->db,
+                $this->logger,
+                $this->container->get(RepairItemRepository::class),
+                RepairItem::class,
+                'RepairItem'
+            ),
         ];
     }
-
+    //RepairItem
     /**
      * Упрощенный метод получения обработчика
      */

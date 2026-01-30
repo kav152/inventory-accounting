@@ -187,7 +187,7 @@ class GenericRepository implements RepositoryInterface
     public function findBy(string $property): ?Collection
     {
         $pdo = $this->database->getConnection();
-        $sql = "SELECT * FROM {$this->tableName} {$property}";
+        $sql = "SELECT * FROM {$this->tableName} {$property}";        
         
         $stmt = $pdo->query($sql);
         $entities = [];

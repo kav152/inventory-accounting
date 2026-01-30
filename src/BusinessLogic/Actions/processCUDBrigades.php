@@ -44,7 +44,7 @@ class processCUDBrigades extends CUDHandler
     protected function prepareResultEntity($brigades)
     {
         return [
-            'id' => $brigades->IDBrigade,
+            'id' => $brigades->IDBrigade ?? 0,
             'NameBrigade' => $brigades->NameBrigade ?? "",
             'IDResponsibleIssuing' => $brigades->IDResponsibleIssuing ?? 0,
             'NameBrigadir' => $brigades->NameBrigadir ?? "",

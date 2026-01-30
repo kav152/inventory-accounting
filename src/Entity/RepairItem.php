@@ -22,9 +22,14 @@ class RepairItem extends BaseEntity
             $this->ID_Repair = isset($data['ID_Repair']) ? (int) $data['ID_Repair'] : 0;
             $this->ID_TMC = isset($data['ID_TMC']) ? (int) $data['ID_TMC'] : 0;
             $this->IDLocation = isset($data['IDLocation']) ? (int) $data['IDLocation'] : 0;
-            $this->RepairCost = floatval($data['RepairCost'] ?? 0);
+            $this->RepairCost = floatval($data['RepairCost'] ?? 0.0);
             $this->InvoiceNumber = $data['InvoiceNumber'] ?? '';
-            $this->UPD = $data['UPD'] ?? '';
+
+            if (is_array($data['UPD'])) {
+                $this->UPD = implode($data['UPD']) ?? '';
+            } else
+                $this->UPD = $data['UPD'] ?? '';
+
             $this->RepairDescription = $data['RepairDescription'] ?? '';
             $this->DateToService = isset($data['DateToService']) && !empty($data['DateToService'])
                 ? $this->formatDateForSQL($data['DateToService'])

@@ -1,4 +1,20 @@
-1 при передачи в работу, после открытия карточки ТМЦ в работе нет того ТМЦ которое мы передали. - как варинт запросить заново
-Перечень ТМЦ который находиться в бригаде brigadesToItems
+1 при передачи в работу, не обновления всплывающего меню. т.к. до этого не бол тМЦ в работе у пользователя
 
-2
+2 при не принятии ТМЦ, должно меняться Статус на предыдущий, предыдущая локация, предыдущий Пользователь
+
+3 при отправки ТМЦ в ремонт из основного окна, не меняються статусы если данное тмц было в работе!
+
+4 при создании бренда и модели и выбора типа ТМЦ - идут ошибки когда нет привязаных зависимых сущностей бренда и моделей.
+VM4351:34 Uncaught ReferenceError: handleSelectChange is not defined
+    at HTMLSelectElement.<anonymous> (<anonymous>:34:13)
+(anonymous) @ VM4351:34
+VM4351:38 Uncaught ReferenceError: handleSelectChange is not defined
+    at HTMLSelectElement.<anonymous> (<anonymous>:38:13)
+(anonymous) @ VM4351:38
+index.php:1 Uncaught ReferenceError: toggleClass is not defined
+    at HTMLInputElement.onchange (index.php:1:1)
+onchange @ index.php:1
+
+5 После возвращения из корзины нужно обновить страницу что бы отобразились тмц которые вернулись!
+
+6 в Корзине дублируються ТМЦ

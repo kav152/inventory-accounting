@@ -73,7 +73,6 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     const requiredFields = {
       IDLocation: "Организация",
       InvoiceNumber: "Счет",
-      RepairCost: "Сумма ремонта/списания",
       RepairDescription: "Описание ремонта",
     };
 
@@ -89,22 +88,30 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     }
     if (!isValid) return;
 
-    /* for (let [key, value] of formData.entries()) {
-       console.log(`${key}: ${value}`);
-     }*/
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
 
+    const formData1 = getCollectFormData(form, window.statusEntity);
     try {
-      const response = await fetch(
-        "/src/BusinessLogic/ActionsTMC/processConfirmRepair.php",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      /* const response = await fetch(
+         "/src/BusinessLogic/ActionsTMC/processConfirmRepair.php",
+         {
+           method: "POST",
+           body: formData,
+         }
+       );*/
 
-      const result = await response.json();
+      // const result = await response.json();
 
-      if (result.success) {
+      const result = await executeEntityAction({
+        action: window.statusEntity,
+        formData: formData1,
+        url: "/src/BusinessLogic/Actions/processCUDRepairItem.php",
+        successMessage: "ТМЦ успешно сохранен",
+      });
+
+      if (result.resultEntity) {
         //alert("Файл успешно загружен!");
         // Дополнительные действия после успешной отправки
         //console.log(result.file_path);

@@ -86,19 +86,34 @@ async function handleRepairBasketFormSubmit(modalElement) {
 // Функция возврата элемента из корзины
 async function returnFromBasket(id) {
   if (confirm("Вы уверены, что хотите вернуть этот элемент из корзины?")) {
-    const formData = new FormData();
-    formData.append("ID_TMC", id);
+    //const formData = new FormData();
+    //formData.append("ID_TMC", id);
+
+    const data = 
+    {
+      ID_TMC: id
+    };
 
     try {
-      const response = await fetch(
+      /*const response = await fetch(
         "/src/BusinessLogic/ActionsTMC/processRepairInBasket.php",
         {
           method: "POST",
           body: formData,
         }
       );
-      const data = await response.json();
-      if (data.success) {
+      const data = await response.json();*/
+
+      const result = await executeEntityAction({
+            action: Action.UPDATE,
+            formData: data,
+            url: "/src/BusinessLogic/Actions/processCUDRepairInBasket.php",
+            successMessage: "ТМЦ успешно сохранен",
+        });
+
+
+
+      if (result.resultEntity) {
         // Удаляем строку из таблицы
         document.getElementById(`basket-item-${id}`).remove();
 
@@ -120,13 +135,13 @@ async function returnFromBasket(id) {
         } else {
           if (countElements.length > 1) {
             // Первый параграф - количество позиций
-            countElements[1].textContent = `Количество позиций: ${data.totalCount}`;
+            countElements[1].textContent = `Количество позиций: ${result.resultEntity.totalCount}`;
             // Второй параграф - общая сумма
-            countElements[2].innerHTML = `Общая сумма ремонта: <strong>${data.formattedTotalCost} руб.</strong>`;
+            countElements[2].innerHTML = `Общая сумма ремонта: <strong>${result.resultEntity.formattedTotalCost} руб.</strong>`;
           }
         }
       } else {
-        showNotification(TypeMessage.error, data.message);
+        showNotification(TypeMessage.error, result.message);
       }
     } catch (error) {
       console.error("Error:", error);
