@@ -1,4 +1,9 @@
 <?php
+date_default_timezone_set('Europe/Moscow');
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../storage/logs/processCUDTypesTMC.log');
+
 require_once __DIR__ . '/CUDHandler.php';
 require_once __DIR__ . '/../../Entity/TypesTMC.php';
 require_once __DIR__ . '/../PropertyController.php';
