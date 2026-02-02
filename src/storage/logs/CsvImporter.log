@@ -1,10 +1,75 @@
-[30-Jan-2026 10:38:47 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
-[30-Jan-2026 10:38:47 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
-[30-Jan-2026 10:38:50 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
-[30-Jan-2026 10:38:51 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
-[30-Jan-2026 11:13:07 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
-[30-Jan-2026 11:13:07 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
-[30-Jan-2026 11:13:08 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
-[30-Jan-2026 11:13:08 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
-[30-Jan-2026 11:13:12 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
-[30-Jan-2026 11:13:12 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[02-Feb-2026 14:51:02 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 14:51:03 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[02-Feb-2026 14:51:08 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 14:51:08 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[02-Feb-2026 14:54:06 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 14:54:06 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[02-Feb-2026 14:54:10 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 14:54:10 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idUser is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$name is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$patronymic is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$surname is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$password is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idAffiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idDepartments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idRoles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Affiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Departments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:54:10 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Roles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:41 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 14:55:41 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[02-Feb-2026 14:55:58 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 14:55:58 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idUser is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$name is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$patronymic is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$surname is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$password is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idAffiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idDepartments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idRoles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Affiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Departments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 14:55:58 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Roles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:31 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 15:18:31 Europe/Moscow] PHP_RSHUTDOWN for php_sqlsrv: entering
+[02-Feb-2026 15:18:35 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 15:18:35 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idUser is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$name is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$patronymic is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$surname is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$password is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idAffiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idDepartments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idRoles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Affiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Departments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:18:35 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Roles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 15:21:30 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idUser is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$name is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$patronymic is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$surname is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$password is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idAffiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idDepartments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idRoles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Affiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Departments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:21:30 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Roles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:19 Europe/Moscow] Access Log: PAGE_ACCESS from IP: ::1
+[02-Feb-2026 15:24:20 Europe/Moscow] Access Log: LOGIN_ATTEMPT from IP: ::1
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idUser is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$name is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$patronymic is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$surname is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$password is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idAffiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idDepartments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$idRoles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Affiliations is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Departments is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43
+[02-Feb-2026 15:24:20 Europe/Moscow] PHP Deprecated:  Creation of dynamic property User::$Roles is deprecated in D:\Програмирование\PHP\TestPHP_для гидхаб\src\View\login.php on line 43

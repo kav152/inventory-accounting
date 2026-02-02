@@ -843,7 +843,7 @@ class ItemController
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $repairs = $repairItemRepository->findBy("where ID_TMC = " . $id . " order by ID_Repair");
         $repairItem = $repairs->last();
-        $repairItem->DateToService = date("Y-m-d H:i:s");
+        $repairItem->DateReturnService = date("Y-m-d H:i:s");
         $repair = $repairItemRepository->save($repairItem);
         if (!$repair) {
             throw new Exception("Ошибка указании даты возвращения из сервиса");

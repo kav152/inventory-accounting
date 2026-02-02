@@ -1,4 +1,9 @@
 import { ServiceStatus } from "../../src/constants/statusService.js";
+import { TypeMessage } from "../../src/constants/typeMessage.js";
+import { Action } from "../../src/constants/actions.js";
+import { showNotification } from "./setting.js";
+import { executeEntityAction, getCollectFormData, } from "../templates/entityActionTemplate.js";
+
 
 (function () {
   // Отправить в сервис
@@ -60,14 +65,15 @@ export function initSendToServiceModalHandlers(modalElement) {
       // .repair-reason-input
       let allFilled = true;
       const items = [];
-      let statusService = document
-        .getElementById("serviceModal")
-        .getAttribute("data-status");
+      let statusService = document.getElementById("serviceModal").getAttribute("data-status");
 
       inputs.forEach((textarea) => {
         const reason = textarea.value.trim();
+
+
         const id = textarea.dataset.id; // или textarea.getAttribute("data-id")
         items.push({ id: id, reason: reason });
+
 
         if (ServiceStatus.sendService == statusService) {
           if (!reason.trim()) {
@@ -78,9 +84,7 @@ export function initSendToServiceModalHandlers(modalElement) {
 
       if (!allFilled) {
         if (ServiceStatus.sendService == statusService) {
-          showNotification(
-            TypeMessage.notification,
-            "Заполните причину ремонта для выбранных ТМЦ",
+          showNotification(TypeMessage.notification, "Заполните причину ремонта для выбранных ТМЦ",
           );
           return;
         }
@@ -89,7 +93,7 @@ export function initSendToServiceModalHandlers(modalElement) {
       }
 
       try {
-        const response = await fetch(
+        /*const response = await fetch(
           "/src/BusinessLogic/ActionsTMC/processSendToService.php",
           {
             method: "POST",
@@ -101,16 +105,29 @@ export function initSendToServiceModalHandlers(modalElement) {
           },
         );
 
-        const data = await response.json();
+        const data = await response.json();*/
 
-        if (data.success) {
-          updateInventoryStatus(
-            window.selectedTMCIds,
-            ServiceStatus.sendService == statusService
-              ? StatusItem.ConfirmRepairTMC
-              : ServiceStatus.returnService == statusService
-                ? StatusItem.Released
-                : -1,
+
+        const requestData = {
+          items: items,
+          statusService: statusService,
+        };
+        const result = await executeEntityAction({
+          action: Action.UPDATE,
+          formData: requestData,
+          url: "/src/BusinessLogic/Actions/processCUDSendToService.php",
+          successMessage: "ТМЦ успешно переданы",
+        });
+
+        if (result.resultEntity) {
+
+          if(!result.resultEntity.success) {
+            showNotification(TypeMessage.error, result.resultEntity.messages);
+          }
+
+          updateInventoryStatus(window.selectedTMCIds, ServiceStatus.sendService == statusService ? StatusItem.ConfirmRepairTMC : ServiceStatus.returnService == statusService
+            ? StatusItem.Released
+            : -1,
           );
 
           hideRowsInAtWorkModal(items);

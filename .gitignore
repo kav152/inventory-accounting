@@ -3,3 +3,5 @@
 # Игнорировать служебные файлы и папки
 .env
 vendor/
+.log
+/src/storage/logs/
