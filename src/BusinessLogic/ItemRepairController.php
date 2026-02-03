@@ -53,19 +53,19 @@ class ItemRepairController
 
 
 
-    public function sendForRepair($data, $filename): bool
+    public function sendForRepair($data, $filename): ?object
     {
-        $ressult = $this->repairManager($data, $filename, OperationType::SEND_REPAIR) ?? false;
+        $ressult = $this->repairManager($data, $filename, OperationType::SEND_REPAIR) ?? null;
         return $ressult;
     }
-    public function writeOffItem($data, $filename): bool
+    public function writeOffItem($data, $filename): ?object
     {
-        $ressult = $this->repairManager($data, $filename, OperationType::WRITE_OFF) ?? false;
+        $ressult = $this->repairManager($data, $filename, OperationType::WRITE_OFF) ?? null;
         ;
         return $ressult;
     }
 
-    private function repairManager($data, $filename, $operationType): bool
+    private function repairManager($data, $filename, $operationType): ?object
     {
         $ID_TMC = isset($data['ID_TMC']) ? (int) $data['ID_TMC'] : 0;
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
@@ -93,7 +93,7 @@ class ItemRepairController
             $repairItem->InvoiceNumber,
             $operationType
         );
-        return true;
+        return $repairItem;
     }
 
     public function updateRepair($data): bool

@@ -66,8 +66,8 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     const repairFormContainer = document.getElementById(`repairForm${idTMC}`);
     // Извлекаем саму форму внутри контейнера
     const form = repairFormContainer.querySelector("form.repair-data-form");
-    const formData = new FormData(form);
-    formData.append("action", action);
+    //const formData = new FormData(form);
+    //formData.append("action", action);
 
     // Валидация обязательных полей
     const requiredFields = {
@@ -88,11 +88,13 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     }
     if (!isValid) return;
 
-    for (let [key, value] of formData.entries()) {
+    /*for (let [key, value] of formData.entries()) {
       console.log(`${key}: ${value}`);
-    }
+    }*/
 
-    const formData1 = getCollectFormData(form, window.statusEntity);
+    const formData1 = getCollectFormData(form, window.statusEntity, {
+      action: action,});
+      
     try {
       /* const response = await fetch(
          "/src/BusinessLogic/ActionsTMC/processConfirmRepair.php",

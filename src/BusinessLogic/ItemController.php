@@ -416,95 +416,6 @@ class ItemController
         return $result ?? null;
     }
 
-    // В BrigadesRepository добавьте:
-    /*public function getAtWorkItemsGrouped(int $statusUser, int $idUser): ?array
-    {
-        $brigadesRepository = $this->container->get(BrigadesRepository::class);
-        $sql = "SELECT 
-              b.IDBrigade,
-              b.NameBrigade,
-              CONCAT(u.Surname, ' ', u.Name, ' ', u.Patronymic) AS NameBrigadir,
-              ii.ID_TMC,
-              ii.NameTMC,
-              ii.SerialNumber,
-              ii.Status,
-              b2.NameBrand,
-              l.NameLocation,
-              u2.Surname,
-              u2.Name,
-              m.NameModel
-          FROM Brigades b
-          JOIN User u ON b.IDResponsibleIssuing = u.IDUser
-          JOIN LinkBrigadesToItem lbt ON b.IDBrigade = lbt.IDBrigade
-          JOIN InventoryItem ii ON lbt.ID_TMC = ii.ID_TMC
-          LEFT JOIN BrandTMC b2 ON ii.IDBrandTMC = b2.IDBrandTMC
-          LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
-          LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
-          LEFT JOIN User u2 ON r.CurrentUser = u2.IDUser
-          LEFT JOIN ModelTMC m ON ii.IDModel = m.IDModel
-                WHERE ii.Status = " . StatusItem::AtWorkTMC;
-
-        if ($statusUser != 0) {
-            $sql .= " AND RegistrationInventoryItem.CurrentUser = {$idUser}";
-        }
-        $sql .= " GROUP BY b.IDBrigade, b.NameBrigade, CONCAT(u.Surname, ' ', u.Name, ' ', u.Patronymic)";
-
-        $results = $brigadesRepository->getAll_array($sql);
-
-        if (empty($results)) {
-            return null;
-        }
-
-        // Группируем результаты по бригадам
-        $grouped = [];
-        foreach ($results as $row) {
-            $brigadeId = $row['IDBrigade'];
-
-            if (!isset($grouped[$brigadeId])) {
-                $grouped[$brigadeId] = [
-                    'id' => $brigadeId,
-                    'name' => $row['NameBrigade'],
-                    'brigadir' => $row['NameBrigadir'],
-                    'count' => 0,
-                    'items' => []
-                ];
-            }
-
-            // Создаем InventoryItem из данных строки
-            $item = new InventoryItem($row);
-
-            // Вручную устанавливаем связанные объекты
-            if (!empty($row['NameBrand'])) {
-                $brand = new BrandTMC([
-                    'IDBrandTMC' => $row['IDBrandTMC'],
-                    'NameBrand' => $row['NameBrand']
-                ]);
-                $item->BrandTMC = $brand;
-            }
-
-            if (!empty($row['NameLocation'])) {
-                $location = new Location([
-                    'IDLocation' => $row['IDLocation'],
-                    'NameLocation' => $row['NameLocation']
-                ]);
-                $item->Location = $location;
-            }
-
-            if (!empty($row['FIO'])) {
-                $user = new User([
-                    'IDUser' => $row['CurrentUser'],
-                    'FIO' => $row['FIO']
-                ]);
-                $item->User = $user;
-            }
-
-            $grouped[$brigadeId]['items'][] = $item;
-            $grouped[$brigadeId]['count']++;
-        }
-
-        return array_values($grouped);
-    }*/
-
     private function getItemsByIds(array $ids): ?Collection
     {
         if (empty($ids))
@@ -516,17 +427,6 @@ class ItemController
         $query = "SELECT * FROM InventoryItem "
             . "LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = IDRegItem "
             . "WHERE InventoryItem.ID_TMC IN ($idsString)";
-
-        //$this->logAction('getItemsByIds', $query);
-
-        // error_log($query);
-
-        /*  $inventoryItemRepository->addRelationship(
-              'User',                     // Свойство в InventoryItem
-              $userRepository,            // Репозиторий User
-              'CurrentUser',              // ID пользователя в InventoryItem
-              'IDUser'                    // Первичный ключ в User
-          );*/
 
         return $result = $inventoryItemRepository->getAll($query) ?? null;
     }

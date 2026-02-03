@@ -77,14 +77,22 @@ export async function executeEntityAction(config) {
  * Собирает данные формы в объект с указанным статусом действия
  * @param {HTMLFormElement} form - HTML-форма, из которой собираются данные
  * @param {Action} statusEntity - Статус действия (Create/Update/Delete)
+ * @param {Object} [extraFields={}] - Дополнительные поля в формате {ключ: значение}
  * @returns {Object} Объект с данными формы и статусом действия
  */
-export function getCollectFormData(form, statusEntity) {
+export function getCollectFormData(form, statusEntity, extraFields = {}) {
   try {
     const formData = new FormData(form);
     const data = {
       statusEntity: statusEntity,
     };
+
+    // Добавляем дополнительные поля, если они переданы
+    if (extraFields && typeof extraFields === 'object') {
+      Object.keys(extraFields).forEach(key => {
+        data[key] = extraFields[key];
+      });
+    }
 
     // Преобразуем FormData в объект
     for (let [key, value] of formData.entries()) {

@@ -23,7 +23,7 @@ class processCUDSendToService extends CUDHandler
     protected function prepareData($postData)
     {
         $this->currentData = $postData;
-        error_log("Данные для возврата/отправки в сервис: " . print_r($this->currentData, true));
+        //error_log("Данные для возврата/отправки в сервис: " . print_r($this->currentData, true));
 
         return [
             'items' => $postData['items'] ?? [],
@@ -38,13 +38,8 @@ class processCUDSendToService extends CUDHandler
 
     protected function update($id, $data, int|null $patofID = null)
     {
-        error_log(print_r($data, true));
-
         $statusService = $data['statusService'] ?? 0;
         $items = $data['items'] ?? [];
-
-        error_log(print_r($items, true));
-        error_log($statusService);
 
         $itemController = new ItemController();
         foreach ($items as $item) {
