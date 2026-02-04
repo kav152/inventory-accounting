@@ -35,11 +35,11 @@ class GenericRepository implements RepositoryInterface
     {
         $pdo = $this->database->getConnection();
         $finalQuery = $query ?? "SELECT * FROM {$this->tableName}";
-        
+
         $startTime = microtime(true);
         $stmt = $pdo->query($finalQuery);
         $loadTime = microtime(true) - $startTime;
-        
+
         // Логируем только медленные запросы
         if ($loadTime > 1.0) {
             $this->logAction('SLOW_QUERY', "Query took {$loadTime}s: {$finalQuery}");
@@ -47,7 +47,7 @@ class GenericRepository implements RepositoryInterface
 
         $entities = [];
         $batchData = [];
-        
+
         // Собираем все данные для пакетной загрузки связей
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $batchData[] = $row;
@@ -125,16 +125,16 @@ class GenericRepository implements RepositoryInterface
 
         $idsString = implode(',', array_map('intval', $ids));
         $sql = "SELECT * FROM {$repository->tableName} WHERE {$idField} IN ({$idsString})";
-        
+
         $result = [];
         $collection = $repository->getAll($sql);
-        
+
         if ($collection) {
             foreach ($collection as $entity) {
                 $result[$entity->$idField] = $entity;
             }
         }
-        
+
         return $result;
     }
 
@@ -150,10 +150,10 @@ class GenericRepository implements RepositoryInterface
         // Быстрая гидратация связей из кэша
         foreach ($this->relationships as $property => $config) {
             $foreignKeyValue = $data[$config['foreign_key']] ?? null;
-            
+
             if ($foreignKeyValue !== null) {
                 $cacheKey = $this->getCacheKey($config['repository']->getEntityClass(), $foreignKeyValue);
-                
+
                 if (isset($this->cache[$cacheKey])) {
                     $entity->$property = $this->cache[$cacheKey];
                 }
@@ -168,10 +168,10 @@ class GenericRepository implements RepositoryInterface
     {
         $pdo = $this->database->getConnection();
         $finalQuery = $sql ?? "SELECT * FROM {$this->tableName}";
-        
+
         $stmt = $pdo->query($finalQuery);
         $entities = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         return empty($entities) ? null : $entities;
     }
 
@@ -187,12 +187,12 @@ class GenericRepository implements RepositoryInterface
     public function findBy(string $property): ?Collection
     {
         $pdo = $this->database->getConnection();
-        $sql = "SELECT * FROM {$this->tableName} {$property}";        
-        
+        $sql = "SELECT * FROM {$this->tableName} {$property}";
+
         $stmt = $pdo->query($sql);
         $entities = [];
         $batchData = [];
-        
+
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $batchData[] = $row;
         }
@@ -218,11 +218,11 @@ class GenericRepository implements RepositoryInterface
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($data === false) {
             return null;
         }
-        
+
         return $this->hydrate($data);
     }
 
@@ -234,26 +234,26 @@ class GenericRepository implements RepositoryInterface
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($data === false) {
             return null;
         }
-        
+
         return $this->hydrate($data);
     }
 
     // Остальные методы (save, insert, update, delete) остаются без изменений...
-    
+
     public function getEntityClass(): string
     {
         return $this->entityClass;
     }
-    
+
     public function getTableName(): string
     {
         return $this->tableName;
     }
-    
+
     private function logAction(string $action, string $message, array $context = []): void
     {
         $logMessage = sprintf(
@@ -472,5 +472,53 @@ class GenericRepository implements RepositoryInterface
             /*    "DELETE FROM {$this->tableName} WHERE id = :id"*/
         );
         return $stmt->execute(['id' => $entity->getId()]);
+    }
+
+    /**
+     * Обновляет поле даты с использованием GETDATE() SQL Server
+     * для обеспечения единого источника времени
+     *
+     * @param int $id ID сущности
+     * @param string $dateField Название поля с датой
+     * @param string $idField Название ID поля (по умолчанию берется из сущности)
+     * @return bool Успешность операции
+     */
+    public function updateDateWithGetDate(int $id, string $dateField, string $idField = null): bool
+    {
+        if ($idField === null) {
+            // Получаем имя ID поля из сущности
+            $tempEntity = new $this->entityClass([]);
+            if ($tempEntity instanceof BaseEntity) {
+                $idField = $tempEntity->getIdFieldName();
+            } else {
+                $idField = 'id'; // значение по умолчанию
+            }
+        }
+
+        $sql = "UPDATE {$this->tableName} 
+                SET {$dateField} = GETDATE() 
+                WHERE {$idField} = :id";
+
+        try {
+            $pdo = $this->database->getConnection();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':id' => $id]);
+
+            $this->logAction('UPDATE_DATE', "Обновлено поле {$dateField} с GETDATE()", [
+                'table' => $this->tableName,
+                'id' => $id,
+                'field' => $dateField,
+                'affected_rows' => $stmt->rowCount()
+            ]);
+
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            $this->logAction('ERROR', 'Ошибка обновления даты с GETDATE()', [
+                'message' => $e->getMessage(),
+                'sql' => $sql,
+                'id' => $id
+            ]);
+            return false;
+        }
     }
 }

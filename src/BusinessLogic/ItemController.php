@@ -2,7 +2,9 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-date_default_timezone_set('Europe/Moscow');
+//date_default_timezone_set('Europe/Moscow');
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../storage/logs/ItemController.log');
@@ -271,8 +273,8 @@ class ItemController
     public function delete($data): bool
     {
         //error_log(print_r($data, true));
-       // $brigadesRepository = new BrigadesRepository(DatabaseFactory::create());
-       // $brigades = $brigadesRepository->findById($data->getID(), 'IDBrigade');
+        // $brigadesRepository = new BrigadesRepository(DatabaseFactory::create());
+        // $brigades = $brigadesRepository->findById($data->getID(), 'IDBrigade');
 
         return $this->cudFactory->delete($data);
     }
@@ -743,10 +745,16 @@ class ItemController
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $repairs = $repairItemRepository->findBy("where ID_TMC = " . $id . " order by ID_Repair");
         $repairItem = $repairs->last();
-        $repairItem->DateReturnService = date("Y-m-d H:i:s");
-        $repair = $repairItemRepository->save($repairItem);
-        if (!$repair) {
-            throw new Exception("Ошибка указании даты возвращения из сервиса");
+        if ($repairItem === null) {
+            throw new Exception(`Не найдено записи об отправки в ремонт ТМЦ id:{$id}`);
+        }
+
+
+        //$repairItem->DateReturnService = date("Y-m-d H:i:s");
+        //$repair = $repairItemRepository->save($repairItem);
+        $result =  $repairItemRepository->updateDateWithGetDate($repairItem->ID_Repair, 'DateReturnService');
+        if (!$result) {
+            throw new Exception(`Ошибка указании даты возвращения из сервиса, текущая дата {$repairItem->DateReturnService}`);
         }
     }
 }

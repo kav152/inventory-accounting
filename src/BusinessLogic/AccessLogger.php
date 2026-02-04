@@ -1,6 +1,8 @@
 <?php
 date_default_timezone_set('Europe/Moscow');
-ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../storage/logs/access.log');
 
@@ -11,16 +13,34 @@ class AccessLogger
 
     public function __construct(string $logDir = null, string $logFile = null)
     {
-        // Определяем директорию для логов
-        $this->logDir = $logDir ?? __DIR__ . '/../../src/storage/logs/';
+        $this->logDir = $logDir ?? __DIR__ . '/../../src/storage/logs';
+        $this->logDir = rtrim($this->logDir, '/');
 
-        // Создаем директорию если не существует
+        // Проверяем/создаем директорию с проверкой прав
         if (!is_dir($this->logDir)) {
-            mkdir($this->logDir, 0755, true);
+            if (!@mkdir($this->logDir, 0777, true) && !is_dir($this->logDir)) {
+                throw new RuntimeException("Не удалось создать директорию логов: {$this->logDir}");
+            }
+            // Устанавливаем права после создания
+            chmod($this->logDir, 0777);
         }
 
-        // Имя файла лога
+        // Проверяем доступность директории для записи
+        if (!is_writable($this->logDir)) {
+            // Пытаемся исправить права
+            @chmod($this->logDir, 0777);
+            if (!is_writable($this->logDir)) {
+                throw new RuntimeException("Директория логов недоступна для записи: {$this->logDir}");
+            }
+        }
+
         $this->logFile = $logFile ?? $this->logDir . '/access.log';
+
+        // Создаем файл лога если не существует
+        if (!file_exists($this->logFile)) {
+            @touch($this->logFile);
+            @chmod($this->logFile, 0666);
+        }
     }
 
     /**
@@ -117,7 +137,7 @@ class AccessLogger
             $logLine . PHP_EOL,
             FILE_APPEND | LOCK_EX
         );
-        
+
         error_log("Access Log: {$action} from IP: {$ip}");
     }
 
@@ -228,30 +248,32 @@ class AccessLogger
                         return false;
                     }
                     break;
-                    
+
                 case 'user_id':
-                    if (!isset($logData['user_id']) || (int)$logData['user_id'] !== (int)$value) {
+                    if (!isset($logData['user_id']) || (int) $logData['user_id'] !== (int) $value) {
                         return false;
                     }
                     break;
-                    
+
                 case 'action':
                     if (!isset($logData['action'])) {
                         return false;
                     }
-                    
+
                     // Специальная обработка для LOGIN_SUCCESS
                     if ($value === 'LOGIN_SUCCESS') {
-                        if ($logData['action'] !== 'LOGIN_ATTEMPT' || 
-                            !isset($logData['success']) || 
-                            $logData['success'] !== true) {
+                        if (
+                            $logData['action'] !== 'LOGIN_ATTEMPT' ||
+                            !isset($logData['success']) ||
+                            $logData['success'] !== true
+                        ) {
                             return false;
                         }
                     } else if ($logData['action'] !== $value) {
                         return false;
                     }
                     break;
-                    
+
                 default:
                     // Для других фильтров проверяем наличие и равенство
                     if (!isset($logData[$key]) || $logData[$key] != $value) {
