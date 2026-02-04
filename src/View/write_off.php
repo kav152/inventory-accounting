@@ -1,6 +1,6 @@
 <?php
 set_time_limit(0);
-ini_set('memory_limit', '1024M');
+//ini_set('memory_limit', '1024M');
 session_start();
 if (!isset($_SESSION['IDUser'])) {
     header('Location: index.php');

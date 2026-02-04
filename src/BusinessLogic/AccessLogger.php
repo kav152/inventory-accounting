@@ -10,6 +10,24 @@ class AccessLogger
 {
     private $logDir;
     private $logFile;
+    private $logFiles = [
+        'access.log',
+        'GenericRepository.log',
+        'ItemController.log',
+        'CommentsHistory.log',
+        'CsvImporter.log',
+        'processCUDTypesTMC.log',
+        'processCUDBrandTMC.log',
+        'processCUDModelTMC.log',
+        'GenericRepository.log',
+        'processCUDRepairItem.log',
+        'ItemRepairController.log',
+        'LocationController.log',
+        'UserController.log',
+        'SettingController.log',
+        'PropertyController.log',
+        'HistoryOperationsController.log'
+    ];
 
     public function __construct(string $logDir = null, string $logFile = null)
     {
@@ -17,31 +35,91 @@ class AccessLogger
         $this->logDir = rtrim($this->logDir, '/');
 
         // Проверяем/создаем директорию с проверкой прав
+        $this->ensureLogDirectory();
+
+        // Создаем все файлы логов из списка
+        $this->createLogFiles();
+
+        $this->logFile = $logFile ?? $this->logDir . '/access.log';
+
+        // Проверяем/создаем директорию с проверкой прав
+        /* if (!is_dir($this->logDir)) {
+             if (!@mkdir($this->logDir, 0777, true) && !is_dir($this->logDir)) {
+                 throw new RuntimeException("Не удалось создать директорию логов: {$this->logDir}");
+             }
+             // Устанавливаем права после создания
+             chmod($this->logDir, 0777);
+         }
+
+         // Проверяем доступность директории для записи
+         if (!is_writable($this->logDir)) {
+             // Пытаемся исправить права
+             @chmod($this->logDir, 0777);
+             if (!is_writable($this->logDir)) {
+                 throw new RuntimeException("Директория логов недоступна для записи: {$this->logDir}");
+             }
+         }
+
+
+         $this->logFile = $logFile ?? $this->logDir . '/access.log';
+
+         // Создаем файл лога если не существует
+         if (!file_exists($this->logFile)) {
+             @touch($this->logFile);
+             @chmod($this->logFile, 0666);
+         }*/
+    }
+
+    /**
+     * Проверяет и создает директорию для логов, устанавливает права
+     */
+    private function ensureLogDirectory(): void
+    {
         if (!is_dir($this->logDir)) {
             if (!@mkdir($this->logDir, 0777, true) && !is_dir($this->logDir)) {
                 throw new RuntimeException("Не удалось создать директорию логов: {$this->logDir}");
             }
-            // Устанавливаем права после создания
-            chmod($this->logDir, 0777);
+
+            // Устанавливаем права на директорию
+            @chmod($this->logDir, 0777);
+            // ДАем права 
+            @chown($this->logDir, '0777! www-data');
+
+
         }
 
         // Проверяем доступность директории для записи
         if (!is_writable($this->logDir)) {
             // Пытаемся исправить права
             @chmod($this->logDir, 0777);
+
             if (!is_writable($this->logDir)) {
                 throw new RuntimeException("Директория логов недоступна для записи: {$this->logDir}");
             }
         }
+    }
 
-        $this->logFile = $logFile ?? $this->logDir . '/access.log';
-
-        // Создаем файл лога если не существует
-        if (!file_exists($this->logFile)) {
-            @touch($this->logFile);
-            @chmod($this->logFile, 0666);
+    /**
+     * Создает все файлы логов из списка и устанавливает права
+     */
+    private function createLogFiles(): void
+    {
+        foreach ($this->logFiles as $logFile) {
+            $filePath = $this->logDir . '/' . $logFile;
+            
+            // Создаем файл если не существует
+            if (!file_exists($filePath)) {
+                @touch($filePath);
+                
+                // Устанавливаем права на файл
+                @chmod($filePath, 0644);
+                @chown($filePath, '0777! www-data');
+                
+            }
         }
     }
+
+
 
     /**
      * Получает реальный IP адрес клиента

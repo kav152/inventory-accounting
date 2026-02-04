@@ -313,12 +313,6 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
         </div>
     <?php endif; ?>
 
-    <?php
-    //include __DIR__ . '/Modal/at_work_modal.php';
-    //include __DIR__ . '/Modal/confirm_modal.php';
-    //include __DIR__ . '/Modal/confirmRepair_modal.php';
-    ?>
-
     <nav id="sidebar">
         <ul>
             <li>
@@ -579,8 +573,6 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             </div>
         </div>
     </div>
-
-
 
     <!-- Подключение Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
