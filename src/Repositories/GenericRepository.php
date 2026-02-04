@@ -504,12 +504,12 @@ class GenericRepository implements RepositoryInterface
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':id' => $id]);
 
-            $this->logAction('UPDATE_DATE', "Обновлено поле {$dateField} с GETDATE()", [
+          /* $this->logAction('UPDATE_DATE', "Обновлено поле {$dateField} с GETDATE()", [
                 'table' => $this->tableName,
                 'id' => $id,
                 'field' => $dateField,
                 'affected_rows' => $stmt->rowCount()
-            ]);
+            ]);*/
 
             return $stmt->rowCount() > 0;
         } catch (PDOException $e) {

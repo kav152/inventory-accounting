@@ -37,19 +37,12 @@ abstract class CUDHandler
                 throw new Exception('Необнаружены данные для выполнения дейтсвия для сущости: ' . $this->entityClass);
             }
 
-            //error_log('dataJson');
-            //error_log(print_r($dataJson, true));
             $data = $this->prepareData($dataJson);
             // Получение действия
             $action = $dataJson['statusEntity'] ?? 'статус не определен';
             $id = $dataJson['id'] ?? 0;
             $patofID = $dataJson['patofID'] ?? null;
 
-
-            //error_log('выполнение действия - executeAction');
-            // error_log(`action -`. print_r($action, true));
-            // error_log(`data -`. print_r($data, true));
-            // error_log(`id -`. print_r($id, true));
             // Выполнение действия
             $result = $this->executeAction($action, $data, $id, $patofID);
 
