@@ -10,9 +10,9 @@ class TypesTMC extends BaseEntity
     public function __construct(array $data = [])
     {
         if (!empty($data)) {
-            $this->IDTypesTMC = (int)$data['IDTypesTMC'];
-            $this->NameTypesTMC = $data['NameTypesTMC'];
-            $this->NameImage = $data['NameImage'];
+            $this->IDTypesTMC = (int)($data['IDTypesTMC'] ?? 0);
+            $this->NameTypesTMC = (string)($data['NameTypesTMC'] ?? '');
+            $this->NameImage = isset($data['NameImage']) ? (string)$data['NameImage'] : null;
         }
     }
 
@@ -47,6 +47,7 @@ class TypesTMC extends BaseEntity
     {
         return [
             'NameTypesTMC',
+            'NameImage'
         ];
     }
 }

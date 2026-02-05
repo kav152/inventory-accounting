@@ -23,7 +23,9 @@ try {
         protected function prepareData($postData)
         {
             return [
-                'NameTypesTMC' => $postData['NameTypesTMC'] ?? ''
+                'IDTypesTMC' => $postData['IDTypesTMC'] ?? 0,
+                'NameTypesTMC' => $postData['NameTypesTMC'] ?? '',
+                'NameImage' => $postData['NameImage'] ?? null
             ];
         }
 
