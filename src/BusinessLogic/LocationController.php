@@ -29,7 +29,7 @@ class LocationController
         });
 
         $this->container->set(Logger::class, function () {
-            return new Logger(__DIR__ . '/../storage/logs/CustomersController.log');
+            return new Logger(__DIR__ . '/../storage/logs/LocationController.log');
         });
         $this->logger = $this->container->get(Logger::class);
 

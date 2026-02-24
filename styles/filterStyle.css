@@ -1,3 +1,13 @@
+/*.filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    color: #64748b;
+    transition: all 0.3s;
+}*/
+
 .filter-btn {
     background: none;
     border: none;
@@ -6,6 +16,12 @@
     margin-left: 8px;
     color: #64748b;
     transition: all 0.3s;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
 }
 
 .filter-btn:hover {
@@ -15,6 +31,24 @@
 .filter-btn.active {
     color: #3b82f6;
 }
+
+/* Бейдж для активного фильтра */
+.filter-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
 
 .dropdown-filter {
     position: absolute;
@@ -119,3 +153,14 @@
 .filter-dropdown-content {
     z-index: 1000; /* Увеличиваем значение */
 }
+
+/* Временные стили для отладки */
+/*.dropdown-filter {
+    border: 2px solid red !important;  Чтобы видеть границы 
+    background: white !important;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3) !important;
+}*/
+/*
+#resultContainer {
+    background: rgba(255,0,0,0.1); /* Полупрозрачный для проверки наложения 
+}*/

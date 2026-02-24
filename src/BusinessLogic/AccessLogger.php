@@ -19,6 +19,7 @@ class AccessLogger
         'processCUDTypesTMC.log',
         'processCUDBrandTMC.log',
         'processCUDModelTMC.log',
+        'processCUDLocation.log',
         'GenericRepository.log',
         'processCUDRepairItem.log',
         'ItemRepairController.log',
@@ -29,7 +30,7 @@ class AccessLogger
         'HistoryOperationsController.log'
     ];
 
-    public function __construct(string $logDir = null, string $logFile = null)
+    public function __construct()
     {
         $this->logDir = $logDir ?? __DIR__ . '/../../src/storage/logs';
         $this->logDir = rtrim($this->logDir, '/');
@@ -41,33 +42,6 @@ class AccessLogger
         $this->createLogFiles();
 
         $this->logFile = $logFile ?? $this->logDir . '/access.log';
-
-        // Проверяем/создаем директорию с проверкой прав
-        /* if (!is_dir($this->logDir)) {
-             if (!@mkdir($this->logDir, 0777, true) && !is_dir($this->logDir)) {
-                 throw new RuntimeException("Не удалось создать директорию логов: {$this->logDir}");
-             }
-             // Устанавливаем права после создания
-             chmod($this->logDir, 0777);
-         }
-
-         // Проверяем доступность директории для записи
-         if (!is_writable($this->logDir)) {
-             // Пытаемся исправить права
-             @chmod($this->logDir, 0777);
-             if (!is_writable($this->logDir)) {
-                 throw new RuntimeException("Директория логов недоступна для записи: {$this->logDir}");
-             }
-         }
-
-
-         $this->logFile = $logFile ?? $this->logDir . '/access.log';
-
-         // Создаем файл лога если не существует
-         if (!file_exists($this->logFile)) {
-             @touch($this->logFile);
-             @chmod($this->logFile, 0666);
-         }*/
     }
 
     /**

@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
 $repairs = $itemData;
 
 $inventoryItem = $repairs->first()->InventoryItem;
-print_r($itemData);
+//print_r($itemData);
 //$repairs = null;
 ?>
 

@@ -66,8 +66,6 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     const repairFormContainer = document.getElementById(`repairForm${idTMC}`);
     // Извлекаем саму форму внутри контейнера
     const form = repairFormContainer.querySelector("form.repair-data-form");
-    //const formData = new FormData(form);
-    //formData.append("action", action);
 
     // Валидация обязательных полей
     const requiredFields = {
@@ -88,35 +86,19 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     }
     if (!isValid) return;
 
-    /*for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }*/
 
     const formData1 = getCollectFormData(form, window.statusEntity, {
       action: action,});
       
     try {
-      /* const response = await fetch(
-         "/src/BusinessLogic/ActionsTMC/processConfirmRepair.php",
-         {
-           method: "POST",
-           body: formData,
-         }
-       );*/
-
-      // const result = await response.json();
-
       const result = await executeEntityAction({
         action: window.statusEntity,
         formData: formData1,
         url: "/src/BusinessLogic/Actions/processCUDRepairItem.php",
-        successMessage: "ТМЦ успешно сохранен",
+        successMessage:  action == 'repair' ? "Ремонт ТМЦ подтвержден" : "ТМЦ списано",
       });
 
       if (result.resultEntity) {
-        //alert("Файл успешно загружен!");
-        // Дополнительные действия после успешной отправки
-        //console.log(result.file_path);
 
         // Удаляем строки с данным id
         const itemRow = document.querySelector(

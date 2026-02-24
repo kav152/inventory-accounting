@@ -20,7 +20,7 @@ class processCUDLocation extends CUDHandler
 
     protected function prepareData($postData)
     {
-        error_log("Данные Location: " . print_r($postData, true));
+        //error_log("Данные Location: " . print_r($postData, true));
 
         return [
             // НАСТРОИТЬ ПОЛЯ ПОД КОНКРЕТНУЮ СУЩНОСТЬ

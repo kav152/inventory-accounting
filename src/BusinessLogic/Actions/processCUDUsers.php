@@ -30,7 +30,7 @@ class processCUDUsers extends CUDHandler
         return $result;
     }
 
-    protected function update($id, $data, int $patofID = null)
+    protected function update($id, $data, ?int $patofID = null)
     {
         // Получаем текущего пользователя для сохранения пароля при массовом обновлении
         $userController = new UserController();

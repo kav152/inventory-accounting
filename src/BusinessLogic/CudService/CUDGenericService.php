@@ -126,7 +126,12 @@ class CUDGenericService
     }
 
     /**
+     * 
      * Обновить свойства сущности (вынесено из CUDServiceObjects)
+     * @param mixed $newEntity
+     * @param mixed $oldEntity
+     * @throws InvalidArgumentException
+     * @return void
      */
     protected function updateProperties($newEntity, $oldEntity): void
     {

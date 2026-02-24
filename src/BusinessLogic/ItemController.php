@@ -460,7 +460,7 @@ class ItemController
             $locationRepository = $this->container->get(LocationRepository::class);
             $location = $locationRepository->findById($inventoryItem->IDLocation, "IDLocation");
             $inventoryItem->Location = $location;
-            $inventoryItem->CurrentUser = $_SESSION["IDUser"];
+            //$inventoryItem->CurrentUser = $_SESSION["IDUser"];
 
             // Регистрация в HistoryOperations
             $historyOperations = new HistoryOperationsController();
@@ -589,7 +589,7 @@ class ItemController
 
             if ($result != null) {
                 $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::ASSIGN_TO_BRIGADE));
-                $this->logHistoryOperation($tmcId, $brigadeId, null, OperationType::ASSIGN_TO_BRIGADE);
+                $this->logHistoryOperation(OperationType::ASSIGN_TO_BRIGADE, $tmcId, $brigadeId, null);
                 return true;
             }
             return false;
@@ -607,7 +607,7 @@ class ItemController
             $linkBrigadesToItemRepository->delete($result);
 
             $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::Return_TMC_toWork));
-            $this->logHistoryOperation($tmcId, $brigadeId, null, OperationType::Return_TMC_toWork);
+            $this->logHistoryOperation(OperationType::Return_TMC_toWork, $tmcId, $brigadeId, null);
 
             return true;
         } catch (PDOException $e) {
@@ -643,14 +643,14 @@ class ItemController
                 }
 
                 $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::ACCEPT_FOR_REPAIR));
-                $this->logHistoryOperation($tmcId, null, $note, OperationType::ACCEPT_FOR_REPAIR);
+                $this->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $note);
                 return true;
             }
             if ($statusService == 1) //  returnService = 1;
             {
                 $this->changeDateReturnService($tmcId);
                 $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::RETURN_FROM_REPAIR));
-                $this->logHistoryOperation($tmcId, null, $note, OperationType::RETURN_FROM_REPAIR);
+                $this->logHistoryOperation(OperationType::RETURN_FROM_REPAIR, $tmcId, null, $note);
                 return true;
             }
 
@@ -683,7 +683,16 @@ class ItemController
         return $result !== null;
     }
 
-    public function logHistoryOperation(int $id, int $brigadeId = null, string $note = null, string $operationType): void
+    /**
+     * Логирует операцию с ТМЦ в истории
+     * 
+     * @param int $id ID ТМЦ
+     * @param string $operationType Тип операции (константа OperationType::*)
+     * @param int|null $brigadeId ID бригады (требуется для некоторых операций)
+     * @param string|null $note Примечание к операции
+     * @throws Exception При отсутствии обязательных данных
+     */
+    public function logHistoryOperation(string $operationType, int $id, ?int $brigadeId = null, ?string $note = null): void
     {
         $locationRepository = $this->container->get(LocationRepository::class);
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
@@ -752,7 +761,7 @@ class ItemController
 
         //$repairItem->DateReturnService = date("Y-m-d H:i:s");
         //$repair = $repairItemRepository->save($repairItem);
-        $result =  $repairItemRepository->updateDateWithGetDate($repairItem->ID_Repair, 'DateReturnService');
+        $result = $repairItemRepository->updateDateWithGetDate($repairItem->ID_Repair, 'DateReturnService');
         if (!$result) {
             throw new Exception(`Ошибка указании даты возвращения из сервиса, текущая дата {$repairItem->DateReturnService}`);
         }

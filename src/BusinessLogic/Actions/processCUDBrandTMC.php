@@ -29,7 +29,7 @@ try {
             ];
         }
 
-        protected function create($data, int $patofID = null)
+        protected function create($data, ?int $patofID = null)
         {
             //error_log('data function create' . print_r($data, true));
             //error_log('patofID: ' . $patofID);
@@ -58,10 +58,10 @@ try {
 
                 $controller = new PropertyController();
                 $resultLink = $controller->create($link);
-                if ($resultLink)
+               /* if ($resultLink)
                     error_log("Cвязь c TypeToBrand не сформирована: TypeTMC=$typeTMCId, Brand=$brandTMCId");
                 else
-                    error_log("Создана связь TypeToBrand: TypeTMC=$typeTMCId, Brand=$brandTMCId");
+                    error_log("Создана связь TypeToBrand: TypeTMC=$typeTMCId, Brand=$brandTMCId");*/
 
             } catch (Exception $e) {
                 error_log("Ошибка при создании связи TypeToBrand: " . $e->getMessage());

@@ -64,6 +64,7 @@ body {
   /* Жирный шрифт */
   font-size: 1.1rem;
   /* Размер шрифта чуть больше обычного */
+  width: auto; /* займёт всю доступную ширину за вычетом margin */
 }
 
 /* Стиль для группы фильтров */
@@ -206,7 +207,7 @@ body {
 .main-content {
   margin-left: 270px;
   /* Отступ слева для обхода бокового меню */
-  padding: 20px;
+  padding: 0px;
   /* Внутренние отступы */
 }
 
@@ -336,7 +337,7 @@ table#writeOffTable tbody tr.main-row.selected td {
 
 /* Стили для контейнера таблицы с прокруткой */
 .table-section .table-responsive {
-    max-height: 70vh; /* 70% высоты viewport */
+    max-height: 84vh; /* 84% высоты viewport */
     overflow-y: auto; /* Вертикальная прокрутка */
     overflow-x: auto; /* Горизонтальная прокрутка при необходимости */
     border: 1px solid #dee2e6;

@@ -132,7 +132,7 @@ class PropertyController
             ]);
 
             $result = $repository->save($link, 'create');
-            error_log("Прямое создание через репозиторий: " . print_r($result, true));
+            //error_log("Прямое создание через репозиторий: " . print_r($result, true));
         } catch (Exception $e) {
             error_log("Ошибка прямого создания: " . $e->getMessage());
             throw $e;

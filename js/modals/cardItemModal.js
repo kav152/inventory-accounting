@@ -192,6 +192,8 @@ async function handleSelectChange(event, currentType, nextType) {
     }
 }
 
+window.handleSelectChange = handleSelectChange;
+
 /**
  * Инициализирует селекты на основе данных, переданных из PHP.
  * Вызывается из cardItem_modal.php после загрузки окна.

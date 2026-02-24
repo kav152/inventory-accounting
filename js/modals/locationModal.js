@@ -62,7 +62,7 @@ async function handleLocationFormSubmit(modalElement) {
 
   const locationData = getCollectFormData(form, window.statusEntity);
 
-  console.log(isMainWarehouseCheckbox);
+  //console.log(isMainWarehouseCheckbox);
 
   try {
     const result = await executeEntityAction({

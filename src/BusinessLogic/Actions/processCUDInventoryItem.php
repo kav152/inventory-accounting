@@ -33,7 +33,7 @@ class processCUDInventoryItem extends CUDHandler
         ];
     }
 
-    protected function create($data, int $patofID = null)
+    protected function create($data, ?int $patofID = null)
     {
         //error_log("Данные InventoryItem: " . print_r($data, true));
         try {
@@ -69,7 +69,7 @@ class processCUDInventoryItem extends CUDHandler
         }
     }
 
-    protected function update($id, $data, int $patofID = null)
+    protected function update($id, $data, ?int $patofID = null)
     {
         try {
             // Получаем существующий элемент

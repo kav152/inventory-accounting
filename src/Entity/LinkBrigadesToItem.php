@@ -10,7 +10,7 @@ class LinkBrigadesToItem extends BaseEntity
     public Brigades $Brigades;
 
 
-    public function __construct(array $data = null, int $ID_TMC =null, int $IDBrigade = null)
+    public function __construct(?array $data = null, ?int $ID_TMC =null, ?int $IDBrigade = null)
     {
         // Конструктор для массива данных
         if (is_array($data)) {

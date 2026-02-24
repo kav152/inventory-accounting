@@ -5,7 +5,7 @@ class DatabaseFactory
 {
     private static array $config;
 
-    public static function setConfig(array $config = null)
+    public static function setConfig(?array $config = null)
     {
         //$set = require_once __DIR__ . '/../../setting.php';
         if ($config == null) 

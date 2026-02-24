@@ -31,7 +31,7 @@ class GenericRepository implements RepositoryInterface
         $this->cache = [];
     }
 
-    public function getAll(string $query = null): ?Collection
+    public function getAll(?string $query = null): ?Collection
     {
         $pdo = $this->database->getConnection();
         $finalQuery = $query ?? "SELECT * FROM {$this->tableName}";
@@ -164,7 +164,7 @@ class GenericRepository implements RepositoryInterface
     }
 
     // Остальные методы остаются без изменений...
-    public function getAll_array(string $sql = null): ?array
+    public function getAll_array(?string $sql = null): ?array
     {
         $pdo = $this->database->getConnection();
         $finalQuery = $sql ?? "SELECT * FROM {$this->tableName}";
@@ -267,7 +267,7 @@ class GenericRepository implements RepositoryInterface
         error_log($logMessage, 3, __DIR__ . '/../storage/logs/GenericRepository.log');
     }
 
-    public function save(object $entity, string $status = null): ?object
+    public function save(object $entity, ?string $status = null): ?object
     {
 
         if (!$entity instanceof BaseEntity && !$entity instanceof IProperty) {
@@ -483,7 +483,7 @@ class GenericRepository implements RepositoryInterface
      * @param string $idField Название ID поля (по умолчанию берется из сущности)
      * @return bool Успешность операции
      */
-    public function updateDateWithGetDate(int $id, string $dateField, string $idField = null): bool
+    public function updateDateWithGetDate(int $id, string $dateField, ?string $idField = null): bool
     {
         if ($idField === null) {
             // Получаем имя ID поля из сущности

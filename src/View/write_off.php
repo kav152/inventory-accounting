@@ -93,6 +93,7 @@ error_log("Время группировки данных по ID_TMC для о�
     <title>Списание/затраты на ремонт</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="\..\..\styles\filterStyle.css" rel="stylesheet">
     <link href="\..\..\styles\writeOff.css" rel="stylesheet">
 
     <script type="module" src="/src/constants/actions.js"></script>
@@ -101,6 +102,7 @@ error_log("Время группировки данных по ID_TMC для о�
     <script type="module" src="/src/constants/typeMessage.js"></script>
     <script type="module" src="/js/updateFunctions.js"></script>
     <script type="module" src="/js/modals/setting.js"></script>
+    
 
 </head>
 
@@ -125,10 +127,10 @@ error_log("Время группировки данных по ID_TMC для о�
 
     <div class="main-content">
         <!-- Фильтры -->
-        <div class="filter-section">
+        <!--div class="filter-section">
             <h4 class="mb-3">Фильтры</h4>
             <div class="row">
-                <div class="col-md-6">
+                <div-- class="col-md-6">
                     <div class="filter-group">
                         <div class="filter-header">
                             <h5>Наименование</h5>
@@ -156,9 +158,9 @@ error_log("Время группировки данных по ID_TMC для о�
                             <?php endforeach; ?>
                         </div>
                     </div>
-                </div>
+                </div-->
 
-                <div class="col-md-6">
+                <!--div class="col-md-6">
                     <div class="filter-group">
                         <div class="filter-header">
                             <h5>Локация</h5>
@@ -186,13 +188,13 @@ error_log("Время группировки данных по ID_TMC для о�
                             <?php endforeach; ?>
                         </div>
                     </div>
-                </div>
+                </!--div>
             </div>
-        </div>
+        </div-->
 
         <!-- Таблица с данными -->
         <div class="table-section">
-            <div class="table-responsive">
+            <div class="table-responsive" id="idTableResponsive">
                 <table class="table table-striped table-hover" id="writeOffTable">
                     <thead class="thead-dark">
                         <tr>
@@ -211,14 +213,14 @@ error_log("Время группировки данных по ID_TMC для о�
                     <tbody>
                         <?php foreach ($groupedItems as $id => $itemData):
                             $mainItem = $itemData['main'];
-                            $repairs = $itemData['repairs'];                            
+                            $repairs = $itemData['repairs'];
                             $totalCost = 0;
                             foreach ($repairs as $repair) {
                                 $totalCost += $repair->RepairCost;
                             }
-                            ?>
+                        ?>
                             <tr class="main-row" data-id="<?= $mainItem->ID_TMC ?>"
-                                
+
                                 data-status="<?= $mainItem->InventoryItem->Status ?>"
                                 data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?>"
                                 data-location="<?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?>"
@@ -300,8 +302,29 @@ error_log("Время группировки данных по ID_TMC для о�
     <script type="module" src="/js/writeOffFunctions.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
 
+    <script type="module">
+        import {
+            initFilter
+        } from '../../js/filters/filterConfigs.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyticsFilter = initFilter('WRITE_OFF', {
+                onRowCountChanged: (visible, total) => {
+                    console.log(`Показано ${visible} из ${total} записей`);
+                }
+            });
+
+            // При размонтировании компонента очищаем фильтр
+            window.addEventListener('beforeunload', function() {
+                if (window.homeFilter && window.homeFilter.destroy) {
+                    window.homeFilter.destroy();
+                }
+            });
+        });
+    </script>
+
+    <script>
         // Глобальные переменные
         let allItems = <?= json_encode($groupedItems) ?>;
         let selectedRow = null;
@@ -374,7 +397,7 @@ error_log("Время группировки данных по ID_TMC для о�
         // Функция настройки поиска в фильтрах
         function setupFilterSearch() {
             document.querySelectorAll('.search-input').forEach(input => {
-                input.addEventListener('input', function () {
+                input.addEventListener('input', function() {
                     const filterType = this.getAttribute('data-filter');
                     const searchValue = this.value.toLowerCase();
                     const options = document.querySelectorAll(`#${filterType}-options .filter-option`);
@@ -392,7 +415,7 @@ error_log("Время группировки данных по ID_TMC для о�
 
             // Очистка поиска
             document.querySelectorAll('.filter-search-clear').forEach(clearBtn => {
-                clearBtn.addEventListener('click', function () {
+                clearBtn.addEventListener('click', function() {
                     const filterType = this.getAttribute('data-filter');
                     const input = document.querySelector(`.search-input[data-filter="${filterType}"]`);
                     input.value = '';
@@ -406,7 +429,7 @@ error_log("Время группировки данных по ID_TMC для о�
 
             // Очистка фильтров
             document.querySelectorAll('.clear-filter').forEach(btn => {
-                btn.addEventListener('click', function () {
+                btn.addEventListener('click', function() {
                     const filterType = this.getAttribute('data-filter');
                     const checkboxes = document.querySelectorAll(`input[data-filter="${filterType}"]:checked`);
                     checkboxes.forEach(checkbox => {
@@ -481,10 +504,9 @@ error_log("Время группировки данных по ID_TMC для о�
 
             //validStatuses = [StatusItem.Repair, StatusItem.NotDistributed]; // Добавляем в конец массива
 
-            window.openModalAction("edit_write_off", null, null,
-                {
-                    id: id
-                });
+            window.openModalAction("edit_write_off", null, null, {
+                id: id
+            });
             // Редирект на страницу редактирования или открытие модального окна
             //alert('Редактирование записи с ID: ' + id);
             // window.location.href = `edit_write_off.php?id=${id}`;
@@ -514,19 +536,19 @@ error_log("Время группировки данных по ID_TMC для о�
         }
 
         // Закрытие модального окна
-        document.querySelector('.close').addEventListener('click', function () {
+        document.querySelector('.close').addEventListener('click', function() {
             document.getElementById('reportModal').style.display = 'none';
         });
 
         // Закрытие модального окна при клике вне его
-        window.addEventListener('click', function (event) {
+        window.addEventListener('click', function(event) {
             if (event.target == document.getElementById('reportModal')) {
                 document.getElementById('reportModal').style.display = 'none';
             }
         });
 
         // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Настройка поиска в фильтрах
             setupFilterSearch();
 
@@ -545,9 +567,9 @@ error_log("Время группировки данных по ID_TMC для о�
                       }
                   });
               });*/
-              
+
             document.querySelectorAll('.main-row').forEach(row => {
-                row.addEventListener('click', function (e) {
+                row.addEventListener('click', function(e) {
                     // Не выделяем строку при клике на кнопку удаления или если строка скрыта
                     if (!e.target.closest('.delete-btn') && this.style.display !== 'none') {
                         selectRow(this);
@@ -557,7 +579,7 @@ error_log("Время группировки данных по ID_TMC для о�
 
             // Обработчики для кнопок удаления
             document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', function (e) {
+                btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const id = this.getAttribute('data-id');
                     deleteRow(id);

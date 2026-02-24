@@ -13,7 +13,7 @@ class HistoryOperations extends BaseEntity
     public ?CommentsHistory $CommentsHistory = null;
     public ?User $User = null;
 
-    public function __construct($param1 = null, $idUser = null, string $valueComment = null)
+    public function __construct($param1 = null, $idUser = null, ?string $valueComment = null)
     {
         // Конструктор для массива данных
         if (is_array($param1)) {

@@ -61,7 +61,6 @@ class ItemRepairController
     public function writeOffItem($data, $filename): ?object
     {
         $ressult = $this->repairManager($data, $filename, OperationType::WRITE_OFF) ?? null;
-        ;
         return $ressult;
     }
 
@@ -74,7 +73,7 @@ class ItemRepairController
         if ($operationType === OperationType::SEND_REPAIR)
             $repairItem->DateReturnService = null;
         else
-            $repairItem->DateReturnService = date("Y-m-d H:i:s");
+            $repairItem->DateReturnService = (new \DateTime())->format('Y-m-d H:i:s');
         $repair = $repairItemRepository->save($repairItem, Action::CREATE);
         if (!$repair) {
             throw new Exception("Ошибка создания repair в repairManager. RepairCost = {$repairItem->RepairCost}");
@@ -88,10 +87,10 @@ class ItemRepairController
             OperationType::getStatusTransition($operationType)
         );
         $itemController->logHistoryOperation(
+            $operationType,
             $ID_TMC,
             null,
-            $repairItem->InvoiceNumber,
-            $operationType
+            $repairItem->InvoiceNumber
         );
         return $repairItem;
     }
@@ -361,12 +360,6 @@ class ItemRepairController
             'ID_TMC'
         );
 
-
-
         return $repairItemRepository->findBy($query);
     }
-
-
-
-
 }

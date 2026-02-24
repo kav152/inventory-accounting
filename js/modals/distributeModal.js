@@ -84,6 +84,17 @@ export function initDistributeHandlers(modalElement) {
 * @param {HTMLElement} modalElement 
 */
 export function initDistributeModalHandlers(modalElement) {
+
+  if (!modalElement) {
+    console.error("Modal element is null or undefined");
+    return;
+  }
+
+  const form = modalElement.querySelector("#distributeForm");
+  if (!form) {
+    console.error("Form element not found in modal");
+    return;
+  }
   // 1. Инициализация обработчиков формы
   modalElement.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -113,7 +124,7 @@ async function handleDistributeFormSubmit(modalElement) {
     });
 
     // Обновляем статусы в таблице ТМЦ
-    if (tmc_ids) {      
+    if (tmc_ids) {
       // Вызываем функцию обновления статусов в таблице
       updateInventoryStatus(tmc_ids, StatusItem.ConfirmItem);
       // Снимаем выделение с строк

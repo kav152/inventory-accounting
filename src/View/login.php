@@ -47,7 +47,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
             $_SESSION["FIO"] = $currentUser->FIO;
             $isAdmin = ($currentUser->Status == 0);
 
-            $router->dispatch("/home");
+            //$router->dispatch("/home");
+            header('Location: /src/View/home.php');
             exit;
         } else {
             // Неверный пароль

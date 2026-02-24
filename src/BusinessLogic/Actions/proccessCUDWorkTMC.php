@@ -29,7 +29,7 @@ class proccessCUDWorkTMC extends CUDHandler
         ];
     }
 
-    protected function update($id, $data, int|null $patofID = null)
+    protected function update($id, $data, ?int $patofID = null)
     {
         $tmcIds = json_decode($this->currentData['tmc_ids'], true);
         $itemController = new ItemController();

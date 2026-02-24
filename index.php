@@ -8,8 +8,6 @@ require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/config/routes.php';
 require __DIR__ . '/src/BusinessLogic/AccessLogger.php';
 
-//print_r(PDO::getAvailableDrivers());
-
 // Логируем доступ к главной странице
 $logAccess = new AccessLogger();
 $logAccess->logPageAccess('index.php');

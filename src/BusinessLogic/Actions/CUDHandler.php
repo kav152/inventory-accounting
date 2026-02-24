@@ -89,7 +89,7 @@ abstract class CUDHandler
     /**
      * Создание сущности
      */
-    protected function create($data, int $patofID = null)
+    protected function create($data, ?int $patofID = null)
     {
         //error_log('CUDHandler patofID: ' . $patofID);
         $entity = new $this->entityClass($data);
@@ -99,7 +99,7 @@ abstract class CUDHandler
     /**
      * Обновление сущности
      */
-    protected function update($id, $data, int $patofID = null)
+    protected function update($id, $data, ?int $patofID = null)
     {
         //error_log(print_r($data));
         $entity = new $this->entityClass($data);

@@ -98,8 +98,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <script type="module" src="/src/constants/actions.js"></script>
     <script type="module" src="/src/constants/typeMessage.js"></script>
     <script type="module" src="/js/modals/setting.js"></script>
-    <script type="module" src="/js/filters/tableFilter.js"></script>
-    <script async src="/app.js"></script>
+    <script src="/app.js" async></script>
 
 
     <style>
@@ -426,7 +425,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             <?php endif; ?>
             <?php if ($_SESSION["Status"] == 0): ?>
                 <li>
-                    <a href="/src/View/adminPanel.php"> 
+                    <a href="/src/View/adminPanel.php">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                             fill="#1f1f1f">
                             <path
@@ -468,13 +467,76 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 <table id="inventoryTable">
                     <thead>
                         <tr class="header-container">
-                            <th>Ид.</th>
-                            <th>Наименование</th>
-                            <th>Сер. номер</th>
-                            <th>Бренд</th>
-                            <th>Статус</th>
-                            <th>Ответств.</th>
-                            <th>Локация</th>
+                            <th>Ид.
+                                <button class="filter-btn" data-column="0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-0"></div>
+                            </th>
+                            <th>Наименование
+                                <button class="filter-btn" data-column="1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-1"></div>
+                            </th>
+                            <th>Сер. номер
+                                <button class="filter-btn" data-column="2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-2"></div>
+                            </th>
+                            <th>Бренд
+                                <button class="filter-btn" data-column="3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-3"></div>
+                            </th>
+                            <th>Статус
+                                <button class="filter-btn" data-column="4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-4"></div>
+                            </th>
+                            <th>Ответств.
+                                <button class="filter-btn" data-column="5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-5"></div>
+                            </th>
+                            <th>Локация
+                                <button class="filter-btn" data-column="6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960"
+                                        width="18">
+                                        <path
+                                            d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+                                    </svg>
+                                </button>
+                                <div class="dropdown-filter" id="dropdown-6"></div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="scroll">
@@ -525,9 +587,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     </script>
 
 
-    <script type="module">
-        import { initFilter } from '../../js/filters/filterConfigs.js';
-
+    <script>
         document.addEventListener("DOMContentLoaded", function () {
             setupModalHandlers();
             setupNotificationsPanel();
@@ -592,21 +652,6 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-
-            //const homeFilter = FilterFactory.createHomeFilter();
-            //window.homeFilter = homeFilter;
-
-            const analyticsFilter = initFilter('HOME', {
-                onRowCountChanged: (visible, total) => { console.log(`Показано ${visible} из ${total} записей`);  }
-            });
-
-            // При размонтировании компонента очищаем фильтр
-            window.addEventListener('beforeunload', function () {
-                if (window.homeFilter && window.homeFilter.destroy) {
-                    window.homeFilter.destroy();
-                }
-            });
-
             navigateToNewItem();
             measureReloadTime();
 
@@ -634,6 +679,193 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 return Array.from(values).sort();
             }
 
+            function createFilterDropdown(columnIndex) {
+                const dropdown = document.createElement('div');
+                dropdown.className = 'filter-dropdown-content';
+                dropdown.style.zIndex = "100";
+
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.className = 'search-input';
+                searchInput.placeholder = 'Поиск...';
+                dropdown.appendChild(searchInput);
+
+                const filterList = document.createElement('div');
+                filterList.className = 'filter-list';
+                dropdown.appendChild(filterList);
+
+                const actions = document.createElement('div');
+                actions.className = 'filter-actions';
+
+                const applyBtn = document.createElement('button');
+                applyBtn.className = 'filter-apply';
+                applyBtn.textContent = 'Поиск';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'filter-cancel';
+                cancelBtn.textContent = 'Отмена';
+
+                actions.appendChild(applyBtn);
+                actions.appendChild(cancelBtn);
+                dropdown.appendChild(actions);
+
+                function populateList(values, filterText = '') {
+                    filterList.innerHTML = '';
+
+                    const selectAllItem = document.createElement('div');
+                    selectAllItem.className = 'filter-item';
+
+                    const selectAllCheckbox = document.createElement('input');
+                    selectAllCheckbox.type = 'checkbox';
+                    selectAllCheckbox.id = `select-all-${columnIndex}`;
+                    selectAllCheckbox.checked = !filters[columnIndex] || filters[columnIndex].length === 0;
+
+                    const selectAllLabel = document.createElement('label');
+                    selectAllLabel.htmlFor = `select-all-${columnIndex}`;
+                    selectAllLabel.textContent = 'Выбрать все';
+
+                    selectAllItem.appendChild(selectAllCheckbox);
+                    selectAllItem.appendChild(selectAllLabel);
+                    filterList.appendChild(selectAllItem);
+
+                    selectAllCheckbox.addEventListener('change', function () {
+                        const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                    });
+
+                    const filteredValues = values.filter(value =>
+                        value.toLowerCase().includes(filterText.toLowerCase())
+                    );
+
+                    filteredValues.forEach(value => {
+                        const item = document.createElement('div');
+                        item.className = 'filter-item';
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = value;
+                        checkbox.id = `filter-${columnIndex}-${value}`;
+
+                        if (filters[columnIndex] && filters[columnIndex].includes(value)) {
+                            checkbox.checked = true;
+                        } else if (!filters[columnIndex]) {
+                            checkbox.checked = true;
+                        }
+
+                        const label = document.createElement('label');
+                        label.htmlFor = `filter-${columnIndex}-${value}`;
+                        label.textContent = value;
+
+                        item.appendChild(checkbox);
+                        item.appendChild(label);
+                        filterList.appendChild(item);
+                    });
+
+                    updateSelectAllState();
+                }
+
+                function updateSelectAllState() {
+                    const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
+                    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+                    const selectAll = document.getElementById(`select-all-${columnIndex}`);
+                    if (selectAll) {
+                        selectAll.checked = allChecked;
+                    }
+                }
+
+                const columnValues = getColumnValues(columnIndex);
+                populateList(columnValues);
+
+                searchInput.addEventListener('input', function () {
+                    populateList(columnValues, this.value);
+                });
+
+                applyBtn.addEventListener('click', function () {
+                    const checkboxes = filterList.querySelectorAll('input[type="checkbox"]:not(#select-all-' + columnIndex + ')');
+                    const selectedValues = [];
+
+                    checkboxes.forEach(checkbox => {
+                        if (checkbox.checked) {
+                            selectedValues.push(checkbox.value);
+                        }
+                    });
+
+                    filters[columnIndex] = selectedValues;
+                    applyFilters();
+
+                    const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
+                    dropdownContainer.classList.remove('show');
+                    currentDropdown = null;
+                });
+
+                cancelBtn.addEventListener('click', function () {
+                    const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
+                    dropdownContainer.classList.remove('show');
+                    currentDropdown = null;
+                });
+
+                return dropdown;
+            }
+
+            function applyFilters() {
+                const rows = document.querySelectorAll('#inventoryTable tbody tr');
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    let visible = true;
+
+                    for (const columnIndex in filters) {
+                        if (filters[columnIndex].length === 0) continue;
+
+                        const cellValue = row.cells[columnIndex].textContent.trim();
+                        if (!filters[columnIndex].includes(cellValue)) {
+                            visible = false;
+                            break;
+                        }
+                    }
+                    row.style.display = visible ? '' : 'none';
+                    if (visible) visibleCount++;
+                });
+                updateRowCounter(visibleCount);
+            }
+
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const columnIndex = this.getAttribute('data-column');
+                    const dropdownContainer = document.getElementById(`dropdown-${columnIndex}`);
+
+                    if (currentDropdown && currentDropdown !== dropdownContainer) {
+                        currentDropdown.classList.remove('show');
+                        currentDropdown.innerHTML = '';
+                    }
+
+                    if (dropdownContainer.classList.contains('show')) {
+                        dropdownContainer.classList.remove('show');
+                        dropdownContainer.innerHTML = '';
+                        currentDropdown = null;
+                    } else {
+                        dropdownContainer.innerHTML = '';
+                        const dropdownContent = createFilterDropdown(columnIndex);
+                        dropdownContainer.appendChild(dropdownContent);
+                        dropdownContainer.classList.add('show');
+                        currentDropdown = dropdownContainer;
+                    }
+                    const cont1 = document.getElementById('cont1');
+                    cont1.dataset.originalOverflow = cont1.style.overflow;
+                    cont1.style.overflow = 'visible';
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (currentDropdown && !currentDropdown.contains(e.target)) {
+                    currentDropdown.classList.remove('show');
+                    currentDropdown.innerHTML = '';
+                    currentDropdown = null;
+                }
+            });
         });
 
         function navigateToNewItem() {

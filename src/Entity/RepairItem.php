@@ -38,6 +38,7 @@ class RepairItem extends BaseEntity
             $this->DateReturnService = isset($data['DateReturnService']) && !empty($data['DateReturnService'])
                 ? $this->formatDateForSQL($data['DateReturnService'])
                 : null;
+
             $this->inBasket = isset($data['inBasket']) ? ($data['inBasket'] != 0) : false;
         }
     }
@@ -86,7 +87,7 @@ class RepairItem extends BaseEntity
     {
         return [
             'DateToService',
-            /*'DateReturnService'*/
+            $this->DateReturnService === null ? null : 'DateReturnService'
         ];
     }
 

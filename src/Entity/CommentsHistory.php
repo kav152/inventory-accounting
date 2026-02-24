@@ -6,7 +6,7 @@ class CommentsHistory extends BaseEntity
 {
     public int $IDComment;
     public string $ValueComment;
-    public function __construct($param1 = null, string $valueComment = null)
+    public function __construct($param1 = null, ?string $valueComment = null)
     {
         // Конструктор для массива данных
         if (is_array($param1)) {

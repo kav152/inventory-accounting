@@ -63,7 +63,7 @@ export async function executeEntityAction(config) {
   } catch (error) {
     console.error(`Ошибка при выполнении действия ${action}:`, error);
     const errorMessage =
-      error.message || `Ошибка при выполнении действия ${action}`;
+      error || `Ошибка при выполнении действия ${action}`;
 
     if (errorCallback) {
       errorCallback(error);
