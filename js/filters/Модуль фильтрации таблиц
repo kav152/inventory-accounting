@@ -1,0 +1,121 @@
+1 Установка и настройка
+2 Конфигурации фильтров
+3 Детальное описание tableFilter.js
+Детальное описание filterStyle.css
+Решения основных проблем
+
+
+1   Установка и настройка
+    1.1 В HTML (home.php):
+    <!-- Стили фильтрации -->
+    <link href="/styles/filterStyle.css" rel="stylesheet">
+
+    <!-- Скрипты фильтрации -->
+    <script type="module" src="/js/filters/tableFilter.js"></script>
+    <script type="module" src="/js/filters/filterConfigs.js"></script>
+
+    1.2 В JavaScript-модуле:
+    import { initFilter } from '/js/filters/filterConfigs.js';
+
+    1.3 Инициализация фильтра
+        document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация фильтра для главной страницы
+        const homeFilter = initFilter('HOME', {
+            onRowCountChanged: (visible, total) => {
+                console.log(`Показано ${visible} из ${total} записей`);
+            }
+        });
+        
+        // Сохранение фильтра в глобальной области для доступа из других функций
+        window.homeFilter = homeFilter;
+        
+        // Очистка при размонтировании
+        window.addEventListener('beforeunload', function() {
+            if (window.homeFilter && window.homeFilter.destroy) {
+                window.homeFilter.destroy();
+            }
+            });
+        });
+
+    1.4 Требования к HTML-разметке
+    <div class="container" id="idcontainer">
+        <table id="inventoryTable">
+            <thead>
+                <tr class="header-container">
+                    <th>Ид.</th>
+                    <th>Наименование</th>
+                    <!-- ... другие заголовки ... -->
+                </tr>
+            </thead>
+            <tbody class="scroll">
+                <tr class="row-container" data-id="1" data-status="1">
+                    <td class="rowGrid1">1</td>
+                    <td class="rowGrid1">Наименование ТМЦ</td>
+                    <!-- ... другие ячейки ... -->
+                </tr>
+                <!-- ... другие строки ... -->
+            </tbody>
+        </table>
+    </div>
+
+2   Конфигурации фильтров
+    export const FilterConfigs = {
+        HOME: {
+            tableId: 'inventoryTable',
+            containerId: 'cont1',
+            rowSelector: 'tbody tr.row-container',
+            excludeColumns: [], // Все столбцы фильтруются
+            onRowCountChanged: (visibleCount, totalCount) => {
+                const counter = document.getElementById('row-counter');
+                if (counter) {
+                    counter.textContent = `Кол-во строк: ${visibleCount} из ${totalCount}`;
+                }
+            }
+        },
+        
+        WRITE_OFF: {
+            tableId: 'writeOffTable',
+            containerId: 'table-section',
+            rowSelector: 'tbody tr.main-row',
+            excludeColumns: [0, 2, 3, 4, 5, 7, 8, 9], // Фильтруем только 1 и 6 столбцы
+            onFilterApplied: (filters, visibleCount) => {
+                // Дополнительная логика для страницы списаний
+            }
+        }
+    };
+3   Детальное описание tableFilter.js
+    3.1 Архитектура класса TableFilter
+    Ключевые методы:
+    init() - Основной метод инициализации. Проверяет наличие таблицы и контейнера. Устанавливает начальные значения счетчиков
+    Вызывает setupFilters() и setupGlobalListeners()
+
+    setupFilters() - Настройка фильтров для каждого столбца. Создает кнопки фильтрации для каждого заголовка
+    Исключает столбцы, указанные в excludeColumns. Инициализирует хранилище фильтров
+
+    createFilterButton(columnIndex) - Создание кнопки фильтра. Использует SVG-иконки с двумя состояниями (активное/неактивное)
+    Добавляет обработчик клика для открытия меню фильтра
+    Привязывает к конкретному столбцу через data-атрибут
+
+    createDropdownContainer(columnIndex) - Создание контейнера меню. Важное изменение: Добавляется в body, а не в header
+    Использует fixed-позиционирование для корректного отображения
+    Автоматически обновляет позицию при изменении размера окна
+
+    getColumnValues(columnIndex) - Получение уникальных значений столбца. Извлекает значения только из видимых строк
+    Использует Set для устранения дубликатов
+    Сортирует значения в алфавитном порядке
+
+    applyFilters() - Применение всех активных фильтров. Новое поведение: Каскадная фильтрация (фильтры применяются последовательно)
+    Обновляет видимость строк на основе выбранных фильтров
+    Вызывает callback-функции после применения
+    Обновляет визуальное состояние кнопок фильтра
+
+    updateFilterButton(columnIndex) - Обновление состояния кнопки
+    Меняет цвет кнопки (синий для активного, серый для неактивного)
+    Показывает/скрывает бейдж с количеством выбранных фильтров
+    Переключает SVG-иконки между активным и неактивным состояниями
+
+    3.2 Реализация каскадной фильтрации
+    
+
+
+

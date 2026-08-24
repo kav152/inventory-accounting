@@ -1,0 +1,75 @@
+<?php
+date_default_timezone_set('Europe/Moscow');
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../storage/logs/proccessCUDWorkTMC.log');
+
+require_once __DIR__ . '/CUDHandler.php';
+require_once __DIR__ . '/../../Entity/InventoryItem.php';
+require_once __DIR__ . '/../ItemController.php';
+
+class proccessCUDWorkTMC extends CUDHandler
+{
+    public function __construct()
+    {
+        DatabaseFactory::setConfig();
+        parent::__construct(new ItemController(), InventoryItem::class);
+    }
+
+    private $currentData = [];
+
+    protected function prepareData($postData)
+    {
+        $this->currentData = $postData;
+        //error_log("Данные распределения: " . print_r($this->currentData, true));
+
+        return [
+            'selectedTMCIds' => json_decode($postData['selectedTMCIds'] ?? '[]', true),
+            'brigade_id' => $postData['brigade_id']
+        ];
+    }
+
+    protected function update($id, $data, ?int $patofID = null)
+    {
+        $tmcIds = json_decode($this->currentData['tmc_ids'], true);
+        if (!is_array($tmcIds) || count($tmcIds) === 0) {
+            throw new Exception('Не выбраны ТМЦ для передачи в работу');
+        }
+
+        $itemController = new ItemController();
+        $brigadeId = trim((string) ($this->currentData['brigade_id'] ?? ''), '"');
+        $brigadeId = (int) $brigadeId;
+        if ($brigadeId <= 0) {
+            throw new Exception('Не выбрана бригада');
+        }
+
+        $failed = [];
+        foreach ($tmcIds as $tmcId) {
+            $result = $itemController->assignToBrigade((int) $tmcId, $brigadeId);
+            if (!$result) {
+                $failed[] = (int) $tmcId;
+            }
+        }
+
+        if (count($failed) === count($tmcIds)) {
+            throw new Exception('Не удалось передать ТМЦ в работу: ' . implode(', ', $failed));
+        }
+        if ($failed) {
+            throw new Exception('Часть ТМЦ не передана в работу: ' . implode(', ', $failed));
+        }
+    }
+
+    protected function create($data, ?int $patofID = null)
+    {
+        throw new Exception('Ошибка - при передачи в работу ТМЦ - функция create неиспользуеться');
+    }
+
+    protected function prepareResultEntity($result)
+    {
+        return [];
+    }
+}
+
+// Использование
+$handler = new proccessCUDWorkTMC();
+$handler->handleRequest();

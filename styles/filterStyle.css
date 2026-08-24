@@ -1,0 +1,166 @@
+/*.filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    color: #64748b;
+    transition: all 0.3s;
+}*/
+
+.filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    color: #64748b;
+    transition: all 0.3s;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.filter-btn:hover {
+    color: #334155;
+}
+
+.filter-btn.active {
+    color: #3b82f6;
+}
+
+/* Бейдж для активного фильтра */
+.filter-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+
+.dropdown-filter {
+    position: absolute;
+    z-index: 1050; /* Увеличьте z-index */
+    top: 100%;
+    left: 0;
+    min-width: 250px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    padding: 15px;
+    display: none;
+    margin-top: 5px;
+}
+
+.dropdown-filter.show {
+    z-index: 1000;
+    display: block;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.filter-list {
+    max-height: 500px;
+    min-width: 200px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 5px;
+}
+
+
+.filter-item {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.filter-item:hover {
+    background-color: #f1f5f9;
+}
+
+.filter-item input {
+    margin-right: 10px;
+}
+
+.filter-item:first-child {
+    font-weight: 600;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: space-between;
+}
+
+.filter-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-apply {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+}
+
+.filter-apply:hover {
+    background-color: #2563eb;
+}
+
+.filter-cancel {
+    background: none;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+}
+
+.filter-cancel:hover {
+    background-color: #f1f5f9;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.filter-dropdown-content {
+    z-index: 1000; /* Увеличиваем значение */
+}
+
+/* Временные стили для отладки */
+/*.dropdown-filter {
+    border: 2px solid red !important;  Чтобы видеть границы 
+    background: white !important;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3) !important;
+}*/
+/*
+#resultContainer {
+    background: rgba(255,0,0,0.1); /* Полупрозрачный для проверки наложения 
+}*/

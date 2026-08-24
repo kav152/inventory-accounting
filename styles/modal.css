@@ -1,0 +1,134 @@
+/* Обновленные стили */
+/*.main-container {
+  display: grid;
+  grid-template-columns: 1fr 0fr;
+  grid-template-areas: "main-part property-part";
+  gap: 1em;
+  transition: all 0.3s ease;
+  width: auto;
+}*/
+/*
+.main-container.expanded {
+  grid-template-columns: 1fr 1fr;
+}*/
+
+.modal-content {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.modal-footer {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.form-container {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 6px;
+}
+/*
+#propertyContainer {
+  background: #f8fafc;
+  border-left: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  overflow-y: auto;
+  border-radius: 0 6px 6px 0;
+  transition: 300ms ease-in-out;
+}*/
+/*
+#propertyContainer {
+  background: #f8f9fa;
+  border-left: 1px solid #dee2e6;
+  padding: 20px;
+  overflow-y: auto;
+  min-width: 400px;
+  height: 100%;
+  transition: all 0.6s ease;
+  position: relative;
+}*/
+/*
+#propertyContainer.show {
+  opacity: 1;
+  padding: 1.5rem;
+  visibility: visible;
+}*/
+/*
+#propertyContainer.close {
+  opacity: 0;
+  padding: 0;
+  visibility: hidden;
+}*/
+#propertyContainer.show {
+  display: block;
+  width: 50%;
+  opacity: 1;
+  visibility: visible;
+}
+
+#propertyContainer.close {
+  display: none;
+  width: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.auto-expand {
+  min-height: 38px;
+  max-height: 200px;
+  line-height: 1.5;
+  padding: 0.375rem 0.75rem;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #334155;
+}
+
+/* Адаптация под Bootstrap */
+.btn-outline-primary {
+  border-color: #cbd5e1;
+}
+
+.btn-outline-primary:hover {
+  background-color: #eff6ff;
+}
+/*================================================================*/
+.property-management {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.property-management .list-group {
+  flex-grow: 1;
+  overflow-y: auto;
+  /*max-height: calc(100% - 120px);*/ /* Оставляем место для заголовка и кнопок */
+  max-height: 50vh; /* Уменьшена высота для строки состояния */
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.list-group-item {
+  padding: 10px 15px;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 5px;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}

@@ -1,0 +1,19 @@
+Сравнительная таблица отличий
+Объект	Тип	База данных ConstructionAccounting	База данных ConstructionAccounting_test	Отличие
+
+Table: RegistrationInventoryItem	Столбец CreationDate	NOT NULL	NULL	Разное ограничение NULL/NOT NULL
+Table: RegistrationInventoryItem	Столбец СhangeDate	NOT NULL	NULL	Разное ограничение NULL/NOT NULL
+Table: RegistrationInventoryItem	Внешние ключи	Есть FK на InventoryItem и User (дважды)	Отсутствуют FK	В тестовой БД отсутствуют внешние ключи для этой таблицы
+Table: RepairItem	Столбец UPD	Тип varbinary(max)	Тип nvarchar(max)	Разный тип данных
+Table: RepairItem	Столбец DateToService	Тип date	Тип datetime	Разный тип данных
+Table: RepairItem	Столбец DateReturnService	Тип date	Тип datetime	Разный тип данных
+Table: RepairItem	Столбец inBasket	Отсутствует	[bit] NULL	В тестовой БД добавлен новый столбец
+Table: RepairItem	Внешние ключи	Есть FK на InventoryItem и Location	Есть FK на InventoryItem и Location	Без изменений
+Table: HistoryOperations	Ограничение DEFAULT	Отсутствует	DEFAULT (getdate()) FOR [HistoryData]	В тестовой БД добавлено значение по умолчанию
+Прочие таблицы	Структура	Идентична тестовой БД	Идентична основной БД	Без структурных отличий
+Внешние ключи	Constraint	Все FK созданы	Все FK созданы, кроме RegistrationInventoryItem	В тестовой БД отсутствуют FK для RegistrationInventoryItem
+Настройки БД	Параметры БД	Не показаны	Многочисленные SET параметры (ANSI_NULLS, QUOTED_IDENTIFIER и др.)	Тестовая БД создается с явным указанием параметров
+
+
+Пароль 123
+$2y$12$wGt.gcUwxox12dZzopcKIOtV/rIRHVe8c3Gtz4IkdJxcuU1E8Ki.m

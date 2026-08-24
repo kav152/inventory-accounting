@@ -1,0 +1,17 @@
+Имя: a1138175_OGK
+Пользователь: a1138175_00
+Адрес хоста: localhost
+
+Представление для актуальных цен:
+
+CREATE VIEW CurrentPrices AS
+SELECT 
+    customer_id,
+    finance_type,
+    amount
+FROM CustomerFinance
+WHERE valid_from <= CURDATE()
+    AND (valid_to IS NULL OR valid_to >= CURDATE());
+
+
+
