@@ -1,7 +1,12 @@
 RewriteEngine On
 
+<<<<<<< HEAD
 # Запретить прямой доступ к папке src/View
 RewriteRule ^src/View/.*$ - [F,L]
+=======
+# Разрешаем доступ к страницам и API в src/View (приложение использует прямые URL)
+# RewriteRule ^src/View/.*$ - [F,L]
+>>>>>>> source/feature/local-updates-2026-08
 
 # Все остальные запросы направлять на index.php
 RewriteCond %{REQUEST_FILENAME} !-f

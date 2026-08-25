@@ -188,6 +188,66 @@ body.main-body {
   position: relative;
   height: 94vh;
   overflow: hidden;
+<<<<<<< HEAD
+=======
+  display: flex;
+  flex-direction: column;
+}
+
+.inventory-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  flex-shrink: 0;
+}
+
+.inventory-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  background: #f8fafc;
+}
+
+.inventory-search:focus-within {
+  border-color: #0d9488;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.inventory-search-icon {
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.inventory-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.inventory-search-hint {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .inventory-search-hint {
+    display: none;
+  }
+>>>>>>> source/feature/local-updates-2026-08
 }
 
 #resultContainer {
@@ -203,6 +263,14 @@ body.main-body {
   /* Уменьшенный размер шрифта */
 }
 
+<<<<<<< HEAD
+=======
+#inventoryTable thead {
+  display: block;
+  width: 100%;
+}
+
+>>>>>>> source/feature/local-updates-2026-08
 #inventoryTable th {
   padding: 10px;
   text-align: left;
@@ -214,6 +282,12 @@ body.main-body {
   /* Шрифт заголовка чуть больше */
   border-radius: 8px;
   /* Скругленные углы */
+<<<<<<< HEAD
+=======
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+>>>>>>> source/feature/local-updates-2026-08
 }
 
 #inventoryTable td {
@@ -222,14 +296,27 @@ body.main-body {
   border-bottom: 1px solid #e0e0e0;
   font-size: 1.1em;
   /* Уменьшенный размер шрифта */
+<<<<<<< HEAD
+=======
+  overflow: hidden;
+  text-overflow: ellipsis;
+>>>>>>> source/feature/local-updates-2026-08
 }
 
 #inventoryTable tbody.scroll {
   display: block;
+<<<<<<< HEAD
   max-height: 80vh;
   /* Уменьшена высота для строки состояния */
   overflow-y: auto;
   overflow-x: hidden;
+=======
+  max-height: calc(80vh - 2.5rem);
+  /* Уменьшена высота для строки состояния и поиска */
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+>>>>>>> source/feature/local-updates-2026-08
 }
 
 /* ======= СТРОКИ И ЯЧЕЙКИ ======= */
@@ -238,7 +325,13 @@ body.main-body {
   border-radius: 0.5em;
   display: grid;
   margin-bottom: 4px;
+<<<<<<< HEAD
   grid-template-columns: 6% 24% 15% 10% 15% 15% 15%;
+=======
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: 5% 20% 11% 8% 12% 12% 14% 14%;
+>>>>>>> source/feature/local-updates-2026-08
   gap: 0.1em;
   border: 1px solid var(--line-clr);
   cursor: pointer;
@@ -247,6 +340,20 @@ body.main-body {
   /* Запрещаем выделение текста */
 }
 
+<<<<<<< HEAD
+=======
+.rowGrid1.legal-cell {
+  font-size: 0.92em;
+  color: #0f766e;
+  font-weight: 650;
+}
+
+.rowGrid1.legal-cell.is-empty {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+>>>>>>> source/feature/local-updates-2026-08
 .row-container:hover {
   background-color: var(--hover-clr);
 }
@@ -272,7 +379,11 @@ body.main-body {
   transition: 0.3s;
 }
 
+<<<<<<< HEAD
 .modal-content {
+=======
+.right-modal .modal-content {
+>>>>>>> source/feature/local-updates-2026-08
   padding: 20px;
   font-size: 16px;
 }
@@ -672,8 +783,26 @@ body.main-body {
   margin: 0;
 }
 
+<<<<<<< HEAD
 .notification-repair-alert,
 .notification-atwork-alert,
+=======
+.notification-writeoff-alert {
+  background: linear-gradient(135deg, #0f766e, #0d9488) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
+}
+.notification-writeoff-alert:hover {
+  filter: brightness(1.05);
+}
+.notification-repair-alert.is-empty,
+.notification-alert.is-empty {
+  opacity: 0.75;
+}
+
+.notification-repair-alert,
+.notification-atwork-alert,
+.notification-writeoff-alert,
+>>>>>>> source/feature/local-updates-2026-08
 .notification-repair-badge,
 .notification-atwork-badge {
   position: relative;

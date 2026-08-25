@@ -16,6 +16,11 @@ class InventoryItem extends BaseEntity
     public ?Location $Location = null;
     public ?User $User = null;
     public ?RegistrationInventoryItem $RegistrationInventoryItem = null;
+<<<<<<< HEAD
+=======
+    /** Временное поле из JOIN Location.FormsJointStockCompanies */
+    public string $LocationLegalEntity = '';
+>>>>>>> source/feature/local-updates-2026-08
 
     public function __construct(array $data = [])
     {
@@ -28,7 +33,16 @@ class InventoryItem extends BaseEntity
             $this->IDTypesTMC = (int)($data['IDTypesTMC'] ?? 0);
             $this->IDBrandTMC = (int)($data['IDBrandTMC'] ?? 0);
             $this->IDModel = (int)($data['IDModel'] ?? 0);
+<<<<<<< HEAD
             $this->IDLocation = (int)($data['IDLocation'] ?? 0);            
+=======
+            $this->IDLocation = (int)($data['IDLocation'] ?? 0);
+            $this->LocationLegalEntity = trim((string) (
+                $data['LocationLegalEntity']
+                ?? $data['FormsJointStockCompanies']
+                ?? ''
+            ));
+>>>>>>> source/feature/local-updates-2026-08
         }        
     }
 

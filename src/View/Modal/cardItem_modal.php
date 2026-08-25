@@ -230,6 +230,41 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                                     </label>
                                 </div>
                             </div>
+<<<<<<< HEAD
+=======
+
+                            <?php
+                            $currentLocationId = (int) ($inventoryItem->IDLocation ?? 0);
+                            $currentLegal = trim((string) ($inventoryItem->Location->FormsJointStockCompanies ?? ''));
+                            $locationsList = $locations ?? [];
+                            ?>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold" for="locationSelect">Локация</label>
+                                <select class="form-select" id="locationSelect" name="idLocation">
+                                    <option value="0">Основной склад (по умолчанию)</option>
+                                    <?php foreach ($locationsList as $loc): ?>
+                                        <?php
+                                        $locId = (int) ($loc->IDLocation ?? 0);
+                                        $locLegal = trim((string) ($loc->FormsJointStockCompanies ?? ''));
+                                        ?>
+                                        <option value="<?= $locId ?>"
+                                            data-legal="<?= htmlspecialchars($locLegal, ENT_QUOTES) ?>"
+                                            <?= $currentLocationId === $locId ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($loc->NameLocation ?? '') ?>
+                                            <?= $locLegal !== '' ? ' — ' . htmlspecialchars($locLegal) : '' ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold" for="txtLegalEntity">Юр. лицо</label>
+                                <input type="text" class="form-control" id="txtLegalEntity" name="legalEntity"
+                                    placeholder="Юр. лицо локации"
+                                    value="<?= htmlspecialchars($currentLegal) ?>">
+                                <div class="form-text">Привязано к выбранной локации. Можно уточнить при создании/редактировании.</div>
+                            </div>
+>>>>>>> source/feature/local-updates-2026-08
                         </div>
 
                         <!--div class="close" id="propertyContainer" style="grid-area: property-part">
@@ -278,6 +313,19 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
             document.getElementById("modelSelect").disabled = +this.value === 0;
         });
 
+<<<<<<< HEAD
+=======
+        const locationSelect = document.getElementById("locationSelect");
+        const legalInput = document.getElementById("txtLegalEntity");
+        if (locationSelect && legalInput && !locationSelect.dataset.legalBound) {
+            locationSelect.dataset.legalBound = "1";
+            locationSelect.addEventListener("change", function () {
+                const selected = this.options[this.selectedIndex];
+                legalInput.value = selected?.getAttribute("data-legal") || "";
+            });
+        }
+
+>>>>>>> source/feature/local-updates-2026-08
         // Обработчики изменений в селектах
         document.getElementById(PropertySelectID[PropertyTMC.TYPE_TMC])?.addEventListener("change", (e) => {
             //forceResetModelSelect();

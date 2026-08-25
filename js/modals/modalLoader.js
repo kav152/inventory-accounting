@@ -7,6 +7,11 @@ import {
 import { StatusItem } from '../../src/constants/statusItem.js';
 import { ServiceStatus } from '../../src/constants/statusService.js';
 import { Action } from '../../src/constants/actions.js';
+<<<<<<< HEAD
+=======
+import { TypeMessage } from '../../src/constants/typeMessage.js';
+import { showNotification } from './setting.js';
+>>>>>>> source/feature/local-updates-2026-08
 
 (function () {
 
@@ -209,6 +214,7 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
 
   selectedRows.forEach((row) => {
     const cells = row.cells;
+<<<<<<< HEAD
     const status = parseInt(row.getAttribute("data-status"));
 
     if (validStatuses.includes(status)) {
@@ -220,6 +226,27 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
       table.innerHTML += fillInTable(type, cells);
     }
   });
+=======
+    const status = parseInt(row.getAttribute("data-status"), 10);
+    const id =
+      row.getAttribute("data-id") ||
+      (cells[0]?.textContent || "").trim();
+
+    if (!id) return;
+
+    if (validStatuses.length === 0 || validStatuses.includes(status)) {
+      window.selectedTMCIds.push(String(id).trim());
+      table.innerHTML += fillInTable(type, cells, row);
+    }
+  });
+
+  if (window.selectedTMCIds.length === 0 && selectedRows.length > 0) {
+    showNotification(
+      TypeMessage.notification,
+      "Среди выбранных нет ТМЦ с подходящим статусом для этой операции",
+    );
+  }
+>>>>>>> source/feature/local-updates-2026-08
 }
 /**
  * Заполнить таблицу в зависимости от типа модального окна
@@ -227,24 +254,65 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
  * @param {*} cells
  * @returns
  */
+<<<<<<< HEAD
 function fillInTable(type, cells = []) {
   //console.log('Мы в fillInTable');
   let html = null;
+=======
+function fillInTable(type, cells = [], row = null) {
+  //console.log('Мы в fillInTable');
+  let html = null;
+  const id =
+    row?.getAttribute("data-id") ||
+    (cells[0]?.textContent || "").trim();
+  const name = (cells[1]?.textContent || "").trim();
+  const serial = (cells[2]?.textContent || "").trim();
+  const location = (cells[6]?.textContent || "").trim();
+
+>>>>>>> source/feature/local-updates-2026-08
   switch (type) {
     case "workModal":
     case "at_work":
     case "confirm":
     case "confirmRepair":
+<<<<<<< HEAD
     case "distributeModal":
       html = `
             <tr>
+=======
+      html = `
+            <tr>
+                <td>${id}</td>
+                <td>${name}</td>
+                <td>${serial}</td>
+                <td>${location}</td>
+            </tr>
+        `;
+      break;
+    case "distributeModal": {
+      const legal = (cells[7]?.textContent || "").trim();
+      const legalText = legal && legal !== "—" ? legal : "—";
+      const legalAttr = legalText !== "—" ? legalText.replace(/"/g, "&quot;") : "";
+      const fromChipClass = legalText !== "—" ? "legal-chip" : "legal-chip empty";
+      html = `
+            <tr data-legal="${legalAttr}">
+>>>>>>> source/feature/local-updates-2026-08
                 <td>${cells[0].textContent}</td>
                 <td>${cells[1].textContent}</td>
                 <td>${cells[2].textContent}</td>
                 <td>${cells[6].textContent}</td>
+<<<<<<< HEAD
             </tr>
         `;
       break;
+=======
+                <td class="col-legal-from"><span class="${fromChipClass}">${legalText}</span></td>
+                <td class="col-legal-to"><span class="legal-chip empty legal-to-chip">—</span></td>
+            </tr>
+        `;
+      break;
+    }
+>>>>>>> source/feature/local-updates-2026-08
     case "serviceModal":
       const id = cells[0].textContent.trim();
       html = `

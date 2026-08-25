@@ -31,7 +31,29 @@ $importResults = null;
     <title>Панель администратора</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<<<<<<< HEAD
     <link rel="stylesheet" href="/styles/table.css">
+=======
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <?php
+      $tableCssVer = @filemtime(__DIR__ . '/../../styles/table.css') ?: time();
+      $adminLocCssVer = @filemtime(__DIR__ . '/../../styles/adminLocations.css') ?: time();
+    ?>
+    <link rel="stylesheet" href="/styles/table.css?v=<?= $tableCssVer ?>">
+    <link rel="stylesheet" href="/styles/adminLocations.css?v=<?= $adminLocCssVer ?>">
+    <style>
+      /* Soft location row selection fallback */
+      #locationTableContainer tbody tr.row-location.selected td {
+        background: #ecfdf8 !important;
+        color: #0f172a !important;
+      }
+      #locationTableContainer tbody tr.row-location.selected td:first-child {
+        box-shadow: inset 3px 0 0 #0d9488;
+      }
+    </style>
+>>>>>>> source/feature/local-updates-2026-08
 
     <style>
         :root {
@@ -248,7 +270,11 @@ $importResults = null;
             </a>
             <div class="ms-auto d-flex align-items-center">
                 <span class="navbar-text me-3">Привет, <?= htmlspecialchars($_SESSION["FIO"]) ?></span>
+<<<<<<< HEAD
                 <a href="/src/View/home.php" class="btn btn-outline-light btn-sm me-2">
+=======
+                <a href="/home" class="btn btn-outline-light btn-sm me-2">
+>>>>>>> source/feature/local-updates-2026-08
                     <i class="bi bi-house me-1"></i>На главную
                 </a>
             </div>
@@ -514,6 +540,11 @@ $importResults = null;
     <script type="module" src="/js/modals/modalLoader.js"></script>
     <script type="module" src="/js/modals/userModal.js"></script>
     <script type="module" src="/js/modals/locationModal.js"></script>
+<<<<<<< HEAD
+=======
+    <script type="module" src="/js/modals/legalTransferModal.js"></script>
+    <script type="module" src="/js/modals/setting.js"></script>
+>>>>>>> source/feature/local-updates-2026-08
     <script type="module" src="/js/modalTypes.js"></script>
     <script type="module" src="/js/updateFunctions.js"></script>
 

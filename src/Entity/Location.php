@@ -12,6 +12,13 @@ class Location extends BaseEntity
     public $isMainWarehouse;
     public $FormsJointStockCompanies;
     public bool $IsRepair;
+<<<<<<< HEAD
+=======
+    public $Phone;
+    public $Contacts;
+    public $Email;
+    public $Location2;
+>>>>>>> source/feature/local-updates-2026-08
     public ?City $City = null;
 
     public function __construct(array $data = [])
@@ -22,8 +29,20 @@ class Location extends BaseEntity
             $this->IDCity = $data['IDCity'] ?? null;
             $this->Address = $data['Address'] ?? null;
             $this->isMainWarehouse = $data['isMainWarehouse'] ?? null;
+<<<<<<< HEAD
             $this->FormsJointStockCompanies = $data['FormsJointStockCompanies'] ?? '';
             $this->IsRepair = (bool)($data['IsRepair'] ?? false);
+=======
+            $this->FormsJointStockCompanies = $data['FormsJointStockCompanies']
+                ?? $data['formsjointstockcompanies']
+                ?? $data['LocationLegalEntity']
+                ?? '';
+            $this->IsRepair = (bool)($data['IsRepair'] ?? false);
+            $this->Phone = $data['Phone'] ?? null;
+            $this->Contacts = $data['Contacts'] ?? null;
+            $this->Email = $data['Email'] ?? null;
+            $this->Location2 = $data['Location2'] ?? null;
+>>>>>>> source/feature/local-updates-2026-08
         }
     }
 
@@ -47,7 +66,11 @@ class Location extends BaseEntity
 
     public function getReadOnlyFields(): array
     {
+<<<<<<< HEAD
         return []; // НАСТРОИТЬ
+=======
+        return [];
+>>>>>>> source/feature/local-updates-2026-08
     }
 
     public function getPersistableProperties(): array
@@ -58,7 +81,18 @@ class Location extends BaseEntity
             'Address',
             'isMainWarehouse',
             'FormsJointStockCompanies',
+<<<<<<< HEAD
             'IsRepair'
         ];
     }
 }
+=======
+            'IsRepair',
+            'Phone',
+            'Contacts',
+            'Email',
+            'Location2',
+        ];
+    }
+}
+>>>>>>> source/feature/local-updates-2026-08

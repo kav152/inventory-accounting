@@ -71,8 +71,15 @@ export async function createEntity(sectionId, selectId, fields, entityUrl, entit
         });
 
         // Определяем поля для отображения в select
+<<<<<<< HEAD
         const displayFields = fields.map(field => field.name);
         const displaySeparator = fields.length > 1 ? ', ' : '';
+=======
+        const displayFields = fields
+            .filter((field) => field.display !== false)
+            .map((field) => field.name);
+        const displaySeparator = displayFields.length > 1 ? ', ' : '';
+>>>>>>> source/feature/local-updates-2026-08
 
         //console.log(displayFields);
         //console.log(result.resultEntity);

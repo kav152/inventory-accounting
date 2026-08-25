@@ -5,8 +5,18 @@
         position: fixed;
         top: 20px;
         right: 20px;
+<<<<<<< HEAD
         z-index: 9999;
         max-width: 350px;
+=======
+        z-index: 20000;
+        max-width: 350px;
+        pointer-events: none;
+    }
+
+    .notification-container .notification {
+        pointer-events: auto;
+>>>>>>> source/feature/local-updates-2026-08
     }
 
     .notification {

@@ -21,9 +21,15 @@ class processCUDCity extends CUDHandler
         //error_log("Данные City: " . print_r($postData, true));
 
         return [
+<<<<<<< HEAD
             // НАСТРОИТЬ ПОЛЯ ПОД КОНКРЕТНУЮ СУЩНОСТЬ
             'IDCity' => (int) $postData['IDCity'] ?? 0,
             'NameCity' => $postData['NameCity'] ?? 'Наименвоание города не указано',
+=======
+            'IDCity' => (int) ($postData['IDCity'] ?? 0),
+            'NameCity' => $postData['NameCity'] ?? 'Наименование города не указано',
+            'Address' => $postData['Address'] ?? null,
+>>>>>>> source/feature/local-updates-2026-08
         ];
     }
 
@@ -38,6 +44,10 @@ class processCUDCity extends CUDHandler
         return [
             'id' => $city->getId(),
             'NameCity' => $city->NameCity,
+<<<<<<< HEAD
+=======
+            'Address' => $city->Address,
+>>>>>>> source/feature/local-updates-2026-08
         ];
     }
 }

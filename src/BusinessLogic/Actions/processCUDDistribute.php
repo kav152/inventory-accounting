@@ -52,7 +52,16 @@ class processCUDDistribute extends CUDHandler
         // Преобразуем в целые числа
         $tmcIds = array_map('intval', $tmcIds);
         $itemController = new ItemController();
+<<<<<<< HEAD
         $itemController->distributeItems($tmcIds, $this->currentData['location'], $this->currentData['user']);
+=======
+        $itemController->distributeItems(
+            $tmcIds,
+            (int) $this->currentData['location'],
+            (int) $this->currentData['user'],
+            (string) ($this->currentData['upd'] ?? '')
+        );
+>>>>>>> source/feature/local-updates-2026-08
     }
 
     protected function prepareResultEntity($result)

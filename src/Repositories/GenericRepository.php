@@ -229,7 +229,10 @@ class GenericRepository implements RepositoryInterface
     public function findById(int $id, string $nameID): ?object
     {
         $sql = "SELECT * FROM {$this->tableName} WHERE {$nameID} = :id";
+<<<<<<< HEAD
         //error_log('findById - sql:' . $sql);
+=======
+>>>>>>> source/feature/local-updates-2026-08
         $pdo = $this->database->getConnection();
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
@@ -239,7 +242,13 @@ class GenericRepository implements RepositoryInterface
             return null;
         }
 
+<<<<<<< HEAD
         return $this->hydrate($data);
+=======
+        $batchData = [$data];
+        $this->preloadRelationships($batchData);
+        return $this->hydrate($batchData[0]);
+>>>>>>> source/feature/local-updates-2026-08
     }
 
     // Остальные методы (save, insert, update, delete) остаются без изменений...

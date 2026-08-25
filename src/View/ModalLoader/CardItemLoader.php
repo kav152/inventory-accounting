@@ -23,6 +23,19 @@ class CardItemLoader extends ModalLoader
 
         $inventoryItem = $controller->getInventoryItem($currentID);
         $typeTMCs = $propertyController->getTypeTMC();
+<<<<<<< HEAD
+=======
+        $locations = $controller->getLocations(false) ?? [];
+
+        if ($inventoryItem && (int) ($inventoryItem->IDLocation ?? 0) > 0 && empty($inventoryItem->Location)) {
+            foreach ($locations as $loc) {
+                if ((int) $loc->IDLocation === (int) $inventoryItem->IDLocation) {
+                    $inventoryItem->Location = $loc;
+                    break;
+                }
+            }
+        }
+>>>>>>> source/feature/local-updates-2026-08
 
         ob_start();
         include __DIR__ . '/../Modal/cardItem_modal.php';

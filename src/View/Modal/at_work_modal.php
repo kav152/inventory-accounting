@@ -170,6 +170,18 @@
             border-color: #dc3545;
             box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
         }
+<<<<<<< HEAD
+=======
+
+        .service-form-section.collapsed,
+        .writeoff-form-section.collapsed {
+            display: none;
+        }
+
+        .atWorkTable .btn-write-off {
+            margin-left: 0.35rem;
+        }
+>>>>>>> source/feature/local-updates-2026-08
     </style>
 
 
@@ -224,13 +236,27 @@
                                                         <td><?= $item->NameTMC ?></td>
                                                         <td><?= $item->SerialNumber ?></td>
                                                         <td><?= $item->User->FIO ?></td>
+<<<<<<< HEAD
                                                         <td>
+=======
+                                                        <td class="text-nowrap">
+>>>>>>> source/feature/local-updates-2026-08
                                                             <button type="button"
                                                                 class="btn btn-warning btn-sm btn-service"
                                                                 data-tmc-id="<?= $item->ID_TMC ?>"
                                                                 onclick="showServiceForm(this, <?= $item->ID_TMC ?>)">
                                                                 <i class="bi bi-tools me-1"></i>В сервис
                                                             </button>
+<<<<<<< HEAD
+=======
+                                                            <button type="button"
+                                                                class="btn btn-danger btn-sm btn-write-off"
+                                                                data-tmc-id="<?= $item->ID_TMC ?>"
+                                                                data-location-id="<?= (int) ($item->IDLocation ?? 0) ?>"
+                                                                onclick="quickWriteOff(this, <?= $item->ID_TMC ?>)">
+                                                                Списать
+                                                            </button>
+>>>>>>> source/feature/local-updates-2026-08
                                                         </td>
                                                     </tr>
                                                     <tr class="service-form-row" style="display: none;">
@@ -262,6 +288,56 @@
                                                                     </div>
                                                                 </form>
                                                             </div>
+<<<<<<< HEAD
+=======
+                                                            <div class="writeoff-form-section collapsed" id="writeOffForm-<?= $item->ID_TMC ?>">
+                                                                <form class="writeoff-form" data-tmc-id="<?= $item->ID_TMC ?>">
+                                                                    <input type="hidden" name="ID_TMC" value="<?= $item->ID_TMC ?>">
+                                                                    <div class="alert alert-light border small mb-3">
+                                                                        Для быстрого списания используйте кнопку «Списать» выше.
+                                                                        Здесь можно указать документы и причину, затем нажать «Списать полностью».
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Организация</label>
+                                                                        <select name="IDLocation" class="form-select">
+                                                                            <option value="<?= (int) ($item->IDLocation ?? 0) ?>">Текущая локация ТМЦ</option>
+                                                                            <?php if (!empty($locationRepairs)): ?>
+                                                                                <?php foreach ($locationRepairs as $loc): ?>
+                                                                                    <option value="<?= $loc->IDLocation ?>"><?= htmlspecialchars($loc->NameLocation) ?></option>
+                                                                                <?php endforeach; ?>
+                                                                            <?php endif; ?>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="row mb-3">
+                                                                        <div class="col-md-4">
+                                                                            <label class="form-label">№ счета</label>
+                                                                            <input type="text" name="InvoiceNumber" class="form-control" placeholder="Счет или «Без счета»" value="Без счета">
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <label class="form-label">№ УПД</label>
+                                                                            <input type="text" name="UPD" class="form-control" placeholder="Номер УПД">
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <label class="form-label">Сумма ремонта/диагностика</label>
+                                                                            <input type="number" name="RepairCost" class="form-control" step="0.01" min="0" value="0">
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Причина списания</label>
+                                                                        <textarea name="RepairDescription" class="form-control" rows="3"
+                                                                            placeholder="Укажите причину списания (без отправки в сервис)">Списание без отправки в сервис</textarea>
+                                                                    </div>
+                                                                    <div class="mt-3">
+                                                                        <button type="button" class="btn btn-danger btn-sm" onclick="sendWriteOffForm(<?= $item->ID_TMC ?>)">
+                                                                            Списать полностью
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-secondary btn-sm" onclick="hideWriteOffForm(<?= $item->ID_TMC ?>)">
+                                                                            Отмена
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+>>>>>>> source/feature/local-updates-2026-08
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
