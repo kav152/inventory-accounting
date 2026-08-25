@@ -28,20 +28,12 @@ const entityConfig = {
     },
     citySection:{
         fields: [
-<<<<<<< HEAD
-            { name: 'NameCity', label: 'Город', type: 'text', required: true }            
-        ],
-        url: '/src/BusinessLogic/Actions/processCUDCity.php',
-        entityName: 'Город',
-        patofIDSelectId: null // не нужно
-=======
             { name: 'NameCity', label: 'Город', type: 'text', required: true },
             { name: 'Address', label: 'Адрес города', type: 'text', required: false, display: false }
         ],
         url: '/src/BusinessLogic/Actions/processCUDCity.php',
         entityName: 'Город',
         patofIDSelectId: null
->>>>>>> feature/local-updates-2026-08
     }
 };
 

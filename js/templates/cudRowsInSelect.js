@@ -78,12 +78,9 @@ function createOptionInSelect(
     .join(separator);
   //console.log(`displayText - ${displayText}`);
   newOption.textContent = displayText;
-<<<<<<< HEAD
-=======
   if (entity.Address !== undefined && entity.Address !== null) {
     newOption.dataset.address = entity.Address;
   }
->>>>>>> feature/local-updates-2026-08
 
   // Добавляем option в select (перед последним option, если есть пустая опция)
   const hasEmptyOption =
@@ -96,13 +93,8 @@ function createOptionInSelect(
 
   // Если нужно выбрать новую строку
   if (selectAfterCreate) {
-<<<<<<< HEAD
-   // triggerChangeEvent(select);
-   // newOption.selected = true;
-=======
     newOption.selected = true;
     select.dispatchEvent(new Event("change", { bubbles: true }));
->>>>>>> feature/local-updates-2026-08
   }
 }
 

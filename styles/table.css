@@ -39,28 +39,6 @@
     /* Запрещаем выделение текста */
 }
 
-<<<<<<< HEAD
-#locationTableContainer .row-location:hover {
-    background-color: var(--hover-clr) !important;
-}
-
-#locationTableContainer .row-location.selected {
-    background-color: var(--select-row-clr) !important;
-    color: white !important;
-}
-
-/* Убедимся, что ячейки тоже меняют цвет */
-#locationTableContainer .row-location.selected td {
-    background-color: inherit !important;
-    color: inherit !important;
-    border-color: transparent;
-}
-
-/* Переопределяем Bootstrap стили для выделенных строк */
-#locationTableContainer table.table-hover tbody tr.row-location.selected:hover td {
-    background-color: var(--select-row-clr) !important;
-    color: white !important;
-=======
 #locationTableContainer .row-location:hover td {
     background-color: #f0fdfa !important;
 }
@@ -78,7 +56,6 @@
 #locationTableContainer table.table-hover tbody tr.row-location.selected:hover td {
     background-color: #ecfdf8 !important;
     color: #0f172a !important;
->>>>>>> feature/local-updates-2026-08
 }
 
 /* ============== Таблицп serviceCentersTableContainer ========== */

@@ -188,8 +188,6 @@ body.main-body {
   position: relative;
   height: 94vh;
   overflow: hidden;
-<<<<<<< HEAD
-=======
   display: flex;
   flex-direction: column;
 }
@@ -247,7 +245,6 @@ body.main-body {
   .inventory-search-hint {
     display: none;
   }
->>>>>>> feature/local-updates-2026-08
 }
 
 #resultContainer {
@@ -263,14 +260,11 @@ body.main-body {
   /* Уменьшенный размер шрифта */
 }
 
-<<<<<<< HEAD
-=======
 #inventoryTable thead {
   display: block;
   width: 100%;
 }
 
->>>>>>> feature/local-updates-2026-08
 #inventoryTable th {
   padding: 10px;
   text-align: left;
@@ -282,12 +276,9 @@ body.main-body {
   /* Шрифт заголовка чуть больше */
   border-radius: 8px;
   /* Скругленные углы */
-<<<<<<< HEAD
-=======
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
->>>>>>> feature/local-updates-2026-08
 }
 
 #inventoryTable td {
@@ -296,27 +287,17 @@ body.main-body {
   border-bottom: 1px solid #e0e0e0;
   font-size: 1.1em;
   /* Уменьшенный размер шрифта */
-<<<<<<< HEAD
-=======
   overflow: hidden;
   text-overflow: ellipsis;
->>>>>>> feature/local-updates-2026-08
 }
 
 #inventoryTable tbody.scroll {
   display: block;
-<<<<<<< HEAD
-  max-height: 80vh;
-  /* Уменьшена высота для строки состояния */
-  overflow-y: auto;
-  overflow-x: hidden;
-=======
   max-height: calc(80vh - 2.5rem);
   /* Уменьшена высота для строки состояния и поиска */
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
->>>>>>> feature/local-updates-2026-08
 }
 
 /* ======= СТРОКИ И ЯЧЕЙКИ ======= */
@@ -325,13 +306,9 @@ body.main-body {
   border-radius: 0.5em;
   display: grid;
   margin-bottom: 4px;
-<<<<<<< HEAD
-  grid-template-columns: 6% 24% 15% 10% 15% 15% 15%;
-=======
   width: 100%;
   box-sizing: border-box;
   grid-template-columns: 5% 20% 11% 8% 12% 12% 14% 14%;
->>>>>>> feature/local-updates-2026-08
   gap: 0.1em;
   border: 1px solid var(--line-clr);
   cursor: pointer;
@@ -340,8 +317,6 @@ body.main-body {
   /* Запрещаем выделение текста */
 }
 
-<<<<<<< HEAD
-=======
 .rowGrid1.legal-cell {
   font-size: 0.92em;
   color: #0f766e;
@@ -353,7 +328,6 @@ body.main-body {
   font-weight: 500;
 }
 
->>>>>>> feature/local-updates-2026-08
 .row-container:hover {
   background-color: var(--hover-clr);
 }
@@ -379,11 +353,7 @@ body.main-body {
   transition: 0.3s;
 }
 
-<<<<<<< HEAD
-.modal-content {
-=======
 .right-modal .modal-content {
->>>>>>> feature/local-updates-2026-08
   padding: 20px;
   font-size: 16px;
 }
@@ -783,10 +753,6 @@ body.main-body {
   margin: 0;
 }
 
-<<<<<<< HEAD
-.notification-repair-alert,
-.notification-atwork-alert,
-=======
 .notification-writeoff-alert {
   background: linear-gradient(135deg, #0f766e, #0d9488) !important;
   box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
@@ -802,7 +768,6 @@ body.main-body {
 .notification-repair-alert,
 .notification-atwork-alert,
 .notification-writeoff-alert,
->>>>>>> feature/local-updates-2026-08
 .notification-repair-badge,
 .notification-atwork-badge {
   position: relative;

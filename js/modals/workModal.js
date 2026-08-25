@@ -101,13 +101,6 @@ export function initWorkModalHandlers(modalElement) {
         successMessage: "ТМЦ успешно переданы в работу",
       });
 
-<<<<<<< HEAD
-      updateInventoryStatus(window.selectedTMCIds, StatusItem.AtWorkTMC);
-      updateCounters({
-        brigadesToItemsCount: window.selectedTMCIds.length,
-      });
-      modal.hide();
-=======
       const ids = window.selectedTMCIds || [];
       let confirmDelta = 0;
       ids.forEach((id) => {
@@ -130,7 +123,6 @@ export function initWorkModalHandlers(modalElement) {
       if (typeof window.removingSelection === "function") {
         window.removingSelection();
       }
->>>>>>> feature/local-updates-2026-08
     } catch (error) {
       console.error("Error:", error);
       showNotification(
@@ -283,15 +275,10 @@ async function handleCreateBrigadeFormSubmit(e) {
 // Обработчик открытия модального окна "В работу ТМЦ"
 (function () {
   function openWorkModal() {
-<<<<<<< HEAD
-    const selectedRows = document.querySelectorAll(
-      "#inventoryTable tbody tr.row-container.selected",
-=======
     const selectedRows = Array.from(
       document.querySelectorAll(
         "#inventoryTable tbody tr.row-container.selected",
       ),
->>>>>>> feature/local-updates-2026-08
     );
 
     if (selectedRows.length === 0) {
@@ -301,12 +288,6 @@ async function handleCreateBrigadeFormSubmit(e) {
       );
       return;
     }
-<<<<<<< HEAD
-    let validStatuses = [StatusItem.Released];
-    openModalAction("workModal", selectedRows, validStatuses);
-    window.removingSelection();
-  }
-=======
 
     // В работу: уже на объекте («Выдано») или после передачи («Подтвердить ТМЦ»)
     const validStatuses = [StatusItem.Released, StatusItem.ConfirmItem];
@@ -332,7 +313,6 @@ async function handleCreateBrigadeFormSubmit(e) {
     openModalAction("workModal", eligibleRows, validStatuses);
   }
 
->>>>>>> feature/local-updates-2026-08
   function openAtWorkModalModal() {
     openEntityModal(Action.CREATE, "atWorkModal");
   }

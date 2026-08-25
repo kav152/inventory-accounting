@@ -7,11 +7,8 @@ import {
 import { StatusItem } from '../../src/constants/statusItem.js';
 import { ServiceStatus } from '../../src/constants/statusService.js';
 import { Action } from '../../src/constants/actions.js';
-<<<<<<< HEAD
-=======
 import { TypeMessage } from '../../src/constants/typeMessage.js';
 import { showNotification } from './setting.js';
->>>>>>> feature/local-updates-2026-08
 
 (function () {
 
@@ -214,19 +211,6 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
 
   selectedRows.forEach((row) => {
     const cells = row.cells;
-<<<<<<< HEAD
-    const status = parseInt(row.getAttribute("data-status"));
-
-    if (validStatuses.includes(status)) {
-      window.selectedTMCIds.push(cells[0].textContent);
-
-      //console.log(`row -`);
-      //console.log(row);
-
-      table.innerHTML += fillInTable(type, cells);
-    }
-  });
-=======
     const status = parseInt(row.getAttribute("data-status"), 10);
     const id =
       row.getAttribute("data-id") ||
@@ -246,7 +230,6 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
       "Среди выбранных нет ТМЦ с подходящим статусом для этой операции",
     );
   }
->>>>>>> feature/local-updates-2026-08
 }
 /**
  * Заполнить таблицу в зависимости от типа модального окна
@@ -254,11 +237,6 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
  * @param {*} cells
  * @returns
  */
-<<<<<<< HEAD
-function fillInTable(type, cells = []) {
-  //console.log('Мы в fillInTable');
-  let html = null;
-=======
 function fillInTable(type, cells = [], row = null) {
   //console.log('Мы в fillInTable');
   let html = null;
@@ -269,17 +247,11 @@ function fillInTable(type, cells = [], row = null) {
   const serial = (cells[2]?.textContent || "").trim();
   const location = (cells[6]?.textContent || "").trim();
 
->>>>>>> feature/local-updates-2026-08
   switch (type) {
     case "workModal":
     case "at_work":
     case "confirm":
     case "confirmRepair":
-<<<<<<< HEAD
-    case "distributeModal":
-      html = `
-            <tr>
-=======
       html = `
             <tr>
                 <td>${id}</td>
@@ -296,23 +268,16 @@ function fillInTable(type, cells = [], row = null) {
       const fromChipClass = legalText !== "—" ? "legal-chip" : "legal-chip empty";
       html = `
             <tr data-legal="${legalAttr}">
->>>>>>> feature/local-updates-2026-08
                 <td>${cells[0].textContent}</td>
                 <td>${cells[1].textContent}</td>
                 <td>${cells[2].textContent}</td>
                 <td>${cells[6].textContent}</td>
-<<<<<<< HEAD
-            </tr>
-        `;
-      break;
-=======
                 <td class="col-legal-from"><span class="${fromChipClass}">${legalText}</span></td>
                 <td class="col-legal-to"><span class="legal-chip empty legal-to-chip">—</span></td>
             </tr>
         `;
       break;
     }
->>>>>>> feature/local-updates-2026-08
     case "serviceModal":
       const id = cells[0].textContent.trim();
       html = `

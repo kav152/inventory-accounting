@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 import { TypeMessage } from "../../src/constants/typeMessage.js";
 
->>>>>>> feature/local-updates-2026-08
 (function () {
 
   // Функция для открытия панели администратора
@@ -125,25 +122,6 @@ import { TypeMessage } from "../../src/constants/typeMessage.js";
 
   // Функция для отображения уведомлений
   function showNotification(type, message) {
-<<<<<<< HEAD
-    const container = document.getElementById("notification-container");
-    if (!container) return;
-
-    // Создаем элемент уведомления
-    const notification = document.createElement("div");
-    notification.className = `notification notification-${TypeMessage.getStatusClasses(type)}`;
-
-    // Иконка в зависимости от типа
-    /*const icon =
-      type === "error"
-        ? '<i class="bi bi-exclamation-triangle-fill"></i>'
-        : '<i class="bi bi-check-circle-fill"></i>';*/
-    const icon = TypeMessage.getIconMessage(type);
-
-    // Заголовок в зависимости от типа
-    //const title = type === "error" ? "Ошибка" : "Успешно";
-    const title = TypeMessage.getTitleMessage(type);
-=======
     let container = document.getElementById("notification-container");
     if (!container) {
       container = document.createElement("div");
@@ -165,38 +143,22 @@ import { TypeMessage } from "../../src/constants/typeMessage.js";
 
     const icon = TM.getIconMessage(type) || "";
     const title = TM.getTitleMessage(type) || "Сообщение";
->>>>>>> feature/local-updates-2026-08
 
     notification.innerHTML = `
             <div class="notification-icon">${icon}</div>
             <div class="notification-content">
                 <div class="notification-title">${title}</div>
-<<<<<<< HEAD
-                <div class="notification-message">${message}</div>
-=======
                 <div class="notification-message">${safeMessage}</div>
->>>>>>> feature/local-updates-2026-08
             </div>
             <button class="notification-close">&times;</button>
         `;
 
-<<<<<<< HEAD
-    // Добавляем уведомление в контейнер
     container.appendChild(notification);
 
-    // Автоматическое скрытие через 5 секунд
-=======
-    container.appendChild(notification);
-
->>>>>>> feature/local-updates-2026-08
     setTimeout(() => {
       closeNotification(notification);
     }, 5000);
 
-<<<<<<< HEAD
-    // Обработчик закрытия по клику
-=======
->>>>>>> feature/local-updates-2026-08
     notification
       .querySelector(".notification-close")
       .addEventListener("click", () => {
@@ -226,25 +188,6 @@ import { TypeMessage } from "../../src/constants/typeMessage.js";
 
 // Функция для отображения уведомлений
 export function showNotification(type, message) {
-<<<<<<< HEAD
-  const container = document.getElementById("notification-container");
-  if (!container) return;
-
-  // Создаем элемент уведомления
-  const notification = document.createElement("div");
-  notification.className = `notification notification-${TypeMessage.getStatusClasses(type)}`;
-
-  // Иконка в зависимости от типа
-  /*const icon =
-    type === "error"
-      ? '<i class="bi bi-exclamation-triangle-fill"></i>'
-      : '<i class="bi bi-check-circle-fill"></i>';*/
-  const icon = TypeMessage.getIconMessage(type);
-
-  // Заголовок в зависимости от типа
-  //const title = type === "error" ? "Ошибка" : "Успешно";
-  const title = TypeMessage.getTitleMessage(type);
-=======
   let container = document.getElementById("notification-container");
   if (!container) {
     container = document.createElement("div");
@@ -266,38 +209,22 @@ export function showNotification(type, message) {
 
   const icon = TM.getIconMessage(type) || "";
   const title = TM.getTitleMessage(type) || "Сообщение";
->>>>>>> feature/local-updates-2026-08
 
   notification.innerHTML = `
             <div class="notification-icon">${icon}</div>
             <div class="notification-content">
                 <div class="notification-title">${title}</div>
-<<<<<<< HEAD
-                <div class="notification-message">${message}</div>
-=======
                 <div class="notification-message">${safeMessage}</div>
->>>>>>> feature/local-updates-2026-08
             </div>
             <button class="notification-close">&times;</button>
         `;
 
-<<<<<<< HEAD
-  // Добавляем уведомление в контейнер
   container.appendChild(notification);
 
-  // Автоматическое скрытие через 5 секунд
-=======
-  container.appendChild(notification);
-
->>>>>>> feature/local-updates-2026-08
   setTimeout(() => {
     closeNotification(notification);
   }, 5000);
 
-<<<<<<< HEAD
-  // Обработчик закрытия по клику
-=======
->>>>>>> feature/local-updates-2026-08
   notification
     .querySelector(".notification-close")
     .addEventListener("click", () => {
@@ -305,18 +232,6 @@ export function showNotification(type, message) {
     });
 }
 
-<<<<<<< HEAD
-// Функция для закрытия уведомления с анимацией
-  function closeNotification(notification) {
-    if (!notification.classList.contains("fade-out")) {
-      notification.classList.add("fade-out");
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
-    }
-  }
-
-=======
 function closeNotification(notification) {
   if (!notification.classList.contains("fade-out")) {
     notification.classList.add("fade-out");
@@ -325,5 +240,4 @@ function closeNotification(notification) {
     }, 500);
   }
 }
->>>>>>> feature/local-updates-2026-08
 

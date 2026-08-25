@@ -1,10 +1,7 @@
 import { showNotification } from './modals/setting.js';
 import { TypeMessage } from '../src/constants/typeMessage.js';
 import { Action } from '../src/constants/actions.js';
-<<<<<<< HEAD
-=======
 import { StatusItem } from '../src/constants/statusItem.js';
->>>>>>> feature/local-updates-2026-08
 import {
   executeEntityAction,
   getCollectFormData,
@@ -17,55 +14,10 @@ import {
       const row = document.querySelector(`.main-row[data-id="${id}"]`);
       const detailsRow = document.getElementById(`details-${id}`);
 
-<<<<<<< HEAD
-     /* if (row) row.style.display = "none";
-      if (detailsRow) detailsRow.style.display = "none";
-
-      // Получаем все данные из data-атрибутов
-      const ID_TMC = row.getAttribute("data-id");
-      const ID_Repair = row.getAttribute("data-id_Repair");
-
-      const repairItemData = {
-        ID_TMC: parseInt(ID_TMC),
-        ID_Repair: parseInt(ID_Repair),
-      };
-
-
-
-      try {
-        // Отправка на сервер
-        const result = await executeEntityAction({
-          action: Action.UPDATE,
-          formData: formData,
-          url: "/src/BusinessLogic/Actions/processCUDRepairItem.php",
-          successMessage: "ТМЦ успешно сохранен",
-        });
-
-        if(result)
-        {
-          row.remove();
-          if (detailsRow) detailsRow.remove();
-
-        }
-
-
-      }
-      catch (error) {
-        console.error("Ошибка сохранения ТМЦ:", error);
-        showNotification(TypeMessage.error, "Ошибка при перемещении в корзину: ". error);
-      }*/
-
-=======
->>>>>>> feature/local-updates-2026-08
       try {
         const formData = new FormData();
         formData.append("ID_TMC", id);
         formData.append("NameTMC", row.dataset.name);
-<<<<<<< HEAD
-        //console.log(id);
-        //console.log(row.dataset.name);
-=======
->>>>>>> feature/local-updates-2026-08
         const response = await fetch(
           "/src/BusinessLogic/ActionsTMC/processRepairInBasket.php",
           {
@@ -96,41 +48,6 @@ import {
       applyFilters();
     }
   }
-<<<<<<< HEAD
-  
-
-  async function returnToWorkTMC() {
-    if (!selectedRow) {
-      showNotification(TypeMessage.notification, "Пожалуйста, выберите запись для редактирования.");
-      return;
-    }
-
-    const status = selectedRow.getAttribute('data-status');
-    const id = selectedRow.getAttribute('data-id');
-    console.log(status);
-    if (status != StatusItem.WrittenOff) {
-      showNotification(TypeMessage.notification, "Выбирите списанные ТМЦ");
-      return;
-    }
-
-    if (confirm("Вы уверены, что хотите вернуть ТМЦ в работу?")) {
-      try {
-
-        let action = 'cancelWriteOff';
-        const response = await fetch(
-          `/src/BusinessLogic/ActionsTMC/processConfirmTMC.php?id=${id}&action=${action}`
-        );
-        const data = await response.json();
-        if (data.success) {
-          showNotification(TypeMessage.success, 'Списаное ТМЦ возвращено на склад');
-        } else {
-          showNotification(TypeMessage.error, data.message);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        showNotification(TypeMessage.error, error);
-      }
-=======
 
   async function deleteRepairLine(repairId, tmcId) {
     if (!confirm("Удалить эту запись ремонта (в корзину)?")) {
@@ -249,17 +166,10 @@ import {
     } catch (error) {
       console.error("Error:", error);
       showNotification(TypeMessage.error, error.message || String(error));
->>>>>>> feature/local-updates-2026-08
     }
   }
 
   window.deleteRow = deleteRow;
-<<<<<<< HEAD
-  window.returnToWorkTMC = returnToWorkTMC;
-  //window.initCardWriteOffHandlers = initCardWriteOffHandlers;
-})();
-
-=======
   window.deleteRepairLine = deleteRepairLine;
   window.returnToWorkTMC = returnToWorkTMC;
   window.cancelWriteOffById = cancelWriteOffById;
@@ -358,7 +268,6 @@ async function writeOffToolDirect() {
 
 window.writeOffToolDirect = writeOffToolDirect;
 
->>>>>>> feature/local-updates-2026-08
 
 export function initCardWriteOffHandlers(modalElement) {
     const form = document.getElementById("edit_write_off");
@@ -367,10 +276,6 @@ export function initCardWriteOffHandlers(modalElement) {
     form.onsubmit = async function (e) {
       e.preventDefault();
 
-<<<<<<< HEAD
-      //const form = modalElement.querySelector("#editWriteOffModal");
-=======
->>>>>>> feature/local-updates-2026-08
       const repairs = modalElement.querySelectorAll(".repair-item");
       const formData = new FormData();
       repairs.forEach((repair, index) => {
@@ -387,13 +292,10 @@ export function initCardWriteOffHandlers(modalElement) {
           repair.querySelector(".invoice-number").value
         );
         formData.append(
-<<<<<<< HEAD
-=======
           `repairs[${index}][UPD]`,
           repair.querySelector(".upd-number")?.value || ""
         );
         formData.append(
->>>>>>> feature/local-updates-2026-08
           `repairs[${index}][RepairCost]`,
           repair.querySelector(".repair-cost").value
         );

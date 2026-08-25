@@ -70,11 +70,7 @@ async function handleConfirmRepairFormSubmit(modalElement) {
     // Валидация обязательных полей
     const requiredFields = {
       IDLocation: "Организация",
-<<<<<<< HEAD
-      InvoiceNumber: "Счет",
-=======
       InvoiceNumber: "№ счета",
->>>>>>> feature/local-updates-2026-08
       RepairDescription: "Описание ремонта",
     };
 
@@ -118,16 +114,6 @@ async function handleConfirmRepairFormSubmit(modalElement) {
 
         // Обновляем счетчик в верхней панели
         const badge = document.getElementById("confirmRepairBadge");
-<<<<<<< HEAD
-        const notification = document.getElementById(
-          "confirmRepairNotification"
-        );
-        const count = parseInt(badge.textContent) - 1;
-        //console.log("Кол-во");
-        //console.log(count);
-        badge.textContent = count;
-        notification.textContent = `Подтвердить ремонт ${count} ТМЦ`;
-=======
         const notification = document.getElementById("confirmRepairNotification");
         const countText = document.getElementById("confirmRepairCountText");
         const count = Math.max(0, (parseInt(badge?.textContent || countText?.textContent || "1", 10) || 1) - 1);
@@ -142,7 +128,6 @@ async function handleConfirmRepairFormSubmit(modalElement) {
           notification.classList.toggle("is-empty", count === 0);
           notification.style.display = "block";
         }
->>>>>>> feature/local-updates-2026-08
 
         // Проверяем, остались ли еще строки в таблице
         const remainingRows = document.querySelectorAll("tr.itemRepair-row");
@@ -151,12 +136,7 @@ async function handleConfirmRepairFormSubmit(modalElement) {
           const modal = bootstrap.Modal.getInstance(
             document.getElementById("confirmRepairModal")
           );
-<<<<<<< HEAD
-          modal.hide();
-
-=======
           modal?.hide();
->>>>>>> feature/local-updates-2026-08
         }
 
         /* === */

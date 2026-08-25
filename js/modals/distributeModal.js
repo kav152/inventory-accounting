@@ -3,11 +3,7 @@ import { TypeMessage } from "../../src/constants/typeMessage.js";
 import { StatusItem } from "../../src/constants/statusItem.js";
 import { Action } from "../../src/constants/actions.js";
 import { executeEntityAction, getCollectFormData, } from "../templates/entityActionTemplate.js";
-<<<<<<< HEAD
-import { updateInventoryStatus } from "../updateFunctions.js";
-=======
 import { updateInventoryStatus, updateInventoryAfterTransfer } from "../updateFunctions.js";
->>>>>>> feature/local-updates-2026-08
 
 
 // Обработчик клика на "Передать ТМЦ"
@@ -24,15 +20,9 @@ import { updateInventoryStatus, updateInventoryAfterTransfer } from "../updateFu
       showNotification(TypeMessage.notification, "Выберите ТМЦ для передачи");
       return;
     }
-<<<<<<< HEAD
-    let validStatuses = [StatusItem.Released];
-    if (StatusUser == 0) {
-      validStatuses = [StatusItem.Released, StatusItem.NotDistributed]; // Добавляем в конец массива
-=======
     let validStatuses = [StatusItem.Released, StatusItem.Repair];
     if (StatusUser == 0) {
       validStatuses = [StatusItem.Released, StatusItem.NotDistributed, StatusItem.Repair];
->>>>>>> feature/local-updates-2026-08
     }
 
     //console.log(`selectedRows - ${selectedRows}`);
@@ -111,8 +101,6 @@ export function initDistributeModalHandlers(modalElement) {
     await handleDistributeFormSubmit(modalElement);
   });
 
-<<<<<<< HEAD
-=======
   const locationSelect = modalElement.querySelector("#distributeLocationSelect");
   if (locationSelect && !locationSelect.dataset.legalBound) {
     locationSelect.dataset.legalBound = "1";
@@ -179,7 +167,6 @@ function updateDistributeLegalPanel(modalElement) {
 
   // Всегда показываем оба столбца юр. лиц в таблице передачи
   modalElement.classList.add("has-dual-legal");
->>>>>>> feature/local-updates-2026-08
 }
 
 
@@ -194,8 +181,6 @@ async function handleDistributeFormSubmit(modalElement) {
   let tmc_ids = window.selectedTMCIds;
   formData['tmc_ids'] = JSON.stringify(tmc_ids);
 
-<<<<<<< HEAD
-=======
   const fromRepair = (tmc_ids || []).some((id) => {
     const row = document.querySelector(`#inventoryTable tr.row-container[data-id="${id}"]`);
     return Number(row?.getAttribute("data-status")) === StatusItem.Repair;
@@ -207,7 +192,6 @@ async function handleDistributeFormSubmit(modalElement) {
     return;
   }
 
->>>>>>> feature/local-updates-2026-08
   try {
     const result = await executeEntityAction({
       action: Action.UPDATE,
@@ -216,13 +200,6 @@ async function handleDistributeFormSubmit(modalElement) {
       successMessage: "ТМЦ успешно переданы",
     });
 
-<<<<<<< HEAD
-    // Обновляем статусы в таблице ТМЦ
-    if (tmc_ids) {
-      // Вызываем функцию обновления статусов в таблице
-      updateInventoryStatus(tmc_ids, StatusItem.ConfirmItem);
-      // Снимаем выделение с строк
-=======
     // Обновляем статусы / локацию / юр. лицо в таблице ТМЦ
     if (tmc_ids) {
       const locationSelect = form.querySelector("#distributeLocationSelect");
@@ -255,7 +232,6 @@ async function handleDistributeFormSubmit(modalElement) {
         }
       }
 
->>>>>>> feature/local-updates-2026-08
       window.removingSelection();
     }
 

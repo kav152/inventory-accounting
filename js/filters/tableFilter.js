@@ -48,10 +48,7 @@ export class TableFilter {
 
     this.originalRowCount = this.getVisibleRows().length;
     this.filteredRowCount = this.originalRowCount;
-<<<<<<< HEAD
-=======
     this.searchQuery = "";
->>>>>>> feature/local-updates-2026-08
 
     this.setupFilters();
     this.setupGlobalListeners();
@@ -236,13 +233,9 @@ export class TableFilter {
   }
 
   populateDropdown(columnIndex, container) {
-<<<<<<< HEAD
-    const values = this.filters[columnIndex].values;
-=======
     // Актуальные значения колонки (после передачи локация/юр.лицо меняются)
     const values = this.getColumnValues(columnIndex);
     this.filters[columnIndex].values = values;
->>>>>>> feature/local-updates-2026-08
 
     const dropdown = document.createElement("div");
     dropdown.className = "filter-dropdown-content";
@@ -451,8 +444,6 @@ export class TableFilter {
       });
     }
 
-<<<<<<< HEAD
-=======
     // Текстовый поиск (локация, юр. лицо, наименование и т.д.)
     const q = (this.searchQuery || "").trim().toLowerCase();
     if (q) {
@@ -468,7 +459,6 @@ export class TableFilter {
       });
     }
 
->>>>>>> feature/local-updates-2026-08
     // Подсчет оставшихся видимых строк
     visibleCount = this.getVisibleRows().length;
 
@@ -487,63 +477,12 @@ export class TableFilter {
     if (this.config.onRowCountChanged) {
       this.config.onRowCountChanged(visibleCount, this.originalRowCount);
     }
-<<<<<<< HEAD
-
-    return visibleCount;
-  }
-
-  /*
-    applyFilters() {
-        const rows = this.table.querySelectorAll(this.config.rowSelector);
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            let visible = true;
-
-            for (const columnIndex in this.filters) {
-                if (this.filters[columnIndex].selected.length === 0) continue;
-
-                const cell = row.cells[columnIndex];
-                if (!cell) continue;
-
-                const cellValue = cell.textContent.trim();
-                if (!this.filters[columnIndex].selected.includes(cellValue)) {
-                    visible = false;
-                    break;
-                }
-            }
-
-            row.style.display = visible ? '' : 'none';
-            if (visible) visibleCount++;
-        });
-
-        this.filteredRowCount = visibleCount;
-
-        // Обновляем все кнопки фильтров
-        for (const columnIndex in this.filters) {
-            this.updateFilterButton(columnIndex);
-        }
-
-        // Вызываем callback-функции
-        if (this.config.onFilterApplied) {
-            this.config.onFilterApplied(this.filters, visibleCount);
-        }
-
-        if (this.config.onRowCountChanged) {
-            this.config.onRowCountChanged(visibleCount, this.originalRowCount);
-        }
-
-        return visibleCount;
-    }
-        */
-=======
   }
 
   setSearchQuery(query) {
     this.searchQuery = query || "";
     this.applyFilters();
   }
->>>>>>> feature/local-updates-2026-08
 
   clearFilters() {
     for (const columnIndex in this.filters) {

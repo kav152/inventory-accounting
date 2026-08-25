@@ -22,10 +22,7 @@ export function updateInventoryStatus(tmcIds, newStatus) {
 
       // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
       row.setAttribute('data-status', newStatus);
-<<<<<<< HEAD
-=======
       refreshRowSearchBlob(row);
->>>>>>> feature/local-updates-2026-08
     }
     else{
       console.log(`Строка с id = ${id} не найдена - статус не изменен`);
@@ -34,8 +31,6 @@ export function updateInventoryStatus(tmcIds, newStatus) {
 }
 
 /**
-<<<<<<< HEAD
-=======
  * Обновление строк после передачи ТМЦ на объект:
  * статус, локация, юр. лицо, ответственный.
  */
@@ -91,7 +86,6 @@ window.updateInventoryAfterTransfer = updateInventoryAfterTransfer;
 window.refreshRowSearchBlob = refreshRowSearchBlob;
 
 /**
->>>>>>> feature/local-updates-2026-08
  * Обновление CSS-классов статуса
  * @param {*} row 
  * @param {*} newStatus 
@@ -124,14 +118,6 @@ function updateStatusClasses(row, newStatus) {
       const notification = document.getElementById("confirmNotification");
 
       if (badge && notification) {
-<<<<<<< HEAD
-        const newCount = parseInt(badge.textContent) + counters.confirmCount;
-        badge.textContent = newCount;
-        notification.textContent = `Принять ${newCount} ТМЦ`;
-
-        badge.style.display = newCount > 0 ? "block" : "none";
-        notification.style.display = newCount > 0 ? "block" : "none";
-=======
         const current = parseInt((badge.textContent || document.getElementById("confirmCountText")?.textContent || "0"), 10) || 0;
         const newCount = Math.max(0, current + counters.confirmCount);
         badge.textContent = newCount;
@@ -145,7 +131,6 @@ function updateStatusClasses(row, newStatus) {
         badge.style.display = newCount > 0 ? "block" : "none";
         notification.style.display = "block";
         notification.classList.toggle("is-empty", newCount === 0);
->>>>>>> feature/local-updates-2026-08
       }
     }
 
@@ -153,17 +138,6 @@ function updateStatusClasses(row, newStatus) {
     if (counters.confirmRepairCount !== undefined) {
       const badge = document.getElementById("confirmRepairBadge");
       const notification = document.getElementById("confirmRepairNotification");
-<<<<<<< HEAD
-
-      if (badge && notification) {
-        const newCount =
-          parseInt(badge.textContent) + counters.confirmRepairCount;
-        badge.textContent = newCount;
-        notification.textContent = `Подтвердить ремонт ${newCount} ТМЦ`;
-
-        badge.style.display = newCount > 0 ? "block" : "none";
-        notification.style.display = newCount > 0 ? "block" : "none";
-=======
       const countText = document.getElementById("confirmRepairCountText");
 
       if (badge || notification) {
@@ -182,7 +156,6 @@ function updateStatusClasses(row, newStatus) {
           notification.style.display = "block";
           notification.classList.toggle("is-empty", newCount === 0);
         }
->>>>>>> feature/local-updates-2026-08
       }
     }
 
@@ -192,13 +165,8 @@ function updateStatusClasses(row, newStatus) {
       const notification = document.getElementById("atWorkNotification");
 
       if (badge && notification) {
-<<<<<<< HEAD
-        const newCount =
-          parseInt(badge.textContent) + counters.brigadesToItemsCount;
-=======
         const current = parseInt((badge.textContent || "0").trim(), 10) || 0;
         const newCount = Math.max(0, current + counters.brigadesToItemsCount);
->>>>>>> feature/local-updates-2026-08
         badge.textContent = newCount;
         notification.innerHTML = `Выдано в работу <span id="atWorkCount">${newCount}</span> ТМЦ`;
 

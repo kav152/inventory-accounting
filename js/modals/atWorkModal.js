@@ -11,8 +11,6 @@ import { updateInventoryStatus } from "../updateFunctions.js";
 import { StatusItem } from "../../src/constants/statusItem.js";
 import { ServiceStatus } from "../../src/constants/statusService.js";
 
-<<<<<<< HEAD
-=======
 function getServiceFormRow(tmcId) {
   return document.getElementById(`serviceForm-${tmcId}`)?.closest("tr");
 }
@@ -51,35 +49,21 @@ function removeAtWorkItemFromModal(tmcId) {
   }
 }
 
->>>>>>> feature/local-updates-2026-08
 /**
  * Отправить в сервис
  * @param {*} tmcId
  */
 async function sendServiceForm(tmcId) {
-<<<<<<< HEAD
-  const items = [];
-  const formRow = document
-    .querySelector(`form[data-tmc-id="${tmcId}"]`)
-    ?.closest("tr");
-  const reason = formRow.querySelector('textarea[name="reason"]').value.trim();
-=======
   const form = document.querySelector(`form.service-form[data-tmc-id="${tmcId}"]`);
   if (!form) return;
 
   const reason = form.querySelector('textarea[name="reason"]').value.trim();
->>>>>>> feature/local-updates-2026-08
   if (reason === "") {
     showNotification(TypeMessage.error, `Поле "Причина ремонта" обязательно для заполнения`);
     return;
   }
-<<<<<<< HEAD
-  items.push({ id: tmcId, reason: reason });
-
-=======
 
   const items = [{ id: tmcId, reason: reason }];
->>>>>>> feature/local-updates-2026-08
   const statusService = ServiceStatus.sendService;
 
   const response = await fetch(
@@ -96,53 +80,6 @@ async function sendServiceForm(tmcId) {
 
   const data = await response.json();
   if (data.success) {
-<<<<<<< HEAD
-
-    if (formRow) {
-      /* console.log(
-         `Отправляем тмц в ремонт его ид="${tmcId}", причина -  ${reason}`,
-       );*/
-
-      const tableBody = formRow.closest("tbody");
-      //console.log(tableBody);
-
-      // Находим и удаляем строку по data-id
-      const rowToDelete = tableBody.querySelector(`tr[data-id="${tmcId}"]`);
-      if (rowToDelete) {
-        rowToDelete.remove();
-        hideServiceForm(tmcId);
-      } else {
-        console.error(`Строка с data-id ${tmcId} не найдена`);
-      }
-
-      updateInventoryStatus([tmcId], StatusItem.ConfirmRepairTMC);
-      updateCounters({ brigadesToItemsCount: -1 });
-    }
-  }
-}
-
-// Показывает форму отправки в сервис для конкретного ТМЦ
-function showServiceForm(button, tmcId) {
-  // Предотвращаем выделение строки
-  event.stopPropagation();
-
-  // Скрываем все открытые формы
-  hideAllServiceForms();
-
-  // Находим строку с формой
-  const formRow = button.closest("tr").nextElementSibling;
-  if (formRow) {
-    formRow.style.display = "table-row";
-    const formSection = document.getElementById(`serviceForm-${tmcId}`);
-    if (formSection) {
-      formSection.classList.remove("collapsed");
-      formSection.classList.add("expanded");
-      // Фокус на поле ввода
-      const textarea = formSection.querySelector("textarea");
-      if (textarea) {
-        setTimeout(() => textarea.focus(), 100);
-      }
-=======
     removeAtWorkItemFromModal(tmcId);
     updateInventoryStatus([tmcId], StatusItem.ConfirmRepairTMC);
     updateCounters({ brigadesToItemsCount: -1, confirmRepairCount: 1 });
@@ -310,33 +247,12 @@ function showWriteOffForm(button, tmcId) {
     const textarea = writeOffSection.querySelector('textarea[name="RepairDescription"]');
     if (textarea) {
       setTimeout(() => textarea.focus(), 100);
->>>>>>> feature/local-updates-2026-08
     }
   }
 }
 
 // Скрывает форму отправки в сервис
 function hideServiceForm(tmcId) {
-<<<<<<< HEAD
-  const formRow = document
-    .querySelector(`form[data-tmc-id="${tmcId}"]`)
-    ?.closest("tr");
-  if (formRow) {
-    const formSection = formRow.querySelector(".service-form-section");
-    //const reason = formRow.querySelector('textarea[name="reason"]').value.trim();
-    //console.log(reason);
-
-    if (formSection) {
-      formSection.classList.remove("expanded");
-      formSection.classList.add("collapsed");
-      setTimeout(() => {
-        formRow.style.display = "none";
-        // Очищаем форму
-        const form = formSection.querySelector("form");
-        if (form) form.reset();
-      }, 300);
-    }
-=======
   const formRow = getServiceFormRow(tmcId);
   if (!formRow) return;
 
@@ -365,22 +281,15 @@ function hideWriteOffForm(tmcId) {
       const form = formSection.querySelector("form");
       if (form) form.reset();
     }, 300);
->>>>>>> feature/local-updates-2026-08
   }
 }
 
 /**
  * Скрывает все открытые формы
  */
-<<<<<<< HEAD
-function hideAllServiceForms() {
-  document
-    .querySelectorAll(".service-form-section.expanded")
-=======
 function hideAllItemActionForms() {
   document
     .querySelectorAll(".service-form-section.expanded, .writeoff-form-section.expanded")
->>>>>>> feature/local-updates-2026-08
     .forEach((section) => {
       section.classList.remove("expanded");
       section.classList.add("collapsed");
@@ -395,13 +304,10 @@ function hideAllItemActionForms() {
     });
 }
 
-<<<<<<< HEAD
-=======
 function hideAllServiceForms() {
   hideAllItemActionForms();
 }
 
->>>>>>> feature/local-updates-2026-08
 (function () {
   /**
    * Открыть модальное окно AtWorkModal
@@ -415,13 +321,10 @@ function hideAllServiceForms() {
   window.sendServiceForm = sendServiceForm;
   window.showServiceForm = showServiceForm;
   window.hideServiceForm = hideServiceForm;
-<<<<<<< HEAD
-=======
   window.sendWriteOffForm = sendWriteOffForm;
   window.quickWriteOff = quickWriteOff;
   window.showWriteOffForm = showWriteOffForm;
   window.hideWriteOffForm = hideWriteOffForm;
->>>>>>> feature/local-updates-2026-08
 })();
 
 let lastSelectedRow = null;
@@ -482,31 +385,18 @@ function initDynamicElements(modalElement) {
 
   modalElement
     .querySelector("#btnReturnTMC")
-<<<<<<< HEAD
-    .addEventListener("click", function () {
-=======
     .addEventListener("click", async function () {
->>>>>>> feature/local-updates-2026-08
       const selectedRows = modalElement.querySelectorAll(
         ".row-container1.selected",
       );
       if (selectedRows.length === 0) {
-<<<<<<< HEAD
-        alert("Выберите ТМЦ для возврата");
-=======
         showNotification(TypeMessage.notification, "Выберите ТМЦ для возврата");
->>>>>>> feature/local-updates-2026-08
         return;
       }
 
       const tmcIds = Array.from(selectedRows).map((row) =>
         row.getAttribute("data-id"),
       );
-<<<<<<< HEAD
-
-      // Получаем brigade_id из первой выбранной строки
-=======
->>>>>>> feature/local-updates-2026-08
       const brigadeId = selectedRows[0].getAttribute("data-brigade");
 
       const data = {
@@ -516,29 +406,13 @@ function initDynamicElements(modalElement) {
       };
 
       try {
-<<<<<<< HEAD
-        const result = executeEntityAction({
-=======
         await executeEntityAction({
->>>>>>> feature/local-updates-2026-08
           action: Action.UPDATE,
           formData: data,
           url: "/src/BusinessLogic/Actions/processCUDReturnFromWork.php",
           successMessage: "ТМЦ успешно переданы на склад",
         });
 
-<<<<<<< HEAD
-        let brigadesToItemsCount = 0;
-        tmcIds.forEach((id) => {
-          // Находим и удаляем строку по data-id
-          const rowToDelete = modalElement.querySelector(`tr.row-container1[data-id="${id}"]`);
-          //const rowToDelete = tableBody.querySelector(`tr[data-id="${id}"]`);
-          if (rowToDelete) {
-            rowToDelete.remove();
-            brigadesToItemsCount = -1;
-          } else {
-            console.error(`Строка с data-id ${id} не найдена`);
-=======
         let removed = 0;
         tmcIds.forEach((id) => {
           const rowToDelete = modalElement.querySelector(
@@ -547,22 +421,15 @@ function initDynamicElements(modalElement) {
           if (rowToDelete) {
             rowToDelete.remove();
             removed += 1;
->>>>>>> feature/local-updates-2026-08
           }
         });
 
         updateInventoryStatus(tmcIds, StatusItem.Released);
-<<<<<<< HEAD
-        updateCounters({
-          brigadesToItemsCount: brigadesToItemsCount,
-        });
-=======
         if (typeof window.updateCounters === "function") {
           window.updateCounters({ brigadesToItemsCount: -removed });
         } else if (typeof updateCounters === "function") {
           updateCounters({ brigadesToItemsCount: -removed });
         }
->>>>>>> feature/local-updates-2026-08
       } catch (error) {
         console.error("Error:", error);
         showNotification(
