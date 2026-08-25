@@ -32,15 +32,6 @@ class proccessCUDWorkTMC extends CUDHandler
     protected function update($id, $data, ?int $patofID = null)
     {
         $tmcIds = json_decode($this->currentData['tmc_ids'], true);
-<<<<<<< HEAD
-        $itemController = new ItemController();
-
-        $brigadeId = trim($this->currentData['brigade_id'], '"'); // Убираем кавычки
-        $brigadeId = (int)$brigadeId; // Преобразуем в целое число
-
-        foreach ($tmcIds as $tmcId) {
-            $result = $itemController->assignToBrigade($tmcId, $brigadeId);
-=======
         if (!is_array($tmcIds) || count($tmcIds) === 0) {
             throw new Exception('Не выбраны ТМЦ для передачи в работу');
         }
@@ -65,7 +56,6 @@ class proccessCUDWorkTMC extends CUDHandler
         }
         if ($failed) {
             throw new Exception('Часть ТМЦ не передана в работу: ' . implode(', ', $failed));
->>>>>>> feature/local-updates-2026-08
         }
     }
 

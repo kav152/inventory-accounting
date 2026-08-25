@@ -23,8 +23,6 @@ class CardItemLoader extends ModalLoader
 
         $inventoryItem = $controller->getInventoryItem($currentID);
         $typeTMCs = $propertyController->getTypeTMC();
-<<<<<<< HEAD
-=======
         $locations = $controller->getLocations(false) ?? [];
 
         if ($inventoryItem && (int) ($inventoryItem->IDLocation ?? 0) > 0 && empty($inventoryItem->Location)) {
@@ -35,7 +33,6 @@ class CardItemLoader extends ModalLoader
                 }
             }
         }
->>>>>>> feature/local-updates-2026-08
 
         ob_start();
         include __DIR__ . '/../Modal/cardItem_modal.php';

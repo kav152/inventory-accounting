@@ -11,10 +11,6 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
 
 <?php include __DIR__ . '/message_modal.php'; ?>
 
-<<<<<<< HEAD
-<div class="modal fade" id="distributeModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-=======
 <style>
     #distributeModal .legal-transfer-panel {
         display: none;
@@ -112,7 +108,6 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
 
 <div class="modal fade" id="distributeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
->>>>>>> feature/local-updates-2026-08
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Передача ТМЦ</h5>
@@ -120,18 +115,6 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
             </div>
             <div class="modal-body">
                 <form id="distributeForm">
-<<<<<<< HEAD
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Объект назначения</label>
-                            <select name="location" class="form-select" required>
-                                <option value="">Выберите объект</option>
-                                <?php foreach ($locations as $location): ?>
-                                    <option value="<?= $location->IDLocation ?>"><?= $location->NameLocation ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-=======
                     <div class="legal-transfer-panel" id="legalTransferPanel">
                         <div class="legal-card legal-card-from" id="legalCardFrom">
                             <div class="legal-card-label">Юр. лицо откуда</div>
@@ -164,21 +147,11 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
                             </select>
                         </div>
                     <div class="row mb-3">
->>>>>>> feature/local-updates-2026-08
                         <div class="col-md-6">
                             <label class="form-label">Ответственный</label>
                             <select name="user" class="form-select" required>
                                 <option value="">Выберите ответственного</option>
                                 <?php foreach ($users as $user): ?>
-<<<<<<< HEAD
-                                    <option value="<?= $user->IDUser ?>"><?= $user->FIO ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <table class="table" >
-=======
                                     <option value="<?= $user->IDUser ?>"><?= htmlspecialchars($user->FIO) ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -192,18 +165,14 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
                     </div>
 
                     <table class="table align-middle" id="distributeItemsTable">
->>>>>>> feature/local-updates-2026-08
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Наименование</th>
                                 <th>Серийный номер</th>
                                 <th>Текущее местоположение</th>
-<<<<<<< HEAD
-=======
                                 <th>Юр. лицо откуда</th>
                                 <th class="col-legal-to">Юр. лицо куда</th>
->>>>>>> feature/local-updates-2026-08
                             </tr>
                         </thead>
                         <tbody id="selectedItemsTable">
@@ -218,8 +187,4 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
             </div>
         </div>
     </div>
-<<<<<<< HEAD
 </div>
-=======
-</div>
->>>>>>> feature/local-updates-2026-08

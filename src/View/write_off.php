@@ -29,9 +29,6 @@ $locations = [];
 
 $startTime = microtime(true);
 
-<<<<<<< HEAD
-$repairItems = $repairContainer->writeOffItems();
-=======
 $onlyWrittenOff = (($_GET['filter'] ?? '') === 'written-off');
 require_once __DIR__ . '/../BusinessLogic/StatusItem.php';
 
@@ -47,7 +44,6 @@ if ($onlyWrittenOff) {
     $repairItems = $repairContainer->writeOffItems();
 }
 
->>>>>>> feature/local-updates-2026-08
 /*
 $endTime = microtime(true);
 $loadTime = $endTime - $startTime;
@@ -61,14 +57,6 @@ $uniqueNames = [];
 $uniqueLocations = [];
 
 foreach ($repairItems as $item) {
-<<<<<<< HEAD
-
-    if (!in_array($item->InventoryItem->NameTMC, $uniqueNames)) {
-        $uniqueNames[] = $item->InventoryItem->NameTMC;
-    }
-    if (!in_array($item->InventoryItem->Location->NameLocation, $uniqueLocations)) {
-        $uniqueLocations[] = $item->InventoryItem->Location->NameLocation;
-=======
     if (!isset($item->InventoryItem)) {
         continue;
     }
@@ -78,7 +66,6 @@ foreach ($repairItems as $item) {
     $locName = $item->InventoryItem->Location->NameLocation ?? '';
     if ($locName !== '' && !in_array($locName, $uniqueLocations)) {
         $uniqueLocations[] = $locName;
->>>>>>> feature/local-updates-2026-08
     }
 }
 
@@ -86,22 +73,6 @@ sort($uniqueNames);
 sort($uniqueLocations);
 
 // Группируем данные по ID_TMC для основной таблицы
-<<<<<<< HEAD
-$groupedItems = [];
-foreach ($repairItems as $item) {
-    $id = $item->ID_TMC;
-    if (!isset($groupedItems[$id])) {
-        $groupedItems[$id] = [
-            'main' => $item,
-            'repairs' => []
-        ];
-    }
-    $groupedItems[$id]['repairs'][] = $item;
-}
-
-//print_r($groupedItems);
-
-=======
 if (!$onlyWrittenOff) {
     $groupedItems = [];
     foreach ($repairItems as $item) {
@@ -116,7 +87,6 @@ if (!$onlyWrittenOff) {
     }
 }
 
->>>>>>> feature/local-updates-2026-08
 // Вычисляем общую сумму ремонта
 $totalRepairCost = 0;
 foreach ($groupedItems as $item) {
@@ -138,12 +108,6 @@ error_log("Время группировки данных по ID_TMC для о�
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Списание/затраты на ремонт</title>
-<<<<<<< HEAD
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="\..\..\styles\filterStyle.css" rel="stylesheet">
-    <link href="\..\..\styles\writeOff.css" rel="stylesheet">
-=======
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -166,7 +130,6 @@ error_log("Время группировки данных по ID_TMC для о�
       }
       .btn-action span { display: none !important; }
     </style>
->>>>>>> feature/local-updates-2026-08
 
     <script type="module" src="/src/constants/actions.js"></script>
     <script type="module" src="/src/constants/statusItem.js"></script>
@@ -178,99 +141,6 @@ error_log("Время группировки данных по ID_TMC для о�
 
 </head>
 
-<<<<<<< HEAD
-<body>
-    <?php include __DIR__ . '/Modal/message_modal.php'; ?>
-    <?php include __DIR__ . '/Modal/report_modal.php'; ?>
-    <!--?php include __DIR__ . '/Modal/basket_modal.php'; ?-->
-
-
-    <!-- Боковое меню -->
-    <div class="sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil"></i> Редактировать</a></li>
-            <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-pdf"></i> Сформировать отчет</a>
-            </li>
-            <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart"></i> Корзина</a></li>
-            <li><a href="#" onclick="returnToWorkTMC()"><i class="bi bi-arrow-return-left"></i> Вернуть в работу</a>
-            </li>
-            <li><a href="home.php"><i class="bi bi-house"></i> На главную</a></li>
-        </ul>
-    </div>
-
-    <div class="main-content">
-        <!-- Фильтры -->
-        <!--div class="filter-section">
-            <h4 class="mb-3">Фильтры</h4>
-            <div class="row">
-                <div-- class="col-md-6">
-                    <div class="filter-group">
-                        <div class="filter-header">
-                            <h5>Наименование</h5>
-                            <button class="btn btn-sm btn-outline-secondary clear-filter" data-filter="name">
-                                <i class="bi bi-x-lg"></i> Очистить
-                            </button>
-                        </div>
-                        <div class="filter-search">
-                            <input type="text" class="form-control form-control-sm search-input" placeholder="Поиск..."
-                                data-filter="name">
-                            <span class="filter-search-clear" data-filter="name">
-                                <i class="bi bi-x"></i>
-                            </span>
-                        </div>
-                        <div class="filter-options" id="name-options">
-                            <?php foreach ($uniqueNames as $name): ?>
-                                <div class="form-check filter-option">
-                                    <input class="form-check-input filter-checkbox" type="checkbox"
-                                        value="<?= htmlspecialchars($name) ?>" id="name-<?= md5($name) ?>"
-                                        data-filter="name">
-                                    <label class="form-check-label" for="name-<?= md5($name) ?>">
-                                        <?= htmlspecialchars($name) ?>
-                                    </label>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div-->
-
-                <!--div class="col-md-6">
-                    <div class="filter-group">
-                        <div class="filter-header">
-                            <h5>Локация</h5>
-                            <button class="btn btn-sm btn-outline-secondary clear-filter" data-filter="location">
-                                <i class="bi bi-x-lg"></i> Очистить
-                            </button>
-                        </div>
-                        <div class="filter-search">
-                            <input type="text" class="form-control form-control-sm search-input" placeholder="Поиск..."
-                                data-filter="location">
-                            <span class="filter-search-clear" data-filter="location">
-                                <i class="bi bi-x"></i>
-                            </span>
-                        </div>
-                        <div class="filter-options" id="location-options">
-                            <?php foreach ($uniqueLocations as $location): ?>
-                                <div class="form-check filter-option">
-                                    <input class="form-check-input filter-checkbox" type="checkbox"
-                                        value="<?= htmlspecialchars($location) ?>" id="location-<?= md5($location) ?>"
-                                        data-filter="location">
-                                    <label class="form-check-label" for="location-<?= md5($location) ?>">
-                                        <?= htmlspecialchars($location) ?>
-                                    </label>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </!--div>
-            </div>
-        </div-->
-
-        <!-- Таблица с данными -->
-        <div class="table-section">
-            <div class="table-responsive" id="idTableResponsive">
-                <table class="table table-striped table-hover" id="writeOffTable">
-                    <thead class="thead-dark">
-=======
 <body class="writeoff-page">
     <?php include __DIR__ . '/Modal/message_modal.php'; ?>
     <?php include __DIR__ . '/Modal/report_modal.php'; ?>
@@ -341,7 +211,6 @@ error_log("Время группировки данных по ID_TMC для о�
             <div class="table-responsive" id="idTableResponsive">
                 <table class="table write-off-table" id="writeOffTable">
                     <thead>
->>>>>>> feature/local-updates-2026-08
                         <tr>
                             <th>Регистр</th>
                             <th>Наименование</th>
@@ -350,16 +219,10 @@ error_log("Время группировки данных по ID_TMC для о�
                             <th>Ответственный</th>
                             <th>Статус</th>
                             <th>Локация</th>
-<<<<<<< HEAD
-                            <th>№ УПД</th>
-                            <th>Сумма ремонта</th>
-                            <th></th>
-=======
                             <th>№ счета</th>
                             <th>№ УПД</th>
                             <th>Сумма ремонта</th>
                             <th>Действия</th>
->>>>>>> feature/local-updates-2026-08
                         </tr>
                     </thead>
                     <tbody>
@@ -367,54 +230,6 @@ error_log("Время группировки данных по ID_TMC для о�
                             $mainItem = $itemData['main'];
                             $repairs = $itemData['repairs'];
                             $totalCost = 0;
-<<<<<<< HEAD
-                            foreach ($repairs as $repair) {
-                                $totalCost += $repair->RepairCost;
-                            }
-                        ?>
-                            <tr class="main-row" data-id="<?= $mainItem->ID_TMC ?>"
-
-                                data-status="<?= $mainItem->InventoryItem->Status ?>"
-                                data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?>"
-                                data-location="<?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?>"
-                                data-total-cost="<?= $totalCost ?>">
-                                <td><?= $mainItem->ID_TMC ?></td>
-                                <td><?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?></td>
-                                <td><?= htmlspecialchars($mainItem->InventoryItem->BrandTMC->NameBrand ?? '') ?></td>
-                                <td><?= htmlspecialchars($mainItem->InventoryItem->SerialNumber ?? '') ?></td>
-                                <td><?= htmlspecialchars($mainItem->RegistrationInventoryItem->User->FIO ?? '') ?></td>
-                                <td><?= (new StatusItem())->getDescription($mainItem->InventoryItem->Status) ?></td>
-                                <td><?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?></td>
-                                <td>
-                                    <?php
-                                    $invoices = [];
-                                    foreach ($repairs as $repair) {
-                                        if (!empty($repair->InvoiceNumber)) {
-                                            $invoices[] = $repair->InvoiceNumber;
-                                        }
-                                    }
-                                    echo htmlspecialchars(implode(', ', array_unique($invoices)));
-                                    ?>
-                                </td>
-                                <td class="cost-cell"><?= number_format($totalCost, 2, ',', ' ') ?> руб.</td>
-                                <?php if (StatusItem::WrittenOff == $mainItem->InventoryItem->Status): ?>
-                                    <td class="action-buttons">
-                                        <button class="btn btn-sm btn-danger delete-btn" data-id="<?= $mainItem->ID_TMC ?>">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                <?php endif; ?>
-
-                            </tr>
-                            <tr class="repair-details-row" id="details-<?= $mainItem->ID_TMC ?>" style="display: none;">
-                                <td colspan="10">
-                                    <div class="repair-details">
-                                        <h6>История ремонтов:</h6>
-                                        <table class="table table-sm repair-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>№ Счета</th>
-=======
                             $invoices = [];
                             $updList = [];
                             foreach ($repairs as $repair) {
@@ -525,31 +340,16 @@ error_log("Время группировки данных по ID_TMC для о�
                                                 <tr>
                                                     <th>№ счета</th>
                                                     <th>№ УПД</th>
->>>>>>> feature/local-updates-2026-08
                                                     <th>Стоимость</th>
                                                     <th>Дата отправки</th>
                                                     <th>Дата возвращения</th>
                                                     <th>Примечания</th>
                                                     <th>Сервис</th>
-<<<<<<< HEAD
-=======
                                                     <th>Действия</th>
->>>>>>> feature/local-updates-2026-08
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($repairs as $repair): ?>
-<<<<<<< HEAD
-                                                    <tr>
-                                                        <td><?= htmlspecialchars($repair->InvoiceNumber ?? '') ?></td>
-                                                        <td><?= number_format($repair->RepairCost, 2, ',', ' ') ?> руб.</td>
-                                                        <td><?= $repair->DateToService ? date('d.m.Y', strtotime($repair->DateToService)) : '' ?>
-                                                        </td>
-                                                        <td><?= $repair->DateReturnService ? date('d.m.Y', strtotime($repair->DateReturnService)) : '' ?>
-                                                        </td>
-                                                        <td><?= htmlspecialchars($repair->RepairDescription ?? '') ?></td>
-                                                        <td><?= htmlspecialchars($repair->Location->NameLocation ?? '') ?></td>
-=======
                                                     <tr class="repair-line" data-repair-id="<?= (int) $repair->ID_Repair ?>"
                                                         data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
                                                         <td><?= htmlspecialchars($repair->InvoiceNumber ?? '') ?: '—' ?></td>
@@ -575,7 +375,6 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                 <i class="bi bi-trash3"></i>
                                                             </button>
                                                         </td>
->>>>>>> feature/local-updates-2026-08
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -587,13 +386,6 @@ error_log("Время группировки данных по ID_TMC для о�
                     </tbody>
                 </table>
             </div>
-<<<<<<< HEAD
-        </div>
-
-        <!-- Общая сумма -->
-        <div class="summary-section" id="total-summary">
-            Общая сумма ремонта ТМЦ: <?= number_format($totalRepairCost, 2, ',', ' ') ?> руб.
-=======
         </section>
 
         <div class="summary-section" id="total-summary">
@@ -602,7 +394,6 @@ error_log("Время группировки данных по ID_TMC для о�
                 <span class="summary-label">Общая сумма ремонта ТМЦ</span>
                 <strong class="summary-amount"><?= number_format($totalRepairCost, 2, ',', ' ') ?> ₽</strong>
             </div>
->>>>>>> feature/local-updates-2026-08
         </div>
     </div>
 
@@ -644,12 +435,9 @@ error_log("Время группировки данных по ID_TMC для о�
                 name: Array.from(document.querySelectorAll('input[data-filter="name"]:checked')).map(cb => cb.value),
                 location: Array.from(document.querySelectorAll('input[data-filter="location"]:checked')).map(cb => cb.value)
             };
-<<<<<<< HEAD
-=======
             const searchValue = (document.getElementById('writeOffSearchInput')?.value || '')
                 .trim()
                 .toLowerCase();
->>>>>>> feature/local-updates-2026-08
 
             const rows = document.querySelectorAll('.main-row');
             let visibleCount = 0;
@@ -660,10 +448,7 @@ error_log("Время группировки данных по ID_TMC для о�
                 const name = row.getAttribute('data-name');
                 const location = row.getAttribute('data-location');
                 const cost = parseFloat(row.getAttribute('data-total-cost'));
-<<<<<<< HEAD
-=======
                 const searchBlob = row.getAttribute('data-search') || '';
->>>>>>> feature/local-updates-2026-08
 
                 if (filters.name.length > 0 && !filters.name.includes(name)) {
                     visible = false;
@@ -671,21 +456,6 @@ error_log("Время группировки данных по ID_TMC для о�
                 if (filters.location.length > 0 && !filters.location.includes(location)) {
                     visible = false;
                 }
-<<<<<<< HEAD
-
-                row.style.display = visible ? '' : 'none';
-
-                // Скрываем соответствующий ряд с деталями
-                /*const id = row.getAttribute('data-id');
-                const detailsRow = document.getElementById('details-' + id);
-                if (detailsRow) {
-                    detailsRow.style.display = visible ? '' : 'none';
-                }*/
-                const id = row.getAttribute('data-id');
-                const detailsRow = document.getElementById('details-' + id);
-                if (detailsRow) {
-                    // Не показываем детали при фильтрации, если строка не выбрана
-=======
                 if (searchValue && !searchBlob.includes(searchValue)) {
                     visible = false;
                 }
@@ -695,7 +465,6 @@ error_log("Время группировки данных по ID_TMC для о�
                 const id = row.getAttribute('data-id');
                 const detailsRow = document.getElementById('details-' + id);
                 if (detailsRow) {
->>>>>>> feature/local-updates-2026-08
                     if (row.classList.contains('selected') && visible) {
                         detailsRow.style.display = '';
                     } else {
@@ -720,10 +489,6 @@ error_log("Время группировки данных по ID_TMC для о�
                 maximumFractionDigits: 2
             }).format(sum);
 
-<<<<<<< HEAD
-            document.getElementById('total-summary').textContent =
-                `Общая сумма ремонта ТМЦ: ${formattedSum} руб.`;
-=======
             const summaryEl = document.getElementById('total-summary');
             if (summaryEl) {
                 summaryEl.innerHTML = `
@@ -735,7 +500,6 @@ error_log("Время группировки данных по ID_TMC для о�
             }
             const heroSum = document.getElementById('hero-total-sum');
             if (heroSum) heroSum.textContent = `${formattedSum} ₽`;
->>>>>>> feature/local-updates-2026-08
         }
 
         // Функция настройки поиска в фильтрах
@@ -838,37 +602,19 @@ error_log("Время группировки данных по ID_TMC для о�
         }*/
 
         // Функция редактирования выбранной записи
-<<<<<<< HEAD
-        function editSelected() {
-            if (!selectedRow) {
-=======
         function editSelected(idFromBtn = null, repairId = null) {
             const id = idFromBtn || (selectedRow ? selectedRow.getAttribute('data-id') : null);
             if (!id) {
->>>>>>> feature/local-updates-2026-08
                 showNotification(TypeMessage.notification, 'Пожалуйста, выберите запись для редактирования.');
                 return;
             }
 
-<<<<<<< HEAD
-            const id = selectedRow.getAttribute('data-id');
-
-            //validStatuses = [StatusItem.Repair, StatusItem.NotDistributed]; // Добавляем в конец массива
-
-            window.openModalAction("edit_write_off", null, null, {
-                id: id
-            });
-            // Редирект на страницу редактирования или открытие модального окна
-            //alert('Редактирование записи с ID: ' + id);
-            // window.location.href = `edit_write_off.php?id=${id}`;
-=======
             const params = { id: id };
             if (repairId) {
                 params.repairId = repairId;
             }
 
             window.openModalAction("edit_write_off", null, null, params);
->>>>>>> feature/local-updates-2026-08
         }
 
 
@@ -911,8 +657,6 @@ error_log("Время группировки данных по ID_TMC для о�
             // Настройка поиска в фильтрах
             setupFilterSearch();
 
-<<<<<<< HEAD
-=======
             const searchInput = document.getElementById('writeOffSearchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', applyFilters);
@@ -924,34 +668,16 @@ error_log("Время группировки данных по ID_TMC для о�
                 });
             }
 
->>>>>>> feature/local-updates-2026-08
             // Добавление обработчиков событий для фильтров
             document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', applyFilters);
             });
 
             // Обработчики для строк таблицы
-<<<<<<< HEAD
-            /*  document.querySelectorAll('.main-row').forEach(row => {
-                  row.addEventListener('click', function (e) {
-                      // Не выделяем строку при клике на кнопку удаления
-                      if (!e.target.closest('.delete-btn')) {
-                          console.log('выделяем строку при клике');
-                          selectRow(this);
-                      }
-                  });
-              });*/
-
-            document.querySelectorAll('.main-row').forEach(row => {
-                row.addEventListener('click', function(e) {
-                    // Не выделяем строку при клике на кнопку удаления или если строка скрыта
-                    if (!e.target.closest('.delete-btn') && this.style.display !== 'none') {
-=======
             document.querySelectorAll('.main-row').forEach(row => {
                 row.addEventListener('click', function(e) {
                     // Не выделяем строку при клике на кнопки действий
                     if (!e.target.closest('.delete-btn, .edit-btn, .restore-btn') && this.style.display !== 'none') {
->>>>>>> feature/local-updates-2026-08
                         selectRow(this);
                     }
                 });
@@ -965,8 +691,6 @@ error_log("Время группировки данных по ID_TMC для о�
                     deleteRow(id);
                 });
             });
-<<<<<<< HEAD
-=======
 
             // Обработчики для кнопок редактирования
             document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -999,7 +723,6 @@ error_log("Время группировки данных по ID_TMC для о�
                     deleteRepairLine(repairId, tmcId);
                 });
             });
->>>>>>> feature/local-updates-2026-08
         });
     </script>
 

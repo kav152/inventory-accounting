@@ -1,20 +1,3 @@
-<<<<<<< HEAD
-<?php if ($confirmCount > 0): ?>
-
-    <?php
-    include __DIR__ . '/message_modal.php';
-    ?>
-    <!-- Модальное окно подтверждения ТМЦ (ConfirmItem) aria-hidden="true" -->
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Принять ТМЦ на склад</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table">
-=======
 <?php
 $confirmCount = (int) ($confirmCount ?? 0);
 $confirmItems = $confirmItems ?? [];
@@ -125,35 +108,18 @@ include __DIR__ . '/message_modal.php';
                             <col class="col-loc">
                             <col class="col-actions">
                         </colgroup>
->>>>>>> feature/local-updates-2026-08
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Наименование</th>
                                 <th>Серийный номер</th>
-<<<<<<< HEAD
-=======
                                 <th>Объект</th>
->>>>>>> feature/local-updates-2026-08
                                 <th>Действия</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($confirmItems as $item): ?>
                                 <tr id="itemRow<?= $item->ID_TMC ?>">
-<<<<<<< HEAD
-                                    <td><?= $item->ID_TMC ?></td>
-                                    <td><?= $item->NameTMC ?></td>
-                                    <td><?= $item->SerialNumber ?></td>
-                                    <td>
-                                        <div style="display: flex; gap: 10px;">
-                                            <button class="btn btn-success"
-                                                onclick="processItem(<?= $item->ID_TMC ?>, 'accept')">
-                                                Принять
-                                            </button>
-                                            <button class="btn btn-danger"
-                                                onclick="processItem(<?= $item->ID_TMC ?>, 'reject')">
-=======
                                     <td><?= (int) $item->ID_TMC ?></td>
                                     <td><?= htmlspecialchars($item->NameTMC ?? '') ?></td>
                                     <td><?= htmlspecialchars($item->SerialNumber ?? '') ?></td>
@@ -166,7 +132,6 @@ include __DIR__ . '/message_modal.php';
                                             </button>
                                             <button type="button" class="btn btn-danger"
                                                 onclick="processItem(<?= (int) $item->ID_TMC ?>, 'reject')">
->>>>>>> feature/local-updates-2026-08
                                                 Отказать
                                             </button>
                                         </div>
@@ -175,13 +140,6 @@ include __DIR__ . '/message_modal.php';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-<<<<<<< HEAD
-                </div>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-=======
                 <?php else: ?>
                     <p class="confirm-empty">Нет ТМЦ, ожидающих проверки УПД и приёмки на объект.</p>
                 <?php endif; ?>
@@ -189,4 +147,3 @@ include __DIR__ . '/message_modal.php';
         </div>
     </div>
 </div>
->>>>>>> feature/local-updates-2026-08

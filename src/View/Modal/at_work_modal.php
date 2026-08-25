@@ -170,8 +170,6 @@
             border-color: #dc3545;
             box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
         }
-<<<<<<< HEAD
-=======
 
         .service-form-section.collapsed,
         .writeoff-form-section.collapsed {
@@ -181,7 +179,6 @@
         .atWorkTable .btn-write-off {
             margin-left: 0.35rem;
         }
->>>>>>> feature/local-updates-2026-08
     </style>
 
 
@@ -236,19 +233,13 @@
                                                         <td><?= $item->NameTMC ?></td>
                                                         <td><?= $item->SerialNumber ?></td>
                                                         <td><?= $item->User->FIO ?></td>
-<<<<<<< HEAD
-                                                        <td>
-=======
                                                         <td class="text-nowrap">
->>>>>>> feature/local-updates-2026-08
                                                             <button type="button"
                                                                 class="btn btn-warning btn-sm btn-service"
                                                                 data-tmc-id="<?= $item->ID_TMC ?>"
                                                                 onclick="showServiceForm(this, <?= $item->ID_TMC ?>)">
                                                                 <i class="bi bi-tools me-1"></i>В сервис
                                                             </button>
-<<<<<<< HEAD
-=======
                                                             <button type="button"
                                                                 class="btn btn-danger btn-sm btn-write-off"
                                                                 data-tmc-id="<?= $item->ID_TMC ?>"
@@ -256,7 +247,6 @@
                                                                 onclick="quickWriteOff(this, <?= $item->ID_TMC ?>)">
                                                                 Списать
                                                             </button>
->>>>>>> feature/local-updates-2026-08
                                                         </td>
                                                     </tr>
                                                     <tr class="service-form-row" style="display: none;">
@@ -288,8 +278,6 @@
                                                                     </div>
                                                                 </form>
                                                             </div>
-<<<<<<< HEAD
-=======
                                                             <div class="writeoff-form-section collapsed" id="writeOffForm-<?= $item->ID_TMC ?>">
                                                                 <form class="writeoff-form" data-tmc-id="<?= $item->ID_TMC ?>">
                                                                     <input type="hidden" name="ID_TMC" value="<?= $item->ID_TMC ?>">
@@ -337,7 +325,6 @@
                                                                     </div>
                                                                 </form>
                                                             </div>
->>>>>>> feature/local-updates-2026-08
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>

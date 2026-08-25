@@ -23,18 +23,6 @@ class processCUDLocation extends CUDHandler
         //error_log("Данные Location: " . print_r($postData, true));
 
         return [
-<<<<<<< HEAD
-            // НАСТРОИТЬ ПОЛЯ ПОД КОНКРЕТНУЮ СУЩНОСТЬ
-            'IDLocation' => (int) $postData['id'],
-            'NameLocation' => $postData['NameLocation'] ?? null,
-            'Address' => $postData['Address'] ?? null,
-            'idRelatedEntity' => $postData['idRelatedEntity'] ?? null,
-            'isMainWarehouse' => $postData['isMainWarehouse'],
-            'FormsJointStockCompanies' => $postData['FormsJointStockCompanies'] ?? null,
-            'IsRepair' => $postData['IsRepair'],
-            'IDCity' => $postData['IDCity'],
-            // Добавить другие поля
-=======
             'IDLocation' => (int) ($postData['id'] ?? 0),
             'NameLocation' => $postData['NameLocation'] ?? null,
             'Address' => $postData['Address'] ?? null,
@@ -47,7 +35,6 @@ class processCUDLocation extends CUDHandler
             'FormsJointStockCompanies' => $postData['FormsJointStockCompanies'] ?? null,
             'IsRepair' => isset($postData['IsRepair']) ? (int) $postData['IsRepair'] : 0,
             'IDCity' => isset($postData['IDCity']) ? (int) $postData['IDCity'] : null,
->>>>>>> feature/local-updates-2026-08
         ];
     }
 
@@ -59,13 +46,7 @@ class processCUDLocation extends CUDHandler
     protected function update($id, $data, int|null $patofID = null)
     {
         $location = parent::update($data['IDLocation'], $data);
-<<<<<<< HEAD
-        $result = $this->locationController->getLocation($data['IDLocation']);
-        //$result = $this->locationController->getLocations(0);
-        error_log(print_r($result, true));
-=======
         $this->locationController->getLocation($data['IDLocation']);
->>>>>>> feature/local-updates-2026-08
         return $location;
     }
 
@@ -73,16 +54,6 @@ class processCUDLocation extends CUDHandler
     {
         return [
             'id' => $location->getId(),
-<<<<<<< HEAD
-            'NameLocation' => $location->NameLocation,
-            'Address' => $location->Address,
-            'City' => [
-                'NameCity' => $location->City->NameCity,
-            ],
-            /*'isMainWarehouse' => $location->isMainWarehouse,
-            'FormsJointStockCompanies' => $location->FormsJointStockCompanies,
-            'IsRepair' => $location->IsRepair,*/
-=======
             'NameLocation' => $location->NameLocation ?? '',
             'Address' => $location->Address ?? '',
             'Location2' => $location->Location2 ?? '',
@@ -93,7 +64,6 @@ class processCUDLocation extends CUDHandler
             'City' => [
                 'NameCity' => $location->City?->NameCity ?? '',
             ],
->>>>>>> feature/local-updates-2026-08
         ];
     }
 }

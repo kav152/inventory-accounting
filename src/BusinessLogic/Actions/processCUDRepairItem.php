@@ -4,13 +4,10 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../storage/logs/processCUDRepairItem.log');
 
-<<<<<<< HEAD
-=======
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
->>>>>>> feature/local-updates-2026-08
 require_once __DIR__ . '/CUDHandler.php';
 require_once __DIR__ . '/../../Entity/RepairItem.php';
 require_once __DIR__ . '/../ItemRepairController.php';
@@ -33,13 +30,9 @@ class processCUDRepairItem extends CUDHandler
             'ID_Repair' => $postData['ID_Repair'] ?? '',
             'ID_TMC' => $postData['ID_TMC'],
             'IDLocation' => $postData['IDLocation'],
-<<<<<<< HEAD
-            'RepairCost' => $postData['RepairCost'],
-=======
             'RepairCost' => isset($postData['RepairCost']) && $postData['RepairCost'] !== ''
                 ? (float) $postData['RepairCost']
                 : 0,
->>>>>>> feature/local-updates-2026-08
             'InvoiceNumber' => $postData['InvoiceNumber'] ?? null,
             'UPD' => $postData['UPD'] ?? null,
             'RepairDescription' => $postData['RepairDescription'] ?? null,

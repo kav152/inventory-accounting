@@ -64,11 +64,7 @@ sort($locations);
     <title>Аналитика ТМЦ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-<<<<<<< HEAD
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-=======
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
->>>>>>> feature/local-updates-2026-08
     <style>
         body {
             background-color: #f8f9fa;

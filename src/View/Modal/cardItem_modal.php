@@ -230,8 +230,6 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                                     </label>
                                 </div>
                             </div>
-<<<<<<< HEAD
-=======
 
                             <?php
                             $currentLocationId = (int) ($inventoryItem->IDLocation ?? 0);
@@ -264,7 +262,6 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                                     value="<?= htmlspecialchars($currentLegal) ?>">
                                 <div class="form-text">Привязано к выбранной локации. Можно уточнить при создании/редактировании.</div>
                             </div>
->>>>>>> feature/local-updates-2026-08
                         </div>
 
                         <!--div class="close" id="propertyContainer" style="grid-area: property-part">
@@ -313,8 +310,6 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
             document.getElementById("modelSelect").disabled = +this.value === 0;
         });
 
-<<<<<<< HEAD
-=======
         const locationSelect = document.getElementById("locationSelect");
         const legalInput = document.getElementById("txtLegalEntity");
         if (locationSelect && legalInput && !locationSelect.dataset.legalBound) {
@@ -325,7 +320,6 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
             });
         }
 
->>>>>>> feature/local-updates-2026-08
         // Обработчики изменений в селектах
         document.getElementById(PropertySelectID[PropertyTMC.TYPE_TMC])?.addEventListener("change", (e) => {
             //forceResetModelSelect();

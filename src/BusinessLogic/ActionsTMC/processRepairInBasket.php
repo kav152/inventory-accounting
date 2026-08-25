@@ -13,19 +13,10 @@ if (!$data) {
     $data = $_POST;
 }
 
-<<<<<<< HEAD
-$ID_TMC = $data['ID_TMC'];
-$NameTMC = $data['NameTMC'];
-//$ID_TMC = 52;
-
-//error_log($ID_TMC);
-//error_log($NameTMC);
-=======
 $ID_TMC = $data['ID_TMC'] ?? null;
 $NameTMC = $data['NameTMC'] ?? '';
 $ID_Repair = isset($data['ID_Repair']) ? (int) $data['ID_Repair'] : 0;
 
->>>>>>> feature/local-updates-2026-08
 DatabaseFactory::setConfig();
 $controller = new ItemRepairController();
 $success = false;
@@ -36,27 +27,6 @@ $response = [
 ];
 
 try {
-<<<<<<< HEAD
-    $success = $controller->RepairInBasket($ID_TMC);
-    //error_log("RepairInBasket выполнено");
-    //error_log($success);
-    // Пересчитываем общую сумму
-    $basketItems = $controller->getBasketItems();
-    $totalRepairCost_Basket = 0;
-    $totalCount = 0;
-    foreach ($basketItems as $item) {
-        $totalRepairCost_Basket += $item->RepairCost;
-        $totalCount++;
-    }
-
-
-    $response = [
-        'success' => $success,
-        'message' => `ТМЦ {$NameTMC} c идификатором {$ID_TMC} пермещено в корзину`,
-        'totalCount' => $totalCount,
-        'totalCost' => $totalRepairCost_Basket,
-        'formattedTotalCost' => number_format($totalRepairCost_Basket, 2, ',', ' ')
-=======
     if ($ID_Repair > 0) {
         $success = $controller->RepairRecordInBasket($ID_Repair);
         $message = $success
@@ -90,7 +60,6 @@ try {
         'formattedTotalCost' => number_format($totalRepairCost_Basket, 2, ',', ' '),
         'ID_Repair' => $ID_Repair ?: null,
         'ID_TMC' => $ID_TMC,
->>>>>>> feature/local-updates-2026-08
     ];
 } catch (Exception $e) {
     $response['message'] = $e->getMessage();

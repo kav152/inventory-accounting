@@ -1,17 +1,3 @@
-<<<<<<< HEAD
-<?php if ($confirmRepairCount > 0): ?>
-    <?php
-    include __DIR__ . '/message_modal.php';
-    ?>
-    <div class="modal fade" id="confirmRepairModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Подтверждение ремонта ТМЦ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-=======
 <?php
 $confirmRepairCount = (int) ($confirmRepairCount ?? 0);
 $confirmRepairItems = $confirmRepairItems ?? [];
@@ -64,7 +50,6 @@ include __DIR__ . '/message_modal.php';
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <?php if ($confirmRepairCount > 0): ?>
->>>>>>> feature/local-updates-2026-08
                     <table class="table">
                         <thead>
                             <tr>
@@ -77,50 +62,28 @@ include __DIR__ . '/message_modal.php';
                             <?php foreach ($confirmRepairItems as $item): ?>
                                 <tr class="itemRepair-row" data-id="<?= $item->ID_TMC ?>">
                                     <td><?= $item->ID_TMC ?></td>
-<<<<<<< HEAD
-                                    <td><?= $item->NameTMC ?></td>
-                                    <td><?= $item->SerialNumber ?></td>
-                                </tr>
-                                <tr class="repair-form" id="repairForm<?= $item->ID_TMC ?>" style="display: none;">
-                                    <td colspan="4">
-                                        <form class="repair-data-form" data-id="<?= $item->ID_TMC ?>">
-=======
                                     <td><?= htmlspecialchars($item->NameTMC) ?></td>
                                     <td><?= htmlspecialchars($item->SerialNumber) ?></td>
                                 </tr>
                                 <tr class="repair-form" id="repairForm<?= $item->ID_TMC ?>" style="display: none;">
                                     <td colspan="3">
                                         <form class="repair-data-form repair-form-card" data-id="<?= $item->ID_TMC ?>">
->>>>>>> feature/local-updates-2026-08
                                             <input type="hidden" name="ID_TMC" value="<?= $item->ID_TMC ?>">
                                             <div class="mb-3">
                                                 <label class="form-label">Организация</label>
                                                 <select name="IDLocation" class="form-select" required>
                                                     <option value="">Выберите организацию</option>
                                                     <?php foreach ($locationRepairs as $loc): ?>
-<<<<<<< HEAD
-                                                        <option value="<?= $loc->IDLocation ?>"><?= $loc->NameLocation ?></option>
-=======
                                                         <option value="<?= $loc->IDLocation ?>">
                                                             <?php
                                                             $legal = trim((string) ($loc->FormsJointStockCompanies ?? ''));
                                                             echo htmlspecialchars($legal !== '' ? $legal . ' — ' . $loc->NameLocation : $loc->NameLocation);
                                                             ?>
                                                         </option>
->>>>>>> feature/local-updates-2026-08
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
                                             <div class="row mb-3">
-<<<<<<< HEAD
-                                                <div class="col">
-                                                    <label class="form-label">Счет</label>
-                                                    <input type="text" name="InvoiceNumber" class="form-control">
-                                                </div>
-                                                <div class="col">
-                                                    <label class="form-label">Сумма ремонта/списания</label>
-                                                    <input type="number" name="RepairCost" class="form-control" step="0.01">
-=======
                                                 <div class="col-md-4">
                                                     <label class="form-label">№ счета</label>
                                                     <input type="text" name="InvoiceNumber" class="form-control" placeholder="Счет или «Без счета»">
@@ -132,24 +95,10 @@ include __DIR__ . '/message_modal.php';
                                                 <div class="col-md-4">
                                                     <label class="form-label">Сумма ремонта/диагностика</label>
                                                     <input type="number" name="RepairCost" class="form-control" step="0.01" min="0" placeholder="0.00">
->>>>>>> feature/local-updates-2026-08
                                                 </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Описание ремонта</label>
-<<<<<<< HEAD
-                                                <textarea name="RepairDescription" class="form-control" rows="3" required></textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Загрузить документ (PDF)</label>
-                                                <input type="file" name="UPD" accept=".pdf" class="form-control">
-                                            </div>
-                                            <button type="button" class="btn btn-primary btn-submit-repair"
-                                                onclick="sendForRepair(<?= $item->ID_TMC ?>, 'repair')">В
-                                                ремонт</button>
-                                            <button type="button" class="btn btn-danger btn-submit-write-off"
-                                                onclick="sendForRepair(<?= $item->ID_TMC ?>, 'writeOff')">Списать</button>
-=======
                                                 <textarea name="RepairDescription" class="form-control" rows="3" required
                                                     placeholder="Описание работ / диагностики"></textarea>
                                             </div>
@@ -167,20 +116,12 @@ include __DIR__ . '/message_modal.php';
                                                     Списать
                                                 </button>
                                             </div>
->>>>>>> feature/local-updates-2026-08
                                         </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-<<<<<<< HEAD
-                </div>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-=======
                 <?php else: ?>
                     <div class="empty-repair-hint">
                         Сейчас нет ТМЦ, ожидающих подтверждения ремонта.<br>
@@ -191,4 +132,3 @@ include __DIR__ . '/message_modal.php';
         </div>
     </div>
 </div>
->>>>>>> feature/local-updates-2026-08

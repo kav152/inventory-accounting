@@ -6,11 +6,8 @@ ini_set('error_log', __DIR__ . '/../../storage/logs/processCUDInventoryItem.log'
 
 require_once __DIR__ . '/CUDHandler.php';
 require_once __DIR__ . '/../../Entity/InventoryItem.php';
-<<<<<<< HEAD
-=======
 require_once __DIR__ . '/../../Entity/Location.php';
 require_once __DIR__ . '/../../Repositories/LocationRepository.php';
->>>>>>> feature/local-updates-2026-08
 require_once __DIR__ . '/../ItemController.php';
 
 class processCUDInventoryItem extends CUDHandler
@@ -25,11 +22,6 @@ class processCUDInventoryItem extends CUDHandler
 
     protected function prepareData($postData)
     {
-<<<<<<< HEAD
-        //error_log("Данные InventoryItem: " . print_r($postData, true));
-
-=======
->>>>>>> feature/local-updates-2026-08
         return [
             'NameTMC' => $postData['nameTMC'] ?? '',
             'IDTypesTMC' => $postData['idTypeTMC'],
@@ -37,36 +29,13 @@ class processCUDInventoryItem extends CUDHandler
             'IDModel' => $postData['idModel'] ?? 0,
             'SerialNumber' => !empty($postData['serialNumber']) ? $postData['serialNumber'] : null,
             'Status' => StatusItem::NotDistributed,
-<<<<<<< HEAD
-            // IDLocation будет установлен в методе create
-=======
             'IDLocation' => isset($postData['idLocation']) ? (int) $postData['idLocation'] : 0,
             'FormsJointStockCompanies' => trim((string) ($postData['legalEntity'] ?? '')),
->>>>>>> feature/local-updates-2026-08
         ];
     }
 
     protected function create($data, ?int $patofID = null)
     {
-<<<<<<< HEAD
-        //error_log("Данные InventoryItem: " . print_r($data, true));
-        try {
-            // Получаем основной склад
-            $mainWarehouse = $this->getMainWarehouse();
-            if (!$mainWarehouse) {
-                throw new Exception('Основной склад не найден');
-            }
-
-            // Устанавливаем IDLocation основного склада
-            $data['IDLocation'] = $mainWarehouse->IDLocation;
-
-            // Создаем объект InventoryItem
-            $inventoryItem = new InventoryItem($data);
-
-            // Используем фабрику через контроллер для создания
-            $createdItem = $this->itemController->create($inventoryItem);
-            $createdItem->Location = $mainWarehouse;
-=======
         try {
             $location = $this->resolveLocation((int) ($data['IDLocation'] ?? 0));
             if (!$location) {
@@ -80,16 +49,11 @@ class processCUDInventoryItem extends CUDHandler
             $inventoryItem = new InventoryItem($data);
             $createdItem = $this->itemController->create($inventoryItem);
             $createdItem->Location = $location;
->>>>>>> feature/local-updates-2026-08
 
             if (!$createdItem) {
                 throw new Exception('Не удалось создать InventoryItem через фабрику');
             }
 
-<<<<<<< HEAD
-            // Регистрация в HistoryOperations
-=======
->>>>>>> feature/local-updates-2026-08
             $historyOperations = new HistoryOperationsController();
             $historyOperations->OperationCreateTMC($createdItem);
 
@@ -104,19 +68,11 @@ class processCUDInventoryItem extends CUDHandler
     protected function update($id, $data, ?int $patofID = null)
     {
         try {
-<<<<<<< HEAD
-            // Получаем существующий элемент
-=======
->>>>>>> feature/local-updates-2026-08
             $existingItem = $this->itemController->getInventoryItem($id);
             if (!$existingItem) {
                 throw new Exception("InventoryItem с ID {$id} не найден");
             }
 
-<<<<<<< HEAD
-            // Обновляем только измененные поля
-=======
->>>>>>> feature/local-updates-2026-08
             $fieldsToUpdate = ['NameTMC', 'IDTypesTMC', 'IDBrandTMC', 'IDModel', 'SerialNumber'];
             foreach ($fieldsToUpdate as $field) {
                 if (array_key_exists($field, $data)) {
@@ -124,13 +80,6 @@ class processCUDInventoryItem extends CUDHandler
                 }
             }
 
-<<<<<<< HEAD
-            // Используем фабрику через контроллер для обновления
-            $updatedItem = $this->itemController->update($existingItem);
-
-            if ($updatedItem) {
-                // Обновляем дату изменения в RegistrationInventoryItem
-=======
             $requestedLocationId = (int) ($data['IDLocation'] ?? 0);
             $location = $this->resolveLocation(
                 $requestedLocationId > 0 ? $requestedLocationId : (int) ($existingItem->IDLocation ?? 0)
@@ -144,7 +93,6 @@ class processCUDInventoryItem extends CUDHandler
             $updatedItem = $this->itemController->update($existingItem);
 
             if ($updatedItem) {
->>>>>>> feature/local-updates-2026-08
                 $registrationInventoryItemRepository = new RegistrationInventoryItemRepository(
                     DatabaseFactory::create()
                 );
@@ -154,16 +102,8 @@ class processCUDInventoryItem extends CUDHandler
                     $registrationInventoryItemRepository->save($regItem);
                 }
 
-<<<<<<< HEAD
-                // Регистрация в HistoryOperations
                 $historyOperations = new HistoryOperationsController();
                 $historyOperations->OperationUpdateTMC($updatedItem);
-
-                
-=======
-                $historyOperations = new HistoryOperationsController();
-                $historyOperations->OperationUpdateTMC($updatedItem);
->>>>>>> feature/local-updates-2026-08
             }
 
             return $updatedItem;
@@ -174,25 +114,14 @@ class processCUDInventoryItem extends CUDHandler
         }
     }
 
-<<<<<<< HEAD
-    protected function delete($data):bool
-    {
-        try {
-            // Получаем существующий элемент
-=======
     protected function delete($data): bool
     {
         try {
->>>>>>> feature/local-updates-2026-08
             $existingItem = $this->itemController->getInventoryItem($data->getId());
             if (!$existingItem) {
                 throw new Exception("InventoryItem с ID {$data->getId()} не найден");
             }
 
-<<<<<<< HEAD
-            // Используем фабрику через контроллер для удаления
-=======
->>>>>>> feature/local-updates-2026-08
             return $this->itemController->delete($data);
 
         } catch (Exception $e) {
@@ -201,8 +130,6 @@ class processCUDInventoryItem extends CUDHandler
         }
     }
 
-<<<<<<< HEAD
-=======
     private function resolveLocation(int $locationId): ?Location
     {
         try {
@@ -233,7 +160,6 @@ class processCUDInventoryItem extends CUDHandler
         $locationRepo->save($location);
     }
 
->>>>>>> feature/local-updates-2026-08
     private function getMainWarehouse(): ?Location
     {
         try {
@@ -250,13 +176,8 @@ class processCUDInventoryItem extends CUDHandler
     {
         return [
             'id' => $inventoryItem->getId(),
-<<<<<<< HEAD
-            'nameTMC' => $inventoryItem->NameTMC,            
-            'serialNumber' => $inventoryItem->SerialNumber,            
-=======
             'nameTMC' => $inventoryItem->NameTMC,
             'serialNumber' => $inventoryItem->SerialNumber,
->>>>>>> feature/local-updates-2026-08
             'BrandTMC' => [
                 'NameBrand' => $inventoryItem->BrandTMC->NameBrand ?? 'бренд не опредлен!',
             ],
@@ -266,20 +187,11 @@ class processCUDInventoryItem extends CUDHandler
             ],
             'Location' => [
                 'NameLocation' => $inventoryItem->Location->NameLocation ?? 'Локация не определена!',
-<<<<<<< HEAD
-=======
                 'FormsJointStockCompanies' => trim((string) ($inventoryItem->Location->FormsJointStockCompanies ?? '')),
->>>>>>> feature/local-updates-2026-08
             ],
         ];
     }
 }
 
-<<<<<<< HEAD
-// Использование
 $handler = new processCUDInventoryItem();
 $handler->handleRequest();
-=======
-$handler = new processCUDInventoryItem();
-$handler->handleRequest();
->>>>>>> feature/local-updates-2026-08

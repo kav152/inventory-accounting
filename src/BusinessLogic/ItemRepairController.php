@@ -64,8 +64,6 @@ class ItemRepairController
         return $ressult;
     }
 
-<<<<<<< HEAD
-=======
     /**
      * Списание ТМЦ без отправки в сервис (только админ, с главной таблицы).
      */
@@ -128,7 +126,6 @@ class ItemRepairController
         ];
     }
 
->>>>>>> feature/local-updates-2026-08
     private function repairManager($data, $filename, $operationType): ?object
     {
         $ID_TMC = isset($data['ID_TMC']) ? (int) $data['ID_TMC'] : 0;
@@ -147,18 +144,13 @@ class ItemRepairController
         //error_log('Передача ID_TMC');
         //error_log($ID_TMC);
         $itemController = new ItemController();
-<<<<<<< HEAD
-=======
         if ($operationType === OperationType::WRITE_OFF) {
             $itemController->unlinkFromBrigade($ID_TMC);
         }
->>>>>>> feature/local-updates-2026-08
         $itemController->changeStatusTMC(
             $ID_TMC,
             OperationType::getStatusTransition($operationType)
         );
-<<<<<<< HEAD
-=======
 
         $historyNote = $repairItem->InvoiceNumber ?? '';
         if ($operationType === OperationType::WRITE_OFF) {
@@ -167,16 +159,11 @@ class ItemRepairController
                 : (string) ($repairItem->InvoiceNumber ?? 'Списание');
         }
 
->>>>>>> feature/local-updates-2026-08
         $itemController->logHistoryOperation(
             $operationType,
             $ID_TMC,
             null,
-<<<<<<< HEAD
-            $repairItem->InvoiceNumber
-=======
             $historyNote
->>>>>>> feature/local-updates-2026-08
         );
         return $repairItem;
     }
@@ -373,8 +360,6 @@ class ItemRepairController
         return true;
     }
 
-<<<<<<< HEAD
-=======
     /**
      * Переместить одну запись ремонта в корзину
      */
@@ -389,7 +374,6 @@ class ItemRepairController
         return $repairItemRepository->save($item) !== null;
     }
 
->>>>>>> feature/local-updates-2026-08
     public function getBasketItems(): ?Collection
     {
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
@@ -431,37 +415,21 @@ class ItemRepairController
         return true;
     }
 
-<<<<<<< HEAD
-    public function getItemWithRepairs($ID_TMC): ?Collection
-=======
     public function getItemWithRepairs($ID_TMC, ?int $ID_Repair = null): ?Collection
->>>>>>> feature/local-updates-2026-08
     {
         //$repairItemRepository = $this->container->get(RepairItemRepository::class);
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
 
-<<<<<<< HEAD
-        /*$query = " LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem "
-            . " WHERE inBasket = 0"
-            . " SELECT *FROM InventoryItem WHERE Status = " . StatusItem::Repair . " or Status =" . StatusItem::WrittenOff
-            . " SELECT *FROM Location"            
-            . " SELECT *FROM [User]";*/
-=======
         $repairFilter = $ID_Repair ? " AND RepairItem.ID_Repair = {$ID_Repair}" : "";
->>>>>>> feature/local-updates-2026-08
 
         $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
           LEFT JOIN InventoryItem ON RegistrationInventoryItem.IDRegItem = InventoryItem.ID_TMC
           LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation
-<<<<<<< HEAD
-          WHERE RepairItem.ID_TMC = {$ID_TMC}";
-=======
           WHERE RepairItem.ID_TMC = {$ID_TMC}
             AND RepairItem.inBasket = 0
             {$repairFilter}";
->>>>>>> feature/local-updates-2026-08
 
         $repairItemRepository->addRelationship(
             'Location',                             // Свойство в Location для связи
@@ -479,8 +447,6 @@ class ItemRepairController
 
         return $repairItemRepository->findBy($query);
     }
-<<<<<<< HEAD
-=======
 
     /**
      * Списанные ТМЦ с историей ремонтов (для реестра «Все списанные»)
@@ -659,5 +625,4 @@ class ItemRepairController
         }
         return $items;
     }
->>>>>>> feature/local-updates-2026-08
 }

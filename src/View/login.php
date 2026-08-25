@@ -1,16 +1,9 @@
 <?php
-<<<<<<< HEAD
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../storage/logs/login.log');
-set_time_limit(0);
-=======
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../storage/logs/login.log');
 set_time_limit(30);
->>>>>>> feature/local-updates-2026-08
 ini_set('memory_limit', '1024M');
 
 
@@ -24,24 +17,6 @@ require_once __DIR__ . '/../BusinessLogic/AccessLogger.php';
 $logAccess = new AccessLogger();
 $logAccess->logPageAccess('login.php');
 
-<<<<<<< HEAD
-DatabaseFactory::setConfig();
-$container = new Container();
-
-$container->set(Database::class, function () {
-    return DatabaseFactory::create();
-});
-
-$userRepository = $container->get(UserRepository::class);
-$users = $userRepository->getAll();
-
-$isAdmin = false;
-$errorMessage = '';
-$successMessage = '';
-$router = new Routes();
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
-=======
 $isAdmin = false;
 $errorMessage = '';
 $successMessage = '';
@@ -67,7 +42,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
     if ($users === null) {
         $errorMessage = $errorMessage ?: 'Нет подключения к базе данных';
     } else {
->>>>>>> feature/local-updates-2026-08
     $currentUser = $users->findBy('IDUser', (int) $_POST["idUser"]);
     //$currentUser = $userRepository->findById();
 
@@ -84,11 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
             $isAdmin = ($currentUser->Status == 0);
 
             //$router->dispatch("/home");
-<<<<<<< HEAD
-            header('Location: /src/View/home.php');
-=======
             header('Location: /home');
->>>>>>> feature/local-updates-2026-08
             exit;
         } else {
             // Неверный пароль
@@ -96,16 +66,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idUser'])) {
             $errorMessage = "Неверный пароль";
         }
     } else {
-<<<<<<< HEAD
-        $logAccess->logLoginAttempt($currentUser->FIO, false, 'User_Not_Found_Inactive');
-        $errorMessage = "Пользователь не найден или деактивирован";
-    }
-=======
         $logAccess->logLoginAttempt($currentUser->FIO ?? 'unknown', false, 'User_Not_Found_Inactive');
         $errorMessage = "Пользователь не найден или деактивирован";
     }
     }
->>>>>>> feature/local-updates-2026-08
 }
 
 // Выход из системы
@@ -228,23 +192,17 @@ if (isset($_GET['logout'])) {
             <div class="row justify-content-center">
                 <div class="col-md-12">
                     <h2 class="text-center mb-4">Авторизация</h2>
-<<<<<<< HEAD
-=======
                     <?php if (!empty($errorMessage)): ?>
                         <div class="alert alert-danger" role="alert">
                             <?= htmlspecialchars($errorMessage) ?>
                         </div>
                     <?php endif; ?>
->>>>>>> feature/local-updates-2026-08
                     <form method="post">
                         <div class="mb-3">
                             <label for="idUser" class="form-label">Пользователь</label>
                             <select class="form-select" name="idUser" id="idUser" required>
                                 <option value="">Выберите пользователя</option>
-<<<<<<< HEAD
-=======
                                 <?php if ($users): ?>
->>>>>>> feature/local-updates-2026-08
                                 <?php foreach ($users as $user): ?>
                                     <?php if ($user->isActive): ?>
                                         <option value="<?= $user->IDUser ?>">
@@ -253,10 +211,7 @@ if (isset($_GET['logout'])) {
                                         </option>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
-<<<<<<< HEAD
-=======
                                 <?php endif; ?>
->>>>>>> feature/local-updates-2026-08
                             </select>
                         </div>
 
