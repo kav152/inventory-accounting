@@ -9,10 +9,15 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
 // Данные передаются через переменную $itemData
 //$inventoryItem = $itemData['main']->InventoryItem;
 $repairs = $itemData;
+<<<<<<< HEAD
 
 $inventoryItem = $repairs->first()->InventoryItem;
 //print_r($itemData);
 //$repairs = null;
+=======
+$inventoryItem = $repairs->first()->InventoryItem;
+$singleRepairMode = !empty($singleRepairMode);
+>>>>>>> feature/local-updates-2026-08
 ?>
 
 <div class="modal fade" id="edit_write_off" tabindex="-1" aria-labelledby="editWriteOffModalLabel" aria-hidden="true">
@@ -20,7 +25,13 @@ $inventoryItem = $repairs->first()->InventoryItem;
         <div class="modal-content">
             <form id="editWriteOffModal">
                 <div class="modal-header">
+<<<<<<< HEAD
                     <h5 class="modal-title" id="editWriteOffModalLabel">Редактирование данных о ремонтах</h5>
+=======
+                    <h5 class="modal-title" id="editWriteOffModalLabel">
+                        <?= $singleRepairMode ? 'Редактирование записи ремонта' : 'Редактирование данных о ремонтах' ?>
+                    </h5>
+>>>>>>> feature/local-updates-2026-08
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -52,11 +63,19 @@ $inventoryItem = $repairs->first()->InventoryItem;
                                 <th>Локация</th>
                                 <td><?= htmlspecialchars($inventoryItem->Location->NameLocation ?? '') ?></td>
                             </tr>
+<<<<<<< HEAD
+=======
+                            <tr>
+                                <th>Юр. лицо</th>
+                                <td><?= htmlspecialchars(trim((string) ($inventoryItem->Location->FormsJointStockCompanies ?? '')) ?: '—') ?></td>
+                            </tr>
+>>>>>>> feature/local-updates-2026-08
                         </table>
                     </div>
 
                     <!-- Данные по repairs (редактируемые) -->
                     <div class="repairs-details">
+<<<<<<< HEAD
                         <h6>Ремонты</h6>
                         <div id="repairsContainer">                            
                             <?php foreach ($repairs as $index => $repair): ?>
@@ -71,6 +90,30 @@ $inventoryItem = $repairs->first()->InventoryItem;
                                                     value="<?= htmlspecialchars($repair->InvoiceNumber ?? '') ?>">
                                             </div>
                                             <div class="col-md-6">
+=======
+                        <h6><?= $singleRepairMode ? 'Выбранная запись' : 'Ремонты' ?></h6>
+                        <div id="repairsContainer">
+                            <?php foreach ($repairs as $index => $repair): ?>
+                                <div class="repair-item card mb-2" data-repair-id="<?= $repair->ID_Repair ?>">
+                                    <input type="hidden" class="form-control id-tmc" value="<?= $inventoryItem->ID_TMC ?>">
+                                    <input type="hidden" class="form-control idLocation" value="<?= $repair->Location->IDLocation ?? 0 ?>">
+                                    <div class="card-body">
+                                        <?php if (!$singleRepairMode): ?>
+                                            <div class="mb-2 text-muted small">Запись №<?= (int) $repair->ID_Repair ?></div>
+                                        <?php endif; ?>
+                                        <div class="row mb-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label">№ счета</label>
+                                                <input type="text" class="form-control invoice-number"
+                                                    value="<?= htmlspecialchars($repair->InvoiceNumber ?? '') ?>">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">№ УПД</label>
+                                                <input type="text" class="form-control upd-number"
+                                                    value="<?= htmlspecialchars($repair->UPD ?? '') ?>">
+                                            </div>
+                                            <div class="col-md-4">
+>>>>>>> feature/local-updates-2026-08
                                                 <label class="form-label">Стоимость (руб.)</label>
                                                 <input type="number" step="0.01" class="form-control repair-cost"
                                                     value="<?= $repair->RepairCost ?>">

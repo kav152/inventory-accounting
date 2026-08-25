@@ -88,8 +88,13 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главное окно. <?= $_SESSION["FIO"] ?> </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<<<<<<< HEAD
     <link href="\..\..\styles\filterStyle.css" rel="stylesheet">
     <link href="\..\..\styles\homeStyle.css" rel="stylesheet">
+=======
+    <link href="/styles/filterStyle.css?v=<?= @filemtime(__DIR__ . '/../../styles/filterStyle.css') ?: time() ?>" rel="stylesheet">
+    <link href="/styles/homeStyle.css?v=<?= @filemtime(__DIR__ . '/../../styles/homeStyle.css') ?: time() ?>" rel="stylesheet">
+>>>>>>> feature/local-updates-2026-08
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
     <script type="module" src="/src/constants/properties.js"></script>
@@ -225,6 +230,10 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
 
         .notification-repair-alert,
         .notification-atwork-alert,
+<<<<<<< HEAD
+=======
+        .notification-writeoff-alert,
+>>>>>>> feature/local-updates-2026-08
         .notification-repair-badge,
         .notification-atwork-badge {
             position: relative;
@@ -237,6 +246,22 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             width: 100%;
             box-sizing: border-box;
         }
+<<<<<<< HEAD
+=======
+
+        .notification-writeoff-alert {
+            background: linear-gradient(135deg, #0f766e, #0d9488) !important;
+            color: #fff !important;
+            text-decoration: none !important;
+            display: block;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .notification-repair-alert.is-empty {
+            opacity: 0.85;
+        }
+>>>>>>> feature/local-updates-2026-08
     </style>
 
 </head>
@@ -252,15 +277,32 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
 
     <?php include __DIR__ . '/Modal/message_modal.php'; ?>
     <?php include __DIR__ . '/Modal/help_modal.php'; ?>
+<<<<<<< HEAD
 
 
     <!-- Панель уведомлений -->
     <?php if ($totalNotifications > 0): ?>
+=======
+    <?php include __DIR__ . '/Modal/writtenOff_mini_modal.php'; ?>
+
+
+    <!-- Панель уведомлений -->
+    <?php
+    $isAdmin = ((int) ($_SESSION["Status"] ?? 1) === 0);
+    $showNotificationsPanel = $totalNotifications > 0 || $isAdmin;
+    if ($isAdmin && !isset($locationRepairs)) {
+        $locationRepairs = $container->getLocations(true) ?? [];
+        $confirmRepairItems = $confirmRepairItems ?? [];
+    }
+    ?>
+    <?php if ($showNotificationsPanel): ?>
+>>>>>>> feature/local-updates-2026-08
         <div class="notifications-panel expanded" id="notificationsPanel">
             <div class="panel-header">
                 <div class="panel-title-container">
                     <h3 class="panel-title">Уведомления</h3>
                     <div class="header-badges">
+<<<<<<< HEAD
                         <?php if ($confirmCount > 0): ?>
                             <div class="notification-badge header-badge" id="confirmBadge" data-bs-toggle="modal"
                                 data-bs-target="#confirmModal">
@@ -274,6 +316,21 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                                     <?= $confirmRepairCount ?>
                                 </div>
                             <?php endif; ?>
+=======
+                        <?php if ($isAdmin || $confirmCount > 0): ?>
+                            <div class="notification-badge header-badge" id="confirmBadge" data-bs-toggle="modal"
+                                data-bs-target="#confirmModal"
+                                style="<?= $confirmCount > 0 ? '' : 'display:none' ?>">
+                                <?= $confirmCount ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($isAdmin): ?>
+                            <div class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
+                                data-bs-toggle="modal" data-bs-target="#confirmRepairModal"
+                                style="<?= $confirmRepairCount > 0 ? '' : 'display:none' ?>">
+                                <?= $confirmRepairCount ?>
+                            </div>
+>>>>>>> feature/local-updates-2026-08
                         <?php endif; ?>
                         <?php if ($brigadesToItemsCount > 0): ?>
                             <div class="notification-badge notification-atwork-badge header-badge" id="atWorkBadge"
@@ -286,6 +343,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 <button class="toggle-btn" id="togglePanelBtn">Свернуть</button>
             </div>
             <div class="notifications-container">
+<<<<<<< HEAD
                 <!-- Всплывающее уведомление для ConfirmItem -->
                 <?php if ($confirmCount > 0): ?>
                     <div class="notification-alert" id="confirmNotification" onclick="openConfirmModal()">
@@ -308,6 +366,37 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     <div class="notification-alert notification-atwork-alert" id="atWorkNotification"
                         onclick="openAtWorkModalModal()">
                         Выдано в работу <span id="atWorkCount"> <?= $brigadesToItemsCount ?> </span> ТМЦ
+=======
+                <?php if ($isAdmin): ?>
+                    <div class="notification-alert <?= $confirmCount > 0 ? '' : 'is-empty' ?>" id="confirmNotification"
+                        onclick="openConfirmModal()">
+                        Проверить УПД / принять <span id="confirmCountText"><?= $confirmCount ?></span> ТМЦ
+                    </div>
+                <?php elseif ($confirmCount > 0): ?>
+                    <div class="notification-alert" id="confirmNotification" onclick="openConfirmModal()">
+                        Проверить УПД / принять <?= $confirmCount ?> ТМЦ
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($isAdmin): ?>
+                    <div class="notification-alert notification-repair-alert <?= $confirmRepairCount > 0 ? '' : 'is-empty' ?>"
+                        id="confirmRepairNotification"
+                        onclick="openConfirmRepairModal()">
+                        Подтвердить ремонт <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
+                    </div>
+                    <a class="notification-alert notification-writeoff-alert" id="writeOffNotification"
+                        href="#"
+                        onclick="event.preventDefault(); openWrittenOffMiniModal();"
+                        style="text-decoration:none; color:#fff; display:block; text-align:center;">
+                        Все списанные
+                    </a>
+                <?php endif; ?>
+
+                <?php if ($brigadesToItemsCount > 0): ?>
+                    <div class="notification-alert notification-atwork-alert" id="atWorkNotification"
+                        onclick="openAtWorkModalModal()">
+                        Выдано в работу <span id="atWorkCount"><?= $brigadesToItemsCount ?></span> ТМЦ
+>>>>>>> feature/local-updates-2026-08
                     </div>
                 <?php endif; ?>
             </div>
@@ -401,6 +490,22 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     <span>Вернуть из сервиса</span>
                 </a>
             </li>
+<<<<<<< HEAD
+=======
+            <?php if ($_SESSION["Status"] == 0): ?>
+                <li>
+                    <a href="#" title="Списать выбранный инструмент без отправки в сервис"
+                        onclick="event.preventDefault(); writeOffToolDirect();">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                            fill="#1f1f1f">
+                            <path
+                                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                        </svg>
+                        <span>Списать инструмент</span>
+                    </a>
+                </li>
+            <?php endif; ?>
+>>>>>>> feature/local-updates-2026-08
 
             <?php if ($_SESSION["Status"] == 0): ?>
                 <li>
@@ -423,6 +528,19 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                         <span>Списание/затраты на ремонт</span>
                     </a>
                 </li>
+<<<<<<< HEAD
+=======
+                <li>
+                    <a href="#" title="Мини-список списанных ТМЦ" onclick="event.preventDefault(); openWrittenOffMiniModal();">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                            fill="#1f1f1f">
+                            <path
+                                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                        </svg>
+                        <span>Все списанные</span>
+                    </a>
+                </li>
+>>>>>>> feature/local-updates-2026-08
             <?php endif; ?>
             <?php if ($_SESSION["Status"] == 0): ?>
                 <li>
@@ -465,6 +583,17 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <div id="main">
         <div class="grid-container">
             <div class="container" id="cont1" style="grid-area: container1">
+<<<<<<< HEAD
+=======
+                <div class="inventory-toolbar">
+                    <label class="inventory-search" for="inventorySearchInput">
+                        <span class="inventory-search-icon" aria-hidden="true">⌕</span>
+                        <input type="search" id="inventorySearchInput" placeholder="Поиск: локация, юр. лицо, наименование…"
+                            autocomplete="off">
+                    </label>
+                    <span class="inventory-search-hint">Фильтры в шапке — по объекту и юр. лицу</span>
+                </div>
+>>>>>>> feature/local-updates-2026-08
                 <table id="inventoryTable">
                     <thead>
                         <tr class="header-container">
@@ -475,10 +604,15 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                             <th>Статус</th>
                             <th>Ответств.</th>
                             <th>Локация</th>
+<<<<<<< HEAD
+=======
+                            <th>Юр. лицо</th>
+>>>>>>> feature/local-updates-2026-08
                         </tr>
                     </thead>
                     <tbody class="scroll">
                         <?php if ($inventoryItems && count($inventoryItems) > 0): ?>
+<<<<<<< HEAD
                             <?php foreach ($inventoryItems as $inventoryItem): ?>
                                 <tr class="row-container <?= ((new StatusItem())->getStatusClasses($inventoryItem->Status)) ?? '' ?>"
                                     onclick="handleAction(event)" data-id="<?= $inventoryItem->ID_TMC ?>"
@@ -491,11 +625,54 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                                     </td>
                                     <td class="rowGrid1"><?= $inventoryItem->User->FIO ?? '' ?></td>
                                     <td class="rowGrid1"><?= $inventoryItem->Location->NameLocation ?></td>
+=======
+                            <?php foreach ($inventoryItems as $inventoryItem):
+                                $locName = (string) ($inventoryItem->Location?->NameLocation ?? '');
+                                $legalEntity = trim((string) (
+                                    $inventoryItem->Location?->FormsJointStockCompanies
+                                    ?? $inventoryItem->LocationLegalEntity
+                                    ?? ''
+                                ));
+                                $statusDesc = (new StatusItem())->getDescription($inventoryItem->Status);
+                                $brandName = (string) ($inventoryItem->BrandTMC?->NameBrand ?? '');
+                                $userFio = (string) ($inventoryItem->User?->FIO ?? '');
+                                $searchBlob = strtolower(trim(implode(' ', array_filter([
+                                    (string) $inventoryItem->ID_TMC,
+                                    (string) ($inventoryItem->NameTMC ?? ''),
+                                    (string) ($inventoryItem->SerialNumber ?? ''),
+                                    $brandName,
+                                    (string) $statusDesc,
+                                    $userFio,
+                                    $locName,
+                                    $legalEntity,
+                                ]))));
+                            ?>
+                                <tr class="row-container <?= ((new StatusItem())->getStatusClasses($inventoryItem->Status)) ?? '' ?>"
+                                    onclick="handleAction(event)" data-id="<?= $inventoryItem->ID_TMC ?>"
+                                    data-status="<?= $inventoryItem->Status ?>"
+                                    data-legal="<?= htmlspecialchars($legalEntity) ?>"
+                                    data-search="<?= htmlspecialchars($searchBlob) ?>">
+                                    <td class="rowGrid1"><?= $inventoryItem->ID_TMC ?></td>
+                                    <td class="rowGrid1"><?= htmlspecialchars($inventoryItem->NameTMC) ?></td>
+                                    <td class="rowGrid1"><?= htmlspecialchars($inventoryItem->SerialNumber) ?></td>
+                                    <td class="rowGrid1"><?= htmlspecialchars($brandName) ?></td>
+                                    <td class="rowGrid1"><?= $statusDesc ?></td>
+                                    <td class="rowGrid1"><?= htmlspecialchars($userFio) ?></td>
+                                    <td class="rowGrid1"><?= htmlspecialchars($locName) ?></td>
+                                    <td class="rowGrid1 legal-cell <?= $legalEntity === '' ? 'is-empty' : '' ?>"
+                                        title="<?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'Заполните юр. лицо в Админка → Локации' ?>">
+                                        <?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'не указано' ?>
+                                    </td>
+>>>>>>> feature/local-updates-2026-08
                                 </tr>
                             <?php endforeach ?>
                         <?php else: ?>
                             <tr>
+<<<<<<< HEAD
                                 <td colspan="7" class="text-center">Нет данных для отображения</td>
+=======
+                                <td colspan="8" class="text-center">Нет данных для отображения</td>
+>>>>>>> feature/local-updates-2026-08
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -531,6 +708,13 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     </script>
 
 
+<<<<<<< HEAD
+=======
+    <script>
+        window.currentUserStatus = <?= (int) ($_SESSION["Status"] ?? 1) ?>;
+        window.currentUserId = <?= (int) ($_SESSION["IDUser"] ?? 0) ?>;
+    </script>
+>>>>>>> feature/local-updates-2026-08
     <script type="module">
         import { initFilter } from '../../js/filters/filterConfigs.js';
 
@@ -599,9 +783,32 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             //const homeFilter = FilterFactory.createHomeFilter();
             //window.homeFilter = homeFilter;
 
+<<<<<<< HEAD
             const analyticsFilter = initFilter('HOME', {
                 onRowCountChanged: (visible, total) => { console.log(`Показано ${visible} из ${total} записей`); }
             });
+=======
+            const homeFilter = initFilter('HOME', {
+                onRowCountChanged: (visible, total) => {
+                    const counter = document.getElementById('row-counter');
+                    if (counter) {
+                        counter.textContent = `Кол-во строк: ${visible} из ${total}`;
+                    }
+                }
+            });
+            window.homeFilter = homeFilter;
+
+            const searchInput = document.getElementById('inventorySearchInput');
+            if (searchInput && homeFilter) {
+                let searchTimer = null;
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => {
+                        homeFilter.setSearchQuery(searchInput.value);
+                    }, 180);
+                });
+            }
+>>>>>>> feature/local-updates-2026-08
 
             // При размонтировании компонента очищаем фильтр
             window.addEventListener('beforeunload', function () {

@@ -83,6 +83,10 @@ class ItemController
             ii.*,
             b.NameBrand,
             l.NameLocation,
+<<<<<<< HEAD
+=======
+            l.FormsJointStockCompanies AS LocationLegalEntity,
+>>>>>>> feature/local-updates-2026-08
             u.IDUser,
             r.CurrentUser,
             m.NameModel,
@@ -100,6 +104,21 @@ class ItemController
     ";
 
         $inventoryItems = $inventoryItemRepository->getAll($sql1);
+<<<<<<< HEAD
+=======
+        if ($inventoryItems) {
+            foreach ($inventoryItems as $item) {
+                // Страховка: юр. лицо из JOIN, если связь Location пришла без поля
+                $legalFromJoin = trim((string) ($item->LocationLegalEntity ?? ''));
+                if ($item->Location) {
+                    $legalOnLoc = trim((string) ($item->Location->FormsJointStockCompanies ?? ''));
+                    if ($legalOnLoc === '' && $legalFromJoin !== '') {
+                        $item->Location->FormsJointStockCompanies = $legalFromJoin;
+                    }
+                }
+            }
+        }
+>>>>>>> feature/local-updates-2026-08
         return $inventoryItems ?? null;
     }
 
@@ -450,6 +469,7 @@ class ItemController
         );
 
         $inventoryItem = $inventoryItemRepository->findById($id, "ID_TMC");
+<<<<<<< HEAD
         $inventoryItem->Status = StatusItem::Released;
         $inventoryItemRepository->save($inventoryItem);
 
@@ -468,6 +488,22 @@ class ItemController
         }
 
         return $inventoryItem != null ? true : false;
+=======
+        if ($inventoryItem === null) {
+            throw new Exception("ТМЦ {$id} не найден");
+        }
+        $inventoryItem->Status = StatusItem::Released;
+        $inventoryItemRepository->save($inventoryItem);
+
+        $locationRepository = $this->container->get(LocationRepository::class);
+        $location = $locationRepository->findById((int) ($inventoryItem->IDLocation ?? 0), "IDLocation");
+        $inventoryItem->Location = $location;
+
+        $historyOperations = new HistoryOperationsController();
+        $historyOperations->AcceptanceConfirmedTMC($inventoryItem);
+
+        return true;
+>>>>>>> feature/local-updates-2026-08
     }
     /**
      * Отказать принимать ТМЦ
@@ -478,6 +514,7 @@ class ItemController
     {
         $historyController = new HistoryOperationsController();
         $historyOperations = $historyController->getHistoryOperations($id);
+<<<<<<< HEAD
 
         $operation = $historyOperations->indexOf(1);
 
@@ -485,10 +522,27 @@ class ItemController
 
         $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
         $registrationItem = $registrationInventoryItemRepository->findById((int) $id, "IDRegItem");
+=======
+        if ($historyOperations === null || $historyOperations->count() < 2) {
+            throw new Exception("Недостаточно записей истории для отказа по ТМЦ {$id}");
+        }
+
+        $operation = $historyOperations->indexOf(1);
+        if ($operation === null) {
+            throw new Exception("Не найдена предыдущая операция для отказа по ТМЦ {$id}");
+        }
+
+        $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
+        $registrationItem = $registrationInventoryItemRepository->findById((int) $id, "IDRegItem");
+        if ($registrationItem === null) {
+            throw new Exception("Не найдена регистрация ТМЦ {$id}");
+        }
+>>>>>>> feature/local-updates-2026-08
 
         $registrationItem->CurrentUser = $operation->IDUser;
         $registrationInventoryItemRepository->save($registrationItem);
 
+<<<<<<< HEAD
 
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $inventoryItem = $inventoryItemRepository->findById((int) $id, "ID_TMC");
@@ -505,6 +559,25 @@ class ItemController
 
         $historyOperations = new HistoryOperationsController();
         $historyOperations->RefusedConfirmedTMC($inventoryItem);
+=======
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $inventoryItem = $inventoryItemRepository->findById((int) $id, "ID_TMC");
+        if ($inventoryItem === null) {
+            throw new Exception("ТМЦ {$id} не найден");
+        }
+
+        $inventoryItem->IDLocation = $operation->IDLocation;
+        $inventoryItem->Status = StatusItem::Released;
+        $inventoryItemRepository->save($inventoryItem);
+
+        $locationRepository = $this->container->get(LocationRepository::class);
+        $location = $locationRepository->findById((int) $inventoryItem->IDLocation, "IDLocation");
+        $inventoryItem->Location = $location;
+        $inventoryItem->CurrentUser = $_SESSION["IDUser"] ?? null;
+
+        $historyWriter = new HistoryOperationsController();
+        $historyWriter->RefusedConfirmedTMC($inventoryItem);
+>>>>>>> feature/local-updates-2026-08
 
         return true;
     }
@@ -517,31 +590,105 @@ class ItemController
     public function cancelWriteOffTMC(int $id)
     {
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+<<<<<<< HEAD
         $inventoryItem = $inventoryItemRepository->findById($id, "ID_TMC");
         $inventoryItem->Status = StatusItem::NotDistributed;
         $inventoryItemRepository->save($inventoryItem);
+=======
+        $locationRepository = $this->container->get(LocationRepository::class);
+        $inventoryItem = $inventoryItemRepository->findById($id, "ID_TMC");
+        if (!$inventoryItem) {
+            throw new Exception("ТМЦ с ID {$id} не найден");
+        }
+        if ((int) $inventoryItem->Status !== StatusItem::WrittenOff) {
+            throw new Exception("ТМЦ не находится в статусе «Списано»");
+        }
+
+        $inventoryItem->Status = StatusItem::NotDistributed;
+        $saved = $inventoryItemRepository->save($inventoryItem);
+        if (!$saved) {
+            throw new Exception("Не удалось вернуть ТМЦ из списания");
+        }
+
+        $location = $locationRepository->findById((int) $inventoryItem->IDLocation, "IDLocation");
+        $inventoryItem->Location = $location;
+
+        $historyOperations = new HistoryOperationsController();
+        $historyOperations->CancelWriteOffTMC($inventoryItem);
+>>>>>>> feature/local-updates-2026-08
         return true;
     }
 
 
     /**
+<<<<<<< HEAD
+=======
+     * ТМЦ на указанной локации (для передачи объект → объект)
+     */
+    public function getItemsByLocation(int $locationId): array
+    {
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $sql = "
+            SELECT 
+                ii.ID_TMC,
+                ii.NameTMC,
+                ii.SerialNumber,
+                ii.Status,
+                l.NameLocation,
+                l.FormsJointStockCompanies AS LocationLegalEntity,
+                b.NameBrand
+            FROM InventoryItem ii
+            LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+            LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+            WHERE ii.IDLocation = {$locationId}
+              AND ii.Status IN (" . StatusItem::NotDistributed . ", " . StatusItem::Released . ", " . StatusItem::ConfirmItem . ")
+            ORDER BY ii.NameTMC
+        ";
+        $items = $inventoryItemRepository->getAll_array($sql) ?? [];
+        $result = [];
+        foreach ($items as $row) {
+            $result[] = [
+                'id' => (int) ($row['ID_TMC'] ?? 0),
+                'name' => (string) ($row['NameTMC'] ?? ''),
+                'serial' => (string) ($row['SerialNumber'] ?? ''),
+                'status' => (int) ($row['Status'] ?? 0),
+                'statusText' => StatusItem::getDescription((int) ($row['Status'] ?? 0)) ?? '',
+                'location' => (string) ($row['NameLocation'] ?? ''),
+                'legal' => trim((string) ($row['LocationLegalEntity'] ?? '')),
+                'brand' => (string) ($row['NameBrand'] ?? ''),
+            ];
+        }
+        return $result;
+    }
+
+    /**
+>>>>>>> feature/local-updates-2026-08
      * Переместить ТМц на новую локацию
      * @param array $tmcIds
      * @param int $locationId
      * @param int $userId
      * @return void
      */
+<<<<<<< HEAD
     public function distributeItems(array $tmcIds, int $locationId, int $userId)
+=======
+    public function distributeItems(array $tmcIds, int $locationId, int $userId, string $upd = '')
+>>>>>>> feature/local-updates-2026-08
     {
         //error_log('Мы в distributeItems: ' . print_r($tmcIds, true));
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
         $historyOperations = new HistoryOperationsController();
+<<<<<<< HEAD
+=======
+        $upd = trim($upd);
+>>>>>>> feature/local-updates-2026-08
 
         foreach ($tmcIds as $id) {
 
             $inventoryItem = $inventoryItemRepository->findById((int) $id, "ID_TMC");
+<<<<<<< HEAD
             $inventoryItem->IDLocation = $locationId;
             $inventoryItem->Status = StatusItem::ConfirmItem;
             $inventoryItemRepository->save($inventoryItem);
@@ -559,6 +706,37 @@ class ItemController
 
             $historyOperations->OperationDistributeTMC($inventoryItem);
             //error_log('Обновление location');
+=======
+            if ($inventoryItem === null) {
+                throw new Exception("ТМЦ {$id} не найден для передачи");
+            }
+            $prevStatus = (int) ($inventoryItem->Status ?? -1);
+
+            if ($prevStatus === StatusItem::Repair) {
+                try {
+                    $this->changeDateReturnService((int) $id);
+                } catch (Exception $e) {
+                    error_log('distributeItems return-from-repair: ' . $e->getMessage());
+                }
+                $this->logHistoryOperation(OperationType::RETURN_FROM_REPAIR, (int) $id, null, $upd !== '' ? $upd : 'Возврат из сервиса на объект');
+            }
+
+            $inventoryItem->IDLocation = $locationId;
+            $inventoryItem->Status = StatusItem::ConfirmItem;
+            $inventoryItemRepository->save($inventoryItem);
+
+            $registrationItem = $registrationInventoryItemRepository->findById((int) $id, "IDRegItem");
+            if ($registrationItem === null) {
+                throw new Exception("Не найдена регистрация ТМЦ {$id} — передача невозможна");
+            }
+            $registrationItem->CurrentUser = $userId;
+            $registrationInventoryItemRepository->save($registrationItem);
+
+            $location = $locationRepository->findById($inventoryItem->IDLocation, "IDLocation");
+            $inventoryItem->Location = $location;
+
+            $historyOperations->OperationDistributeTMC($inventoryItem, $upd);
+>>>>>>> feature/local-updates-2026-08
         }
     }
 
@@ -599,12 +777,28 @@ class ItemController
     }
 
 
+<<<<<<< HEAD
     public function returnTMCtoWork($tmcId, $brigadeId): bool
     {
         try {
             $linkBrigadesToItemRepository = $this->container->get(LinkBrigadesToItemRepository::class);
             $result = $linkBrigadesToItemRepository->findById($tmcId, 'ID_TMC');
             $linkBrigadesToItemRepository->delete($result);
+=======
+    public function unlinkFromBrigade(int $tmcId): void
+    {
+        $linkBrigadesToItemRepository = $this->container->get(LinkBrigadesToItemRepository::class);
+        $link = $linkBrigadesToItemRepository->findById($tmcId, 'ID_TMC');
+        if ($link != null) {
+            $linkBrigadesToItemRepository->delete($link);
+        }
+    }
+
+    public function returnTMCtoWork($tmcId, $brigadeId): bool
+    {
+        try {
+            $this->unlinkFromBrigade($tmcId);
+>>>>>>> feature/local-updates-2026-08
 
             $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::Return_TMC_toWork));
             $this->logHistoryOperation(OperationType::Return_TMC_toWork, $tmcId, $brigadeId, null);
@@ -694,6 +888,7 @@ class ItemController
      */
     public function logHistoryOperation(string $operationType, int $id, ?int $brigadeId = null, ?string $note = null): void
     {
+<<<<<<< HEAD
         $locationRepository = $this->container->get(LocationRepository::class);
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $brigadesRepository = $this->container->get(BrigadesRepository::class);
@@ -741,6 +936,72 @@ class ItemController
                 break;
         }
         ;
+=======
+        try {
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $locationRepository = $this->container->get(LocationRepository::class);
+            $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+            $brigadesRepository = $this->container->get(BrigadesRepository::class);
+            $inventoryItem = $inventoryItemRepository->findById((int) $id, "ID_TMC");
+            if (!$inventoryItem) {
+                throw new Exception("ТМЦ {$id} не найден для записи истории");
+            }
+
+            $locationId = (int) ($inventoryItem->IDLocation ?? 0);
+            $location = $locationId > 0
+                ? $locationRepository->findById($locationId, "IDLocation")
+                : null;
+            $inventoryItem->Location = $location;
+
+            $historyOperations = new HistoryOperationsController();
+
+            switch ($operationType) {
+                case OperationType::CREATE:
+                    $historyOperations->OperationCreateTMC($inventoryItem);
+                    break;
+                case OperationType::DISTRIBUTE:
+                    $historyOperations->OperationDistributeTMC($inventoryItem);
+                    break;
+                case OperationType::CONFIRM:
+                    $historyOperations->AcceptanceConfirmedTMC($inventoryItem);
+                    break;
+                case OperationType::SEND_REPAIR:
+                    $historyOperations->RepairConfirmedTMC($inventoryItem, (string) $note);
+                    break;
+                case OperationType::ASSIGN_TO_BRIGADE:
+                    if ($brigadeId == null) {
+                        throw new Exception("brigadeId не указан. Ошибка в ItemController->logHistoryOperation");
+                    }
+                    $brigade = $brigadesRepository->findById((int) $brigadeId, "IDBrigade");
+                    $historyOperations->AssignToBrigadeTMC($inventoryItem, $brigade);
+                    break;
+                case OperationType::WRITE_OFF:
+                    $historyOperations->WriteOffTMC($inventoryItem, $note);
+                    break;
+                case OperationType::Return_TMC_toWork:
+                    if ($brigadeId == null) {
+                        throw new Exception("brigadeId не указан. Ошибка в ItemController->logHistoryOperation");
+                    }
+                    $brigade = $brigadesRepository->findById((int) $brigadeId, "IDBrigade");
+                    $historyOperations->ReturnFromWork($inventoryItem, $brigade);
+                    break;
+                case OperationType::RETURN_FROM_REPAIR:
+                    $historyOperations->ReturnFromRepairTMC($inventoryItem, (string) $note);
+                    break;
+                case OperationType::ACCEPT_FOR_REPAIR:
+                    $historyOperations->AcceptForRepairTMC($inventoryItem, (string) $note);
+                    break;
+                default:
+                    throw new Exception("Неизвестный тип операции истории: {$operationType}");
+            }
+        } catch (Throwable $e) {
+            error_log('logHistoryOperation error [' . $operationType . ' / TMC ' . $id . ']: ' . $e->getMessage());
+            // История не должна откатывать основную операцию (списание/ремонт уже выполнены)
+        }
+>>>>>>> feature/local-updates-2026-08
     }
 
     /**
@@ -752,6 +1013,7 @@ class ItemController
     public function changeDateReturnService(int $id)
     {
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
+<<<<<<< HEAD
         $repairs = $repairItemRepository->findBy("where ID_TMC = " . $id . " order by ID_Repair");
         $repairItem = $repairs->last();
         if ($repairItem === null) {
@@ -764,6 +1026,20 @@ class ItemController
         $result = $repairItemRepository->updateDateWithGetDate($repairItem->ID_Repair, 'DateReturnService');
         if (!$result) {
             throw new Exception(`Ошибка указании даты возвращения из сервиса, текущая дата {$repairItem->DateReturnService}`);
+=======
+        $repairs = $repairItemRepository->findBy("where ID_TMC = " . (int) $id . " order by ID_Repair");
+        if ($repairs === null || $repairs->count() === 0) {
+            throw new Exception("Не найдено записи об отправке в ремонт ТМЦ id:{$id}");
+        }
+        $repairItem = $repairs->last();
+        if ($repairItem === null) {
+            throw new Exception("Не найдено записи об отправке в ремонт ТМЦ id:{$id}");
+        }
+
+        $result = $repairItemRepository->updateDateWithGetDate($repairItem->ID_Repair, 'DateReturnService');
+        if (!$result) {
+            throw new Exception("Ошибка указания даты возвращения из сервиса для ТМЦ id:{$id}");
+>>>>>>> feature/local-updates-2026-08
         }
     }
 }

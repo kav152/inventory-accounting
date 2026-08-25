@@ -3,7 +3,11 @@ import { TypeMessage } from "../../src/constants/typeMessage.js";
 import { StatusItem } from "../../src/constants/statusItem.js";
 import { Action } from "../../src/constants/actions.js";
 import { executeEntityAction, getCollectFormData, } from "../templates/entityActionTemplate.js";
+<<<<<<< HEAD
 import { updateInventoryStatus } from "../updateFunctions.js";
+=======
+import { updateInventoryStatus, updateInventoryAfterTransfer } from "../updateFunctions.js";
+>>>>>>> feature/local-updates-2026-08
 
 
 // Обработчик клика на "Передать ТМЦ"
@@ -20,9 +24,15 @@ import { updateInventoryStatus } from "../updateFunctions.js";
       showNotification(TypeMessage.notification, "Выберите ТМЦ для передачи");
       return;
     }
+<<<<<<< HEAD
     let validStatuses = [StatusItem.Released];
     if (StatusUser == 0) {
       validStatuses = [StatusItem.Released, StatusItem.NotDistributed]; // Добавляем в конец массива
+=======
+    let validStatuses = [StatusItem.Released, StatusItem.Repair];
+    if (StatusUser == 0) {
+      validStatuses = [StatusItem.Released, StatusItem.NotDistributed, StatusItem.Repair];
+>>>>>>> feature/local-updates-2026-08
     }
 
     //console.log(`selectedRows - ${selectedRows}`);
@@ -101,6 +111,75 @@ export function initDistributeModalHandlers(modalElement) {
     await handleDistributeFormSubmit(modalElement);
   });
 
+<<<<<<< HEAD
+=======
+  const locationSelect = modalElement.querySelector("#distributeLocationSelect");
+  if (locationSelect && !locationSelect.dataset.legalBound) {
+    locationSelect.dataset.legalBound = "1";
+    locationSelect.addEventListener("change", () => updateDistributeLegalPanel(modalElement));
+  }
+
+  // Обновляем блок юр. лиц после открытия / заполнения таблицы
+  setTimeout(() => updateDistributeLegalPanel(modalElement), 50);
+}
+
+function collectSourceLegalEntities(modalElement) {
+  const values = new Set();
+  modalElement.querySelectorAll("#selectedItemsTable tr[data-legal]").forEach((row) => {
+    const legal = (row.getAttribute("data-legal") || "").trim();
+    if (legal) values.add(legal);
+  });
+  return Array.from(values);
+}
+
+function updateDistributeLegalPanel(modalElement) {
+  const panel = modalElement.querySelector("#legalTransferPanel");
+  const fromEl = modalElement.querySelector("#legalFromValue");
+  const toEl = modalElement.querySelector("#legalToValue");
+  const hint = modalElement.querySelector("#legalCrossHint");
+  const cardFrom = modalElement.querySelector("#legalCardFrom");
+  const cardTo = modalElement.querySelector("#legalCardTo");
+  if (!panel || !fromEl || !toEl) return;
+
+  const fromList = collectSourceLegalEntities(modalElement);
+  const locationSelect = modalElement.querySelector("#distributeLocationSelect");
+  const selectedOption = locationSelect?.selectedOptions?.[0];
+  const toLegal = (selectedOption?.getAttribute("data-legal") || "").trim();
+
+  const fromText = fromList.length ? fromList.join(", ") : "—";
+  fromEl.textContent = fromText;
+  fromEl.classList.toggle("is-empty", fromList.length === 0);
+
+  toEl.textContent = toLegal || "—";
+  toEl.classList.toggle("is-empty", !toLegal);
+
+  // Обновляем столбец «Юр. лицо куда» в таблице
+  modalElement.querySelectorAll("#selectedItemsTable .legal-to-chip").forEach((chip) => {
+    if (toLegal) {
+      chip.textContent = toLegal;
+      chip.classList.remove("empty");
+    } else {
+      chip.textContent = "—";
+      chip.classList.add("empty");
+    }
+  });
+
+  const hasFrom = fromList.length > 0;
+  const hasTo = !!toLegal;
+  const isCross =
+    hasFrom &&
+    hasTo &&
+    fromList.some((fromLegal) => fromLegal.toLowerCase() !== toLegal.toLowerCase());
+
+  // Показываем панель, если есть хотя бы одно юр. лицо
+  panel.classList.toggle("is-visible", hasFrom || hasTo);
+  hint?.classList.toggle("is-visible", isCross);
+  cardFrom?.classList.toggle("legal-card-cross", isCross);
+  cardTo?.classList.toggle("legal-card-cross", isCross);
+
+  // Всегда показываем оба столбца юр. лиц в таблице передачи
+  modalElement.classList.add("has-dual-legal");
+>>>>>>> feature/local-updates-2026-08
 }
 
 
@@ -115,6 +194,20 @@ async function handleDistributeFormSubmit(modalElement) {
   let tmc_ids = window.selectedTMCIds;
   formData['tmc_ids'] = JSON.stringify(tmc_ids);
 
+<<<<<<< HEAD
+=======
+  const fromRepair = (tmc_ids || []).some((id) => {
+    const row = document.querySelector(`#inventoryTable tr.row-container[data-id="${id}"]`);
+    return Number(row?.getAttribute("data-status")) === StatusItem.Repair;
+  });
+  const upd = (form.querySelector('[name="upd"]')?.value || "").trim();
+  if (fromRepair && !upd) {
+    showNotification(TypeMessage.notification, "Укажите № УПД для отправки из сервиса на объект");
+    form.querySelector('[name="upd"]')?.focus();
+    return;
+  }
+
+>>>>>>> feature/local-updates-2026-08
   try {
     const result = await executeEntityAction({
       action: Action.UPDATE,
@@ -123,11 +216,46 @@ async function handleDistributeFormSubmit(modalElement) {
       successMessage: "ТМЦ успешно переданы",
     });
 
+<<<<<<< HEAD
     // Обновляем статусы в таблице ТМЦ
     if (tmc_ids) {
       // Вызываем функцию обновления статусов в таблице
       updateInventoryStatus(tmc_ids, StatusItem.ConfirmItem);
       // Снимаем выделение с строк
+=======
+    // Обновляем статусы / локацию / юр. лицо в таблице ТМЦ
+    if (tmc_ids) {
+      const locationSelect = form.querySelector("#distributeLocationSelect");
+      const userSelect = form.querySelector('select[name="user"]');
+      const locationOpt = locationSelect?.selectedOptions?.[0];
+      const userOpt = userSelect?.selectedOptions?.[0];
+
+      const locationName = (
+        locationOpt?.getAttribute("data-name") ||
+        (locationOpt?.textContent || "").split("(")[0]
+      ).trim();
+      const legal = (locationOpt?.getAttribute("data-legal") || "").trim();
+      const responsible = (userOpt?.textContent || "").trim();
+
+      updateInventoryAfterTransfer(tmc_ids, {
+        status: StatusItem.ConfirmItem,
+        location: locationName,
+        legal: legal,
+        responsible: responsible,
+      });
+
+      const destUserId = userSelect?.value || "";
+      const isAdmin = Number(window.currentUserStatus) === 0;
+      const isDestUser = String(destUserId) === String(window.currentUserId || "");
+      if (isAdmin || isDestUser) {
+        if (typeof updateCounters === "function") {
+          updateCounters({ confirmCount: tmc_ids.length });
+        } else if (typeof window.updateCounters === "function") {
+          window.updateCounters({ confirmCount: tmc_ids.length });
+        }
+      }
+
+>>>>>>> feature/local-updates-2026-08
       window.removingSelection();
     }
 

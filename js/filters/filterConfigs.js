@@ -21,9 +21,15 @@ export const FilterConfigs = {
         tableId: 'writeOffTable',
         containerId: 'idTableResponsive',
         rowSelector: 'tbody tr.main-row',
+<<<<<<< HEAD
         excludeColumns: [8, 9],
         onFilterApplied: (filters, visibleCount) => {
             // Общая логика для списаний
+=======
+        // Не фильтруем: № счета, № УПД, сумма, действия
+        excludeColumns: [7, 8, 9, 10],
+        onFilterApplied: (filters, visibleCount) => {
+>>>>>>> feature/local-updates-2026-08
             let total = 0;
             document.querySelectorAll('.main-row').forEach(row => {
                 if (row.style.display !== 'none') {
@@ -31,6 +37,7 @@ export const FilterConfigs = {
                 }
             });
 
+<<<<<<< HEAD
             const summaryEl = document.getElementById('total-summary');
             if (summaryEl) {
                 const formattedSum = new Intl.NumberFormat('ru-RU', {
@@ -39,12 +46,37 @@ export const FilterConfigs = {
                 }).format(total);
                 summaryEl.textContent = `Общая сумма ремонта ТМЦ: ${formattedSum} руб.`;
             }
+=======
+            const formattedSum = new Intl.NumberFormat('ru-RU', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(total);
+
+            const summaryEl = document.getElementById('total-summary');
+            if (summaryEl) {
+                summaryEl.innerHTML = `
+                    <div class="summary-icon"><i class="bi bi-cash-coin"></i></div>
+                    <div class="summary-text">
+                        <span class="summary-label">Общая сумма ремонта ТМЦ</span>
+                        <strong class="summary-amount">${formattedSum} ₽</strong>
+                    </div>`;
+            }
+            const heroSum = document.getElementById('hero-total-sum');
+            if (heroSum) heroSum.textContent = `${formattedSum} ₽`;
+>>>>>>> feature/local-updates-2026-08
         }
     }
 };
 
+<<<<<<< HEAD
 // Вспомогательная функция для инициализации
 export function initFilter(tableType, customConfig = {}) {
     const config = { ...FilterConfigs[tableType], ...customConfig };
     return new TableFilter(config);
 }
+=======
+export function initFilter(tableType, customConfig = {}) {
+    const config = { ...FilterConfigs[tableType], ...customConfig };
+    return new TableFilter(config);
+}
+>>>>>>> feature/local-updates-2026-08

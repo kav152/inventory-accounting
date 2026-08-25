@@ -64,6 +64,71 @@ class ItemRepairController
         return $ressult;
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Списание ТМЦ без отправки в сервис (только админ, с главной таблицы).
+     */
+    public function directWriteOffByIds(array $tmcIds, string $reason = ''): array
+    {
+        $written = [];
+        $errors = [];
+        $atWorkCount = 0;
+        $reason = trim($reason) !== '' ? trim($reason) : 'Списание без отправки в сервис';
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $blocked = [
+            StatusItem::WrittenOff,
+            StatusItem::Repair,
+            StatusItem::ConfirmRepairTMC,
+        ];
+
+        foreach ($tmcIds as $rawId) {
+            $id = (int) $rawId;
+            if ($id <= 0) {
+                continue;
+            }
+
+            $item = $inventoryItemRepository->findById($id, 'ID_TMC');
+            if (!$item) {
+                $errors[] = "ТМЦ {$id} не найден";
+                continue;
+            }
+
+            $status = (int) ($item->Status ?? -1);
+            if (in_array($status, $blocked, true)) {
+                $errors[] = "ТМЦ {$id}: нельзя списать из статуса «" . (StatusItem::getDescription($status) ?? $status) . "»";
+                continue;
+            }
+
+            $locationId = (int) ($item->IDLocation ?? 0);
+            if ($locationId <= 0) {
+                $errors[] = "ТМЦ {$id}: не указана локация";
+                continue;
+            }
+
+            $this->writeOffItem([
+                'ID_TMC' => $id,
+                'IDLocation' => $locationId,
+                'InvoiceNumber' => 'Без счета',
+                'UPD' => '',
+                'RepairCost' => 0,
+                'RepairDescription' => $reason,
+            ], null);
+
+            if ($status === StatusItem::AtWorkTMC) {
+                $atWorkCount++;
+            }
+            $written[] = $id;
+        }
+
+        return [
+            'written' => $written,
+            'errors' => $errors,
+            'atWorkCount' => $atWorkCount,
+        ];
+    }
+
+>>>>>>> feature/local-updates-2026-08
     private function repairManager($data, $filename, $operationType): ?object
     {
         $ID_TMC = isset($data['ID_TMC']) ? (int) $data['ID_TMC'] : 0;
@@ -82,15 +147,36 @@ class ItemRepairController
         //error_log('Передача ID_TMC');
         //error_log($ID_TMC);
         $itemController = new ItemController();
+<<<<<<< HEAD
+=======
+        if ($operationType === OperationType::WRITE_OFF) {
+            $itemController->unlinkFromBrigade($ID_TMC);
+        }
+>>>>>>> feature/local-updates-2026-08
         $itemController->changeStatusTMC(
             $ID_TMC,
             OperationType::getStatusTransition($operationType)
         );
+<<<<<<< HEAD
+=======
+
+        $historyNote = $repairItem->InvoiceNumber ?? '';
+        if ($operationType === OperationType::WRITE_OFF) {
+            $historyNote = trim((string) ($repairItem->RepairDescription ?? '')) !== ''
+                ? (string) $repairItem->RepairDescription
+                : (string) ($repairItem->InvoiceNumber ?? 'Списание');
+        }
+
+>>>>>>> feature/local-updates-2026-08
         $itemController->logHistoryOperation(
             $operationType,
             $ID_TMC,
             null,
+<<<<<<< HEAD
             $repairItem->InvoiceNumber
+=======
+            $historyNote
+>>>>>>> feature/local-updates-2026-08
         );
         return $repairItem;
     }
@@ -287,6 +373,23 @@ class ItemRepairController
         return true;
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Переместить одну запись ремонта в корзину
+     */
+    public function RepairRecordInBasket(int $ID_Repair): bool
+    {
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $item = $repairItemRepository->findById($ID_Repair, 'ID_Repair');
+        if (!$item) {
+            return false;
+        }
+        $item->inBasket = true;
+        return $repairItemRepository->save($item) !== null;
+    }
+
+>>>>>>> feature/local-updates-2026-08
     public function getBasketItems(): ?Collection
     {
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
@@ -328,23 +431,37 @@ class ItemRepairController
         return true;
     }
 
+<<<<<<< HEAD
     public function getItemWithRepairs($ID_TMC): ?Collection
+=======
+    public function getItemWithRepairs($ID_TMC, ?int $ID_Repair = null): ?Collection
+>>>>>>> feature/local-updates-2026-08
     {
         //$repairItemRepository = $this->container->get(RepairItemRepository::class);
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
 
+<<<<<<< HEAD
         /*$query = " LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem "
             . " WHERE inBasket = 0"
             . " SELECT *FROM InventoryItem WHERE Status = " . StatusItem::Repair . " or Status =" . StatusItem::WrittenOff
             . " SELECT *FROM Location"            
             . " SELECT *FROM [User]";*/
+=======
+        $repairFilter = $ID_Repair ? " AND RepairItem.ID_Repair = {$ID_Repair}" : "";
+>>>>>>> feature/local-updates-2026-08
 
         $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
           LEFT JOIN InventoryItem ON RegistrationInventoryItem.IDRegItem = InventoryItem.ID_TMC
           LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation
+<<<<<<< HEAD
           WHERE RepairItem.ID_TMC = {$ID_TMC}";
+=======
+          WHERE RepairItem.ID_TMC = {$ID_TMC}
+            AND RepairItem.inBasket = 0
+            {$repairFilter}";
+>>>>>>> feature/local-updates-2026-08
 
         $repairItemRepository->addRelationship(
             'Location',                             // Свойство в Location для связи
@@ -362,4 +479,185 @@ class ItemRepairController
 
         return $repairItemRepository->findBy($query);
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * Списанные ТМЦ с историей ремонтов (для реестра «Все списанные»)
+     * Берём по InventoryItem.Status, чтобы не показывать ТМЦ с прошлыми ремонтами.
+     */
+    public function getWrittenOffGroupedItems(): array
+    {
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $locationRepository = $this->container->get(LocationRepository::class);
+
+        $statusWrittenOff = (int) StatusItem::WrittenOff;
+
+        $sql = "
+            SELECT
+                ii.ID_TMC,
+                ii.NameTMC,
+                ii.SerialNumber,
+                ii.Status,
+                ii.IDBrandTMC,
+                ii.IDLocation,
+                l.NameLocation,
+                l.FormsJointStockCompanies AS LocationLegalEntity,
+                b.NameBrand,
+                r.IDRegItem,
+                r.CurrentUser,
+                u.Surname,
+                u.Name,
+                u.Patronymic
+            FROM InventoryItem ii
+            LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+            LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+            LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
+            LEFT JOIN [User] u ON r.CurrentUser = u.IDUser
+            WHERE ii.Status = {$statusWrittenOff}
+            ORDER BY ii.ID_TMC DESC
+        ";
+
+        $rows = $inventoryItemRepository->getAll_array($sql) ?? [];
+        if (!$rows) {
+            return [];
+        }
+
+        $ids = array_map(static fn($row) => (int) ($row['ID_TMC'] ?? 0), $rows);
+        $ids = array_values(array_filter($ids));
+        $idsList = implode(',', $ids);
+
+        $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+        $repairsByTmc = [];
+        if ($idsList !== '') {
+            $repairQuery = "
+                SELECT RepairItem.*
+                FROM RepairItem
+                WHERE RepairItem.inBasket = 0
+                  AND RepairItem.ID_TMC IN ({$idsList})
+                ORDER BY RepairItem.ID_Repair DESC
+            ";
+            $repairItems = $repairItemRepository->getAll($repairQuery);
+            if ($repairItems) {
+                foreach ($repairItems as $repair) {
+                    $tmcId = (int) $repair->ID_TMC;
+                    $repairsByTmc[$tmcId][] = $repair;
+                }
+            }
+        }
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $tmcId = (int) ($row['ID_TMC'] ?? 0);
+            if ($tmcId <= 0) {
+                continue;
+            }
+
+            $inventoryItem = new InventoryItem([
+                'ID_TMC' => $tmcId,
+                'NameTMC' => $row['NameTMC'] ?? '',
+                'SerialNumber' => $row['SerialNumber'] ?? null,
+                'Status' => (int) ($row['Status'] ?? $statusWrittenOff),
+                'IDBrandTMC' => (int) ($row['IDBrandTMC'] ?? 0),
+                'IDLocation' => (int) ($row['IDLocation'] ?? 0),
+                'LocationLegalEntity' => $row['LocationLegalEntity'] ?? '',
+            ]);
+
+            $inventoryItem->Location = new Location([
+                'IDLocation' => (int) ($row['IDLocation'] ?? 0),
+                'NameLocation' => $row['NameLocation'] ?? '',
+                'FormsJointStockCompanies' => $row['LocationLegalEntity'] ?? '',
+            ]);
+
+            $inventoryItem->BrandTMC = new BrandTMC([
+                'IDBrandTMC' => (int) ($row['IDBrandTMC'] ?? 0),
+                'NameBrand' => $row['NameBrand'] ?? '',
+            ]);
+
+            $user = new User([
+                'IDUser' => (int) ($row['CurrentUser'] ?? 0),
+                'Surname' => $row['Surname'] ?? '',
+                'Name' => $row['Name'] ?? '',
+                'Patronymic' => $row['Patronymic'] ?? '',
+                'Status' => 0,
+            ]);
+
+            $currentUserId = (int) ($row['CurrentUser'] ?? 0);
+            $registration = new RegistrationInventoryItem([
+                'IDRegItem' => (int) ($row['IDRegItem'] ?? $tmcId),
+                'CreatedUser' => $currentUserId,
+                'CurrentUser' => $currentUserId,
+            ]);
+            $registration->User = $user;
+
+            $repairs = $repairsByTmc[$tmcId] ?? [];
+            if ($repairs) {
+                $main = $repairs[0];
+                $main->InventoryItem = $inventoryItem;
+                $main->RegistrationInventoryItem = $registration;
+                foreach ($repairs as $repair) {
+                    $repair->InventoryItem = $inventoryItem;
+                    $repair->RegistrationInventoryItem = $registration;
+                }
+            } else {
+                $main = new RepairItem([
+                    'ID_Repair' => 0,
+                    'ID_TMC' => $tmcId,
+                    'IDLocation' => (int) ($row['IDLocation'] ?? 0),
+                    'RepairCost' => 0,
+                    'InvoiceNumber' => '',
+                    'RepairDescription' => '',
+                    'DateToService' => date('Y-m-d H:i:s'),
+                    'inBasket' => 0,
+                ]);
+                $main->InventoryItem = $inventoryItem;
+                $main->RegistrationInventoryItem = $registration;
+                $repairs = [$main];
+            }
+
+            $grouped[$tmcId] = [
+                'main' => $main,
+                'repairs' => $repairs,
+            ];
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Списанные ТМЦ для мини-окна на главной
+     */
+    public function getWrittenOffSummary(int $limit = 50): array
+    {
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $sql = "
+            SELECT TOP {$limit}
+                ii.ID_TMC,
+                ii.NameTMC,
+                ii.SerialNumber,
+                l.NameLocation,
+                l.FormsJointStockCompanies AS LocationLegalEntity,
+                b.NameBrand
+            FROM InventoryItem ii
+            LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+            LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+            WHERE ii.Status = " . StatusItem::WrittenOff . "
+            ORDER BY ii.ID_TMC DESC
+        ";
+        $rows = $inventoryItemRepository->getAll_array($sql) ?? [];
+        $items = [];
+        foreach ($rows as $row) {
+            $items[] = [
+                'id' => (int) ($row['ID_TMC'] ?? 0),
+                'name' => (string) ($row['NameTMC'] ?? ''),
+                'serial' => (string) ($row['SerialNumber'] ?? ''),
+                'location' => (string) ($row['NameLocation'] ?? ''),
+                'legal' => trim((string) ($row['LocationLegalEntity'] ?? '')),
+                'brand' => (string) ($row['NameBrand'] ?? ''),
+            ];
+        }
+        return $items;
+    }
+>>>>>>> feature/local-updates-2026-08
 }

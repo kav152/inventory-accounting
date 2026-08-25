@@ -1,12 +1,21 @@
 import { ServiceStatus } from "../../src/constants/statusService.js";
 import { TypeMessage } from "../../src/constants/typeMessage.js";
 import { Action } from "../../src/constants/actions.js";
+<<<<<<< HEAD
 import { showNotification } from "./setting.js";
 import { executeEntityAction, getCollectFormData, } from "../templates/entityActionTemplate.js";
 
 
 (function () {
   // Отправить в сервис
+=======
+import { StatusItem } from "../../src/constants/statusItem.js";
+import { showNotification } from "./setting.js";
+import { executeEntityAction } from "../templates/entityActionTemplate.js";
+import { updateInventoryStatus } from "../updateFunctions.js";
+
+(function () {
+>>>>>>> feature/local-updates-2026-08
   function sendToService(NameClassContainer, serviceStatus) {
     const selectedRows = document.querySelectorAll(
       `.${NameClassContainer}.selected`,
@@ -19,6 +28,7 @@ import { executeEntityAction, getCollectFormData, } from "../templates/entityAct
       return;
     }
 
+<<<<<<< HEAD
     let nameColumn = "";
     let nameBt = "";
     let title = "";
@@ -38,23 +48,37 @@ import { executeEntityAction, getCollectFormData, } from "../templates/entityAct
         nameColumn = "Коментарии ";
         nameBt = "Вернуть";
         title = "Вернуть из сервиса";
+=======
+    let validStatuses = [];
+    switch (serviceStatus) {
+      case ServiceStatus.sendService:
+        validStatuses = [StatusItem.Released, StatusItem.AtWorkTMC];
+        break;
+      case ServiceStatus.returnService:
+>>>>>>> feature/local-updates-2026-08
         validStatuses = [StatusItem.Repair];
         break;
     }
 
+<<<<<<< HEAD
     //console.log(selectedRows);
     // serviceModal
     // sendToService
+=======
+>>>>>>> feature/local-updates-2026-08
     openModalAction("serviceModal", selectedRows, validStatuses);
   }
 
   window.sendToService = sendToService;
 })();
 
+<<<<<<< HEAD
 /**
  * Обработчик serviceModal
  * @param {*} modalElement
  */
+=======
+>>>>>>> feature/local-updates-2026-08
 export function initSendToServiceModalHandlers(modalElement) {
   document
     .getElementById("btnSubmitService")
@@ -62,6 +86,7 @@ export function initSendToServiceModalHandlers(modalElement) {
       const inputs = document.querySelectorAll(
         "#selectedServiceItemsContainer .repair-reason-input",
       );
+<<<<<<< HEAD
       // .repair-reason-input
       let allFilled = true;
       const items = [];
@@ -115,10 +140,39 @@ export function initSendToServiceModalHandlers(modalElement) {
         const result = await executeEntityAction({
           action: Action.UPDATE,
           formData: requestData,
+=======
+      let allFilled = true;
+      const items = [];
+      const statusService = document
+        .getElementById("serviceModal")
+        .getAttribute("data-status");
+
+      inputs.forEach((textarea) => {
+        const reason = textarea.value.trim();
+        items.push({ id: textarea.dataset.id, reason });
+        if (ServiceStatus.sendService == statusService && !reason) {
+          allFilled = false;
+        }
+      });
+
+      if (!allFilled && ServiceStatus.sendService == statusService) {
+        showNotification(
+          TypeMessage.notification,
+          "Заполните причину ремонта для выбранных ТМЦ",
+        );
+        return;
+      }
+
+      try {
+        const result = await executeEntityAction({
+          action: Action.UPDATE,
+          formData: { items, statusService },
+>>>>>>> feature/local-updates-2026-08
           url: "/src/BusinessLogic/Actions/processCUDSendToService.php",
           successMessage: "ТМЦ успешно переданы",
         });
 
+<<<<<<< HEAD
         if (result.resultEntity) {
 
           if(!result.resultEntity.success) {
@@ -155,10 +209,62 @@ export function initSendToServiceModalHandlers(modalElement) {
       } catch (error) {
         console.error(error);
         showNotification(TypeMessage.error, error);
+=======
+        const ok =
+          !!result?.resultEntity &&
+          (result.resultEntity.success === undefined ||
+            result.resultEntity.success === true);
+
+        if (!ok) {
+          const messages = result?.resultEntity?.messages;
+          showNotification(
+            TypeMessage.error,
+            Array.isArray(messages)
+              ? messages.join("; ")
+              : messages || "Ошибка при отправке в сервис",
+          );
+          return;
+        }
+
+        const newStatus =
+          ServiceStatus.sendService == statusService
+            ? StatusItem.ConfirmRepairTMC
+            : ServiceStatus.returnService == statusService
+              ? StatusItem.Released
+              : -1;
+
+        updateInventoryStatus(window.selectedTMCIds, newStatus);
+        hideRowsInAtWorkModal(items);
+
+        if (statusService == ServiceStatus.sendService) {
+          const bump = {
+            confirmRepairCount: items.length,
+            brigadesToItemsCount: -items.length,
+          };
+          if (typeof window.updateCounters === "function") {
+            window.updateCounters(bump);
+          }
+        }
+
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        modalElement.addEventListener(
+          "hidden.bs.modal",
+          function onHidden() {
+            restoreAtWorkModal();
+            modalElement.removeEventListener("hidden.bs.modal", onHidden);
+          },
+          { once: true },
+        );
+        modal?.hide();
+      } catch (error) {
+        console.error(error);
+        showNotification(TypeMessage.error, error.message || String(error));
+>>>>>>> feature/local-updates-2026-08
       }
     });
 }
 
+<<<<<<< HEAD
 /**
  * Скрывает строки в модальном окне atWorkModal по ID
  * @param {Array} items - массив объектов с id и reason
@@ -174,10 +280,19 @@ function hideRowsInAtWorkModal(items) {
   }
 
   // Скрываем строки в atWorkModal
+=======
+function hideRowsInAtWorkModal(items) {
+  const atWorkModal = document.getElementById("atWorkModal");
+  if (!atWorkModal) return;
+  const modalInstance = bootstrap.Modal.getInstance(atWorkModal);
+  if (!modalInstance || !modalInstance._isShown) return;
+
+>>>>>>> feature/local-updates-2026-08
   items.forEach((item) => {
     const row = atWorkModal.querySelector(
       `.row-container1[data-id="${item.id}"]`,
     );
+<<<<<<< HEAD
     if (row) {
       row.style.display = "none";
     }
@@ -205,6 +320,20 @@ function restoreAtWorkModal() {
       setTimeout(() => {
         modalInstance.show();
       }, 300);
+=======
+    if (row) row.style.display = "none";
+  });
+}
+
+function restoreAtWorkModal() {
+  const atWorkModal = document.getElementById("atWorkModal");
+  if (atWorkModal && atWorkModal.classList.contains("show")) return;
+
+  if (window.previousModal === "atWorkModal") {
+    const modalInstance = bootstrap.Modal.getInstance(atWorkModal);
+    if (modalInstance) {
+      setTimeout(() => modalInstance.show(), 300);
+>>>>>>> feature/local-updates-2026-08
     }
     window.previousModal = null;
   }

@@ -24,7 +24,17 @@ class Database
 
                 break;
             case 'sqlsrv':
+<<<<<<< HEAD
                 $dsn = "sqlsrv:Server={$this->config['host']};Database={$this->config['dbname']}";
+=======
+                $host = $this->config['host'];
+                $dbname = $this->config['dbname'];
+                $dsn = "sqlsrv:Server=tcp:{$host},1433;Database={$dbname};LoginTimeout=5;TrustServerCertificate=yes";
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+                ];
+>>>>>>> feature/local-updates-2026-08
                 break;
             default:
                 throw new InvalidArgumentException("Неподдерживаемый драйвер: $driver");

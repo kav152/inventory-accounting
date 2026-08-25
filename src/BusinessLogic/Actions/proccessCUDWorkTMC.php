@@ -32,6 +32,7 @@ class proccessCUDWorkTMC extends CUDHandler
     protected function update($id, $data, ?int $patofID = null)
     {
         $tmcIds = json_decode($this->currentData['tmc_ids'], true);
+<<<<<<< HEAD
         $itemController = new ItemController();
 
         $brigadeId = trim($this->currentData['brigade_id'], '"'); // Убираем кавычки
@@ -39,6 +40,32 @@ class proccessCUDWorkTMC extends CUDHandler
 
         foreach ($tmcIds as $tmcId) {
             $result = $itemController->assignToBrigade($tmcId, $brigadeId);
+=======
+        if (!is_array($tmcIds) || count($tmcIds) === 0) {
+            throw new Exception('Не выбраны ТМЦ для передачи в работу');
+        }
+
+        $itemController = new ItemController();
+        $brigadeId = trim((string) ($this->currentData['brigade_id'] ?? ''), '"');
+        $brigadeId = (int) $brigadeId;
+        if ($brigadeId <= 0) {
+            throw new Exception('Не выбрана бригада');
+        }
+
+        $failed = [];
+        foreach ($tmcIds as $tmcId) {
+            $result = $itemController->assignToBrigade((int) $tmcId, $brigadeId);
+            if (!$result) {
+                $failed[] = (int) $tmcId;
+            }
+        }
+
+        if (count($failed) === count($tmcIds)) {
+            throw new Exception('Не удалось передать ТМЦ в работу: ' . implode(', ', $failed));
+        }
+        if ($failed) {
+            throw new Exception('Часть ТМЦ не передана в работу: ' . implode(', ', $failed));
+>>>>>>> feature/local-updates-2026-08
         }
     }
 

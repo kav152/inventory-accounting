@@ -8,13 +8,20 @@ class EditWriteOffModalLoader extends ModalLoader
     public function load($params = [])
     {
         $idTmc = $params['id'] ?? null;
+<<<<<<< HEAD
         
         if (!$idTmc) {
 
+=======
+        $idRepair = isset($params['repairId']) ? (int) $params['repairId'] : null;
+
+        if (!$idTmc) {
+>>>>>>> feature/local-updates-2026-08
             return '<div class="alert alert-danger">Не указан ID ТМЦ</div>';
         }
         DatabaseFactory::setConfig();
         $repairController = new ItemRepairController();
+<<<<<<< HEAD
         $itemData = $repairController->getItemWithRepairs($idTmc);
         //print_r($itemData);
         
@@ -26,3 +33,18 @@ class EditWriteOffModalLoader extends ModalLoader
         return ob_get_clean();
     }
 }
+=======
+        $itemData = $repairController->getItemWithRepairs((int) $idTmc, $idRepair ?: null);
+
+        if (!$itemData || count($itemData) === 0) {
+            return '<div class="alert alert-warning">Запись ремонта не найдена</div>';
+        }
+
+        $singleRepairMode = $idRepair > 0;
+
+        ob_start();
+        include __DIR__ . '/../Modal/edit_write_off_modal.php';
+        return ob_get_clean();
+    }
+}
+>>>>>>> feature/local-updates-2026-08

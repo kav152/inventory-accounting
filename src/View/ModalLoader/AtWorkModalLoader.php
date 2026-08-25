@@ -14,6 +14,10 @@ class AtWorkModalLoader extends ModalLoader
             $brigadesToItemsCount = count($brigadesToItems);
             $atWorkGroups = $controller->getAtWorkItemsGrouped($_SESSION["Status"], $_SESSION["IDUser"]);
         }
+<<<<<<< HEAD
+=======
+        $locationRepairs = $controller->getLocations(true);
+>>>>>>> feature/local-updates-2026-08
 
         //if ($brigadesToItemsCount > 0) {
         ob_start();

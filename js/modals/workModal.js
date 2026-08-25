@@ -101,11 +101,36 @@ export function initWorkModalHandlers(modalElement) {
         successMessage: "ТМЦ успешно переданы в работу",
       });
 
+<<<<<<< HEAD
       updateInventoryStatus(window.selectedTMCIds, StatusItem.AtWorkTMC);
       updateCounters({
         brigadesToItemsCount: window.selectedTMCIds.length,
       });
       modal.hide();
+=======
+      const ids = window.selectedTMCIds || [];
+      let confirmDelta = 0;
+      ids.forEach((id) => {
+        const row = document.querySelector(
+          `#inventoryTable tr.row-container[data-id="${id}"]`,
+        );
+        const prev = parseInt(row?.getAttribute("data-status"), 10);
+        if (prev === StatusItem.ConfirmItem) confirmDelta -= 1;
+      });
+
+      updateInventoryStatus(ids, StatusItem.AtWorkTMC);
+      const counterPatch = { brigadesToItemsCount: ids.length };
+      if (confirmDelta !== 0) counterPatch.confirmCount = confirmDelta;
+      if (typeof window.updateCounters === "function") {
+        window.updateCounters(counterPatch);
+      } else if (typeof updateCounters === "function") {
+        updateCounters(counterPatch);
+      }
+      modal.hide();
+      if (typeof window.removingSelection === "function") {
+        window.removingSelection();
+      }
+>>>>>>> feature/local-updates-2026-08
     } catch (error) {
       console.error("Error:", error);
       showNotification(
@@ -258,8 +283,15 @@ async function handleCreateBrigadeFormSubmit(e) {
 // Обработчик открытия модального окна "В работу ТМЦ"
 (function () {
   function openWorkModal() {
+<<<<<<< HEAD
     const selectedRows = document.querySelectorAll(
       "#inventoryTable tbody tr.row-container.selected",
+=======
+    const selectedRows = Array.from(
+      document.querySelectorAll(
+        "#inventoryTable tbody tr.row-container.selected",
+      ),
+>>>>>>> feature/local-updates-2026-08
     );
 
     if (selectedRows.length === 0) {
@@ -269,10 +301,38 @@ async function handleCreateBrigadeFormSubmit(e) {
       );
       return;
     }
+<<<<<<< HEAD
     let validStatuses = [StatusItem.Released];
     openModalAction("workModal", selectedRows, validStatuses);
     window.removingSelection();
   }
+=======
+
+    // В работу: уже на объекте («Выдано») или после передачи («Подтвердить ТМЦ»)
+    const validStatuses = [StatusItem.Released, StatusItem.ConfirmItem];
+    const eligibleRows = selectedRows.filter((row) => {
+      const status = parseInt(row.getAttribute("data-status"), 10);
+      return validStatuses.includes(status);
+    });
+
+    if (eligibleRows.length === 0) {
+      const sample = selectedRows[0];
+      const status = parseInt(sample?.getAttribute("data-status"), 10);
+      const statusName =
+        (window.StatusItem && StatusItem.getDescription(status)) ||
+        StatusItem.getDescription(status) ||
+        String(status);
+      showNotification(
+        TypeMessage.notification,
+        `В работу можно передать ТМЦ со статусом «Выдано на объект» или «Подтвердить ТМЦ». Сейчас: «${statusName}»`,
+      );
+      return;
+    }
+
+    openModalAction("workModal", eligibleRows, validStatuses);
+  }
+
+>>>>>>> feature/local-updates-2026-08
   function openAtWorkModalModal() {
     openEntityModal(Action.CREATE, "atWorkModal");
   }

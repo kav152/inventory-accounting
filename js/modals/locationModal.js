@@ -3,7 +3,10 @@ import {
   getCollectFormData,
 } from "../templates/entityActionTemplate.js";
 import { Action } from "../../src/constants/actions.js";
+<<<<<<< HEAD
 //import { openModalAction } from "./modalLoader.js";
+=======
+>>>>>>> feature/local-updates-2026-08
 import { executeActionForCUD } from "../templates/cudRowsInTable.js";
 
 (function () {})();
@@ -13,19 +16,28 @@ import { executeActionForCUD } from "../templates/cudRowsInTable.js";
  * @param {HTMLElement} modalElement
  */
 export function initLocationModalHandlers(modalElement) {
+<<<<<<< HEAD
   // 1. Инициализация обработчиков формы
+=======
+>>>>>>> feature/local-updates-2026-08
   modalElement.addEventListener("submit", async function (e) {
     e.preventDefault();
     await handleLocationFormSubmit(modalElement);
   });
 
+<<<<<<< HEAD
   // 2. Инициализация динамических элементов (если нужны)
   initDynamicElements(modalElement);
   // 3. Обработка изменения состояния чекбокса
+=======
+  initDynamicElements(modalElement);
+
+>>>>>>> feature/local-updates-2026-08
   const checkbox = modalElement.querySelector("#isMainWarehouseCheckbox");
   if (checkbox) {
     checkbox.addEventListener("change", function () {
       const hiddenField = modalElement.querySelector("#isMainWarehouse");
+<<<<<<< HEAD
       hiddenField.value = this.checked ? "1" : "0";
     });
   }
@@ -64,6 +76,46 @@ async function handleLocationFormSubmit(modalElement) {
 
   //console.log(isMainWarehouseCheckbox);
 
+=======
+      if (hiddenField) {
+        hiddenField.value = this.checked ? "1" : "0";
+      }
+    });
+  }
+
+  const citySelect = modalElement.querySelector("#citySelect");
+  const cityAddressPreview = modalElement.querySelector("#CityAddressPreview");
+  if (citySelect && cityAddressPreview) {
+    const syncCityAddress = () => {
+      const option = citySelect.options[citySelect.selectedIndex];
+      cityAddressPreview.value = option?.dataset?.address || "";
+    };
+    citySelect.addEventListener("change", syncCityAddress);
+    syncCityAddress();
+  }
+}
+
+function initDynamicElements(modalElement) {
+  const modalTitle = modalElement.querySelector("#locationModalTitle");
+  if (!modalTitle) return;
+  modalTitle.textContent =
+    window.statusEntity === Action.UPDATE
+      ? "Редактировать локацию"
+      : "Добавить локацию";
+}
+
+async function handleLocationFormSubmit(modalElement) {
+  const form = modalElement.querySelector("#locationForm");
+
+  const checkbox = modalElement.querySelector("#isMainWarehouseCheckbox");
+  const hiddenField = modalElement.querySelector("#isMainWarehouse");
+  if (checkbox && hiddenField) {
+    hiddenField.value = checkbox.checked ? "1" : "0";
+  }
+
+  const locationData = getCollectFormData(form, window.statusEntity);
+
+>>>>>>> feature/local-updates-2026-08
   try {
     const result = await executeEntityAction({
       action: window.statusEntity,
@@ -85,7 +137,10 @@ async function handleLocationFormSubmit(modalElement) {
 
     needFullReload = true;
     hideGlobalLoader();
+<<<<<<< HEAD
     // Закрываем модальное окно
+=======
+>>>>>>> feature/local-updates-2026-08
     const modalInstance = bootstrap.Modal.getInstance(modalElement);
     modalInstance.hide();
   } catch (error) {
