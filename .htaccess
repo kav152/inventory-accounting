@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Разрешаем доступ к страницам и API в src/View (приложение использует прямые URL)
+# RewriteRule ^src/View/.*$ - [F,L]
+
+# Все остальные запросы направлять на index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteRule ^ index.php [QSA,L]
+#php_value display_errors 1
