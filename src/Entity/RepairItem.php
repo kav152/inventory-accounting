@@ -25,7 +25,8 @@ class RepairItem extends BaseEntity
             $this->RepairCost = floatval($data['RepairCost'] ?? 0.0);
             $this->InvoiceNumber = $data['InvoiceNumber'] ?? '';
 
-            if (is_array($data['UPD'])) {
+            $upd = $data['UPD'] ?? null;
+            if (is_array($upd)) {
                 $this->UPD = implode($data['UPD']) ?? '';
             } else
                 $this->UPD = $data['UPD'] ?? '';
