@@ -66,6 +66,15 @@ export class TableFilter {
         return;
       }
 
+      // Оборачиваем текст заголовка для корректного flex-layout и кнопки фильтра
+      if (!header.querySelector(".th-label")) {
+        const label = document.createElement("span");
+        label.className = "th-label";
+        label.textContent = header.textContent.trim();
+        header.textContent = "";
+        header.appendChild(label);
+      }
+
       // Создаем кнопку фильтра
       const filterBtn = this.createFilterButton(columnIndex);
       header.appendChild(filterBtn);
@@ -554,7 +563,7 @@ export class FilterFactory {
       tableId: "writeOffTable",
       containerId: "table-section",
       rowSelector: "tbody tr.main-row",
-      excludeColumns: [0, 2, 3, 4, 5, 7, 8, 9], // Фильтруем только 1 и 6 столбцы
+      excludeColumns: [8, 9, 10], // write_off: счёт, сумма, действия
       onFilterApplied: (filters, visibleCount) => {
         // Обновляем общую сумму
         let total = 0;

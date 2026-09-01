@@ -181,7 +181,7 @@ body.main-body {
   border: 1px solid var(--line-clr);
   border-radius: 1em;
   margin-bottom: 10px;
-  padding: 2%;
+  padding: 0.5%;
 }
 
 #cont1 {
@@ -266,29 +266,45 @@ body.main-body {
 }
 
 #inventoryTable th {
-  padding: 10px;
+  padding: 8px 6px;
   text-align: left;
   background-color: #f1f5f9;
   font-weight: 600;
   color: #334155;
   position: relative;
-  font-size: 1.15em;
-  /* Шрифт заголовка чуть больше */
+  font-size: 0.95em;
   border-radius: 8px;
-  /* Скругленные углы */
+  overflow: visible;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/*#inventoryTable td {
+  padding: 8px 6px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
+  min-width: 0;
+}*/
 #inventoryTable td {
-  padding: 10px;
+  padding: 8px 6px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 1.1em;
-  /* Уменьшенный размер шрифта */
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.95em;
+  /* разрешаем перенос */
+  white-space: normal;          /* или pre-wrap, если нужны пробелы */
+  word-wrap: break-word;        /* перенос длинных слов */
+  overflow-wrap: break-word;    /* современный аналог */
+  overflow: visible;            /* чтобы текст не обрезался */
+  text-overflow: clip;          /* убираем многоточие */
+  min-width: 0;
 }
 
 #inventoryTable tbody.scroll {
@@ -308,13 +324,19 @@ body.main-body {
   margin-bottom: 4px;
   width: 100%;
   box-sizing: border-box;
-  grid-template-columns: 5% 20% 11% 8% 12% 12% 14% 14%;
-  gap: 0.1em;
+  grid-template-columns:
+    minmax(42px, 0.45fr)
+    minmax(110px, 1.6fr)
+    minmax(88px, 1fr)
+    minmax(72px, 0.8fr)
+    minmax(88px, 1fr)
+    minmax(96px, 1fr)
+    minmax(100px, 1.1fr)
+    minmax(100px, 1.1fr);
+  gap: 0.25em;
   border: 1px solid var(--line-clr);
   cursor: pointer;
-  /* Добавляем курсор-указатель */
   user-select: none;
-  /* Запрещаем выделение текста */
 }
 
 .rowGrid1.legal-cell {
@@ -326,6 +348,17 @@ body.main-body {
 .rowGrid1.legal-cell.is-empty {
   color: #94a3b8;
   font-weight: 500;
+}
+
+#inventoryTable th .th-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#inventoryTable th .filter-btn {
+  flex: 0 0 auto;
 }
 
 .row-container:hover {

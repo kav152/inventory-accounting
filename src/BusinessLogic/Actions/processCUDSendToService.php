@@ -43,10 +43,19 @@ class processCUDSendToService extends CUDHandler
 
         $itemController = new ItemController();
         foreach ($items as $item) {
-            $result = $itemController->sendToService($item['id'], (int)$statusService, $item['reason']);
-            if (!$result) {
+            try {
+                $result = $itemController->sendToService(
+                    (int) $item['id'],
+                    (int) $statusService,
+                    (string) ($item['reason'] ?? '')
+                );
+                if (!$result) {
+                    $this->success = false;
+                    $this->messages[] = "Ошибка при отправке ТМЦ в сервис: {$item['id']}";
+                }
+            } catch (Exception $e) {
                 $this->success = false;
-                $this->messages[] = "Ошибка при отправке ТМЦ в сервис: {$item['id']}";
+                $this->messages[] = "ТМЦ {$item['id']}: " . $e->getMessage();
             }
         }
     }

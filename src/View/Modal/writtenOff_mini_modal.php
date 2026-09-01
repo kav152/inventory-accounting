@@ -41,6 +41,7 @@
 </div>
 
 <script>
+// мини-окно «все списанные» на главной
 (function () {
     function escapeHtml(value) {
         return String(value)
@@ -79,9 +80,18 @@
         modal.show();
 
         try {
-            const response = await fetch('/src/BusinessLogic/ActionsTMC/processGetWrittenOffItems.php');
-            const data = await response.json();
-            if (!data.success) throw new Error(data.message || 'Ошибка загрузки');
+            const response = await fetch('/src/BusinessLogic/ActionsTMC/processGetWrittenOffItems.php', {
+                credentials: 'same-origin',
+            });
+            const raw = await response.text();
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (parseError) {
+                // php иногда отдавал warning перед json — ловим здесь
+                throw new Error('Сервер вернул некорректный ответ. Обновите страницу и попробуйте снова.');
+            }
+            if (!response.ok || !data.success) throw new Error(data.message || 'Ошибка загрузки');
 
             const items = data.items || [];
             countEl.textContent = items.length + ' записей';

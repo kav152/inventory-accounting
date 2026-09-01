@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 date_default_timezone_set('Europe/Moscow');
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -157,7 +160,10 @@ class processCUDInventoryItem extends CUDHandler
 
         $location->FormsJointStockCompanies = $legalEntity;
         $locationRepo = new LocationRepository(DatabaseFactory::create());
-        $locationRepo->save($location);
+        $saved = $locationRepo->save($location);
+        if ($saved === null) {
+            throw new Exception('Не удалось сохранить юр. лицо для локации');
+        }
     }
 
     private function getMainWarehouse(): ?Location

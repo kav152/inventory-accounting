@@ -233,7 +233,7 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
 
                             <?php
                             $currentLocationId = (int) ($inventoryItem->IDLocation ?? 0);
-                            $currentLegal = trim((string) ($inventoryItem->Location->FormsJointStockCompanies ?? ''));
+                            $currentLegal = trim((string) ($inventoryItem->Location?->FormsJointStockCompanies ?? ''));
                             $locationsList = $locations ?? [];
                             ?>
                             <div class="mb-3">
@@ -249,7 +249,6 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                                             data-legal="<?= htmlspecialchars($locLegal, ENT_QUOTES) ?>"
                                             <?= $currentLocationId === $locId ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($loc->NameLocation ?? '') ?>
-                                            <?= $locLegal !== '' ? ' — ' . htmlspecialchars($locLegal) : '' ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

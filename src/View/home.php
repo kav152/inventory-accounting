@@ -292,11 +292,12 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                             </div>
                         <?php endif; ?>
                         <?php if ($isAdmin): ?>
-                            <div class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
-                                data-bs-toggle="modal" data-bs-target="#confirmRepairModal"
-                                style="<?= $confirmRepairCount > 0 ? '' : 'display:none' ?>">
+                            <?php // тот же архив, filter=pending ?>
+                            <a href="/src/View/write_off.php?filter=pending"
+                                class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
+                                style="<?= $confirmRepairCount > 0 ? '' : 'display:none'; ?> text-decoration:none;">
                                 <?= $confirmRepairCount ?>
-                            </div>
+                            </a>
                         <?php endif; ?>
                         <?php if ($brigadesToItemsCount > 0): ?>
                             <div class="notification-badge notification-atwork-badge header-badge" id="atWorkBadge"
@@ -310,22 +311,26 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             </div>
             <div class="notifications-container">
                 <?php if ($isAdmin): ?>
-                    <div class="notification-alert <?= $confirmCount > 0 ? '' : 'is-empty' ?>" id="confirmNotification"
+                    <?php if ($confirmCount > 0): ?>
+                    <div class="notification-alert" id="confirmNotification"
                         onclick="openConfirmModal()">
-                        Проверить УПД / принять <span id="confirmCountText"><?= $confirmCount ?></span> ТМЦ
+                        Принять <span id="confirmCountText"><?= $confirmCount ?></span> ТМЦ
                     </div>
+                    <?php endif; ?>
                 <?php elseif ($confirmCount > 0): ?>
                     <div class="notification-alert" id="confirmNotification" onclick="openConfirmModal()">
-                        Проверить УПД / принять <?= $confirmCount ?> ТМЦ
+                        Принять <?= $confirmCount ?> ТМЦ
                     </div>
                 <?php endif; ?>
 
-                <?php if ($isAdmin): ?>
-                    <div class="notification-alert notification-repair-alert <?= $confirmRepairCount > 0 ? '' : 'is-empty' ?>"
+                <?php if ($isAdmin && $confirmRepairCount > 0): ?>
+                    <?php // ведём в архив, не в отдельную модалку ?>
+                    <a class="notification-alert notification-repair-alert"
                         id="confirmRepairNotification"
-                        onclick="openConfirmRepairModal()">
-                        Подтвердить ремонт <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
-                    </div>
+                        href="/src/View/write_off.php?filter=pending"
+                        style="text-decoration:none; color:#fff; display:block; text-align:center;">
+                        Ремонты без счёта <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
+                    </a>
                     <a class="notification-alert notification-writeoff-alert" id="writeOffNotification"
                         href="#"
                         onclick="event.preventDefault(); openWrittenOffMiniModal();"
@@ -524,7 +529,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                         <input type="search" id="inventorySearchInput" placeholder="Поиск: локация, юр. лицо, наименование…"
                             autocomplete="off">
                     </label>
-                    <span class="inventory-search-hint">Фильтры в шапке — по объекту и юр. лицу</span>
+                    <span class="inventory-search-hint">Фильтры в шапке таблицы — по всем столбцам, в т.ч. серийный номер и бренд</span>
                 </div>
                 <table id="inventoryTable">
                     <thead>

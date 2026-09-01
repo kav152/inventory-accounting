@@ -29,8 +29,32 @@ $locations = [];
 
 $startTime = microtime(true);
 
-$onlyWrittenOff = (($_GET['filter'] ?? '') === 'written-off');
+$pageFilter = (string) ($_GET['filter'] ?? '');
+$onlyWrittenOff = ($pageFilter === 'written-off');
+// pending / verified — вкладки архива на странице списания
+$archiveFilter = in_array($pageFilter, ['pending', 'verified'], true) ? $pageFilter : '';
 require_once __DIR__ . '/../BusinessLogic/StatusItem.php';
+
+// счёт считаем заполненным, если не пустой и не прочерк/нули
+function repairHasInvoice($repair): bool
+{
+    $invoice = trim((string) ($repair->InvoiceNumber ?? ''));
+    return $invoice !== '' && $invoice !== '-' && !preg_match('/^0+$/', $invoice);
+}
+
+// по всем ремонтам строки — иначе «ожидает счёт»
+function repairsAreVerified(array $repairs): bool
+{
+    if ($repairs === []) {
+        return false;
+    }
+    foreach ($repairs as $repair) {
+        if (!repairHasInvoice($repair)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 if ($onlyWrittenOff) {
     $groupedItems = $repairContainer->getWrittenOffGroupedItems();
@@ -87,6 +111,25 @@ if (!$onlyWrittenOff) {
     }
 }
 
+$pendingCount = 0;
+$verifiedCount = 0;
+// счётчики для шапки — считаем до фильтра вкладок
+foreach ($groupedItems as $item) {
+    if (repairsAreVerified($item['repairs'])) {
+        $verifiedCount++;
+    } else {
+        $pendingCount++;
+    }
+}
+
+// ?filter=pending|verified
+if ($archiveFilter !== '' && !$onlyWrittenOff) {
+    $groupedItems = array_filter($groupedItems, static function ($item) use ($archiveFilter) {
+        $verified = repairsAreVerified($item['repairs']);
+        return $archiveFilter === 'verified' ? $verified : !$verified;
+    });
+}
+
 // Вычисляем общую сумму ремонта
 $totalRepairCost = 0;
 foreach ($groupedItems as $item) {
@@ -107,7 +150,7 @@ error_log("Время группировки данных по ID_TMC для о�
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Списание/затраты на ремонт</title>
+    <title>Архив ремонтов / списание</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -150,7 +193,7 @@ error_log("Время группировки данных по ID_TMC для о�
             <div class="brand-mark"><i class="bi bi-wrench-adjustable"></i></div>
             <div class="brand-text">
                 <strong>ТМЦ</strong>
-                <span>Списания</span>
+                <span>Архив ремонтов</span>
             </div>
         </div>
         <div class="sidebar-label">Действия</div>
@@ -168,12 +211,12 @@ error_log("Время группировки данных по ID_TMC для о�
     <div class="main-content">
         <header class="page-hero">
             <div class="hero-copy">
-                <p class="hero-kicker">Учёт затрат</p>
+                <p class="hero-kicker">Архив ремонтов</p>
                 <h1 class="page-title"><?= $onlyWrittenOff ? 'Все списанные' : 'Списание / ремонт' ?></h1>
                 <p class="page-subtitle">
                     <?= $onlyWrittenOff
-                        ? 'Только ТМЦ со статусом «Списано» — счета, УПД и история'
-                        : 'Счета, УПД и история ремонтов по каждой единице ТМЦ' ?>
+                        ? 'Только ТМЦ со статусом «Списано» — счета и история ремонтов'
+                        : 'Кладовщик отправляет ТМЦ в сервис — запись появляется здесь. Администратор указывает № счёта, после сохранения строка получает статус «Проверено».' ?>
                 </p>
             </div>
             <div class="hero-stats">
@@ -181,6 +224,16 @@ error_log("Время группировки данных по ID_TMC для о�
                     <span class="stat-label">Записей</span>
                     <strong class="stat-value"><?= count($groupedItems) ?></strong>
                 </div>
+                <?php if (!$onlyWrittenOff): ?>
+                <div class="stat-card">
+                    <span class="stat-label">Ожидают счёт</span>
+                    <strong class="stat-value stat-pending"><?= $pendingCount ?></strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Проверено</span>
+                    <strong class="stat-value stat-verified"><?= $verifiedCount ?></strong>
+                </div>
+                <?php endif; ?>
                 <div class="stat-card stat-card-accent">
                     <span class="stat-label">Сумма ремонта</span>
                     <strong class="stat-value" id="hero-total-sum"><?= number_format($totalRepairCost, 2, ',', ' ') ?> ₽</strong>
@@ -200,6 +253,14 @@ error_log("Время группировки данных по ID_TMC для о�
                         placeholder="Поиск: id, наименование, серийный, бренд, локация…"
                         autocomplete="off">
                 </div>
+                <?php if (!$onlyWrittenOff): ?>
+                <?php // быстрый отбор для админа ?>
+                <div class="archive-tabs">
+                    <a href="/src/View/write_off.php" class="archive-tab<?= $archiveFilter === '' ? ' active' : '' ?>">Все</a>
+                    <a href="/src/View/write_off.php?filter=pending" class="archive-tab<?= $archiveFilter === 'pending' ? ' active' : '' ?>">Ожидают счёт</a>
+                    <a href="/src/View/write_off.php?filter=verified" class="archive-tab<?= $archiveFilter === 'verified' ? ' active' : '' ?>">Проверено</a>
+                </div>
+                <?php endif; ?>
                 <div class="toolbar-hint">
                     <?php if ($onlyWrittenOff): ?>
                         <a href="/src/View/write_off.php" style="color:inherit;text-decoration:none;">← Все записи</a>
@@ -218,9 +279,9 @@ error_log("Время группировки данных по ID_TMC для о�
                             <th>Серийный номер</th>
                             <th>Ответственный</th>
                             <th>Статус</th>
+                            <th>Проверка</th>
                             <th>Локация</th>
                             <th>№ счета</th>
-                            <th>№ УПД</th>
                             <th>Сумма ремонта</th>
                             <th>Действия</th>
                         </tr>
@@ -231,22 +292,17 @@ error_log("Время группировки данных по ID_TMC для о�
                             $repairs = $itemData['repairs'];
                             $totalCost = 0;
                             $invoices = [];
-                            $updList = [];
                             foreach ($repairs as $repair) {
                                 $totalCost += $repair->RepairCost;
-                                $invoice = trim((string) ($repair->InvoiceNumber ?? ''));
-                                if ($invoice !== '' && $invoice !== '-' && !preg_match('/^0+$/', $invoice)) {
-                                    $invoices[] = $invoice;
-                                }
-                                $upd = trim((string) ($repair->UPD ?? ''));
-                                if ($upd !== '' && $upd !== '-') {
-                                    $updList[] = $upd;
+                                if (repairHasInvoice($repair)) {
+                                    $invoices[] = trim((string) $repair->InvoiceNumber);
                                 }
                             }
                             $invoices = array_values(array_unique($invoices));
-                            $updList = array_values(array_unique($updList));
+                            $isVerified = repairsAreVerified($repairs);
                             $statusValue = (int) $mainItem->InventoryItem->Status;
                             $statusText = (new StatusItem())->getDescription($statusValue);
+                            $verificationText = $isVerified ? 'проверено' : 'ожидает счёт';
                             $statusClass = $statusValue === StatusItem::WrittenOff
                                 ? 'status-written-off'
                                 : ($statusValue === StatusItem::Repair ? 'status-repair' : 'status-default');
@@ -258,10 +314,12 @@ error_log("Время группировки данных по ID_TMC для о�
                                 (string) $brand,
                                 (string) ($mainItem->InventoryItem->Location->NameLocation ?? ''),
                                 (string) ($statusText ?? ''),
+                                (string) $verificationText,
                             ])));
                         ?>
                             <tr class="main-row" data-id="<?= $mainItem->ID_TMC ?>"
                                 data-status="<?= $statusValue ?>"
+                                data-verified="<?= $isVerified ? '1' : '0' ?>"
                                 data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?>"
                                 data-location="<?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?>"
                                 data-total-cost="<?= $totalCost ?>"
@@ -280,6 +338,13 @@ error_log("Время группировки данных по ID_TMC для о�
                                 <td>
                                     <span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($statusText) ?></span>
                                 </td>
+                                <td>
+                                    <?php if ($isVerified): ?>
+                                        <span class="status-badge status-verified"><i class="bi bi-check-circle-fill"></i> Проверено</span>
+                                    <?php else: ?>
+                                        <span class="status-badge status-pending-invoice"><i class="bi bi-hourglass-split"></i> Ожидает счёт</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?: '—' ?></td>
                                 <td class="col-doc">
                                     <?php if ($invoices): ?>
@@ -289,20 +354,6 @@ error_log("Время группировки данных по ID_TMC для о�
                                             </span>
                                             <?php if (count($invoices) > 1): ?>
                                                 <span class="doc-more">+<?= count($invoices) - 1 ?></span>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <span class="empty-cell">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="col-doc">
-                                    <?php if ($updList): ?>
-                                        <div class="doc-stack">
-                                            <span class="doc-chip doc-chip-upd" title="<?= htmlspecialchars(implode(', ', $updList)) ?>">
-                                                <?= htmlspecialchars($updList[0]) ?>
-                                            </span>
-                                            <?php if (count($updList) > 1): ?>
-                                                <span class="doc-more">+<?= count($updList) - 1 ?></span>
                                             <?php endif; ?>
                                         </div>
                                     <?php else: ?>
@@ -339,7 +390,7 @@ error_log("Время группировки данных по ID_TMC для о�
                                             <thead>
                                                 <tr>
                                                     <th>№ счета</th>
-                                                    <th>№ УПД</th>
+                                                    <th>Проверка</th>
                                                     <th>Стоимость</th>
                                                     <th>Дата отправки</th>
                                                     <th>Дата возвращения</th>
@@ -353,7 +404,13 @@ error_log("Время группировки данных по ID_TMC для о�
                                                     <tr class="repair-line" data-repair-id="<?= (int) $repair->ID_Repair ?>"
                                                         data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
                                                         <td><?= htmlspecialchars($repair->InvoiceNumber ?? '') ?: '—' ?></td>
-                                                        <td><?= htmlspecialchars($repair->UPD ?? '') ?: '—' ?></td>
+                                                        <td>
+                                                            <?php if (repairHasInvoice($repair)): ?>
+                                                                <span class="status-badge status-verified">Проверено</span>
+                                                            <?php else: ?>
+                                                                <span class="status-badge status-pending-invoice">Ожидает счёт</span>
+                                                            <?php endif; ?>
+                                                        </td>
                                                         <td><?= number_format($repair->RepairCost, 2, ',', ' ') ?> ₽</td>
                                                         <td><?= $repair->DateToService ? date('d.m.Y', strtotime($repair->DateToService)) : '—' ?></td>
                                                         <td><?= $repair->DateReturnService ? date('d.m.Y', strtotime($repair->DateReturnService)) : '—' ?></td>

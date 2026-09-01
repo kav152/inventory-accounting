@@ -116,7 +116,7 @@
 
             </div>
 
-            <div class="mt-3 d-flex justify-content-end">
+            <div class="mt-3 d-flex justify-content-end p-3">
                 <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Отмена</button>
                 <button type="submit" class="btn btn-primary" id="btnSubmitService">Передать</button>
             </div>

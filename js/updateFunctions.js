@@ -125,11 +125,11 @@ function updateStatusClasses(row, newStatus) {
         if (countTextEl) {
           countTextEl.textContent = String(newCount);
         } else {
-          notification.textContent = `Проверить УПД / принять ${newCount} ТМЦ`;
+          notification.textContent = `Принять ${newCount} ТМЦ`;
         }
 
         badge.style.display = newCount > 0 ? "block" : "none";
-        notification.style.display = "block";
+        notification.style.display = newCount > 0 ? "block" : "none";
         notification.classList.toggle("is-empty", newCount === 0);
       }
     }
@@ -150,10 +150,10 @@ function updateStatusClasses(row, newStatus) {
         if (countText) {
           countText.textContent = newCount;
         } else if (notification) {
-          notification.innerHTML = `Подтвердить ремонт <span id="confirmRepairCountText">${newCount}</span> ТМЦ`;
+          notification.innerHTML = `Ремонты без счёта <span id="confirmRepairCountText">${newCount}</span> ТМЦ`;
         }
         if (notification) {
-          notification.style.display = "block";
+          notification.style.display = newCount > 0 ? "block" : "none";
           notification.classList.toggle("is-empty", newCount === 0);
         }
       }
@@ -275,6 +275,7 @@ function updateStatusClasses(row, newStatus) {
     )}</td>
       <td class="rowGrid1">${newItem.responsible || ""}</td>
       <td class="rowGrid1">${newItem.location || ""}</td>
+      <td class="rowGrid1 legal-cell ${newItem.legal ? "" : "is-empty"}">${newItem.legal || "не указано"}</td>
     `;
 
     // Вставляем в начало таблицы (первой строкой)

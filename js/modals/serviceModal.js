@@ -25,7 +25,7 @@ import { updateInventoryStatus } from "../updateFunctions.js";
         validStatuses = [StatusItem.Released, StatusItem.AtWorkTMC];
         break;
       case ServiceStatus.returnService:
-        validStatuses = [StatusItem.Repair];
+        validStatuses = [StatusItem.Repair, StatusItem.ConfirmRepairTMC];
         break;
     }
 
@@ -90,7 +90,7 @@ export function initSendToServiceModalHandlers(modalElement) {
 
         const newStatus =
           ServiceStatus.sendService == statusService
-            ? StatusItem.ConfirmRepairTMC
+            ? StatusItem.Repair
             : ServiceStatus.returnService == statusService
               ? StatusItem.Released
               : -1;
@@ -99,12 +99,8 @@ export function initSendToServiceModalHandlers(modalElement) {
         hideRowsInAtWorkModal(items);
 
         if (statusService == ServiceStatus.sendService) {
-          const bump = {
-            confirmRepairCount: items.length,
-            brigadesToItemsCount: -items.length,
-          };
           if (typeof window.updateCounters === "function") {
-            window.updateCounters(bump);
+            window.updateCounters({ confirmRepairCount: items.length });
           }
         }
 

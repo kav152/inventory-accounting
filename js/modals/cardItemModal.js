@@ -27,6 +27,9 @@ export function initCardTMCModalHandlers(modalElement) {
 
     // 3. Обработчики каскадных селектов (Тип -> Бренд -> Модель)
     initCascadeSelectHandlers(modalElement);
+
+    // 4. Юр. лицо: подставляется из выбранной локации
+    initLegalEntityHandlers(modalElement);
 }
 
 /**
@@ -81,6 +84,8 @@ async function handleFormSubmit(modalElement) {
             "row-container",
             "id"
         );
+
+        syncLegalEntityInTable(result.resultEntity);
 
         // Закрытие модального окна
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
@@ -193,6 +198,54 @@ async function handleSelectChange(event, currentType, nextType) {
 }
 
 window.handleSelectChange = handleSelectChange;
+
+function initLegalEntityHandlers(modalElement) {
+    const locationSelect = modalElement.querySelector("#locationSelect");
+    const legalInput = modalElement.querySelector("#txtLegalEntity");
+    if (!locationSelect || !legalInput || locationSelect.dataset.legalBound) return;
+
+    locationSelect.dataset.legalBound = "1";
+    locationSelect.addEventListener("change", function () {
+        const selected = this.options[this.selectedIndex];
+        legalInput.value = selected?.getAttribute("data-legal") || "";
+    });
+}
+
+function syncLegalEntityInTable(entity) {
+    if (!entity?.id) return;
+
+    const legalEntity = (
+        entity.Location?.FormsJointStockCompanies ||
+        entity.legalEntity ||
+        ""
+    ).trim();
+
+    const row = document.querySelector(
+        `#inventoryTable tr.row-container[data-id="${entity.id}"]`,
+    );
+    if (!row) return;
+
+    row.setAttribute("data-legal", legalEntity);
+    const legalCell = row.querySelector(".legal-cell") || row.cells?.[7];
+    if (legalCell) {
+        legalCell.textContent = legalEntity || "не указано";
+        legalCell.title = legalEntity
+            ? legalEntity
+            : "Заполните юр. лицо в Админка → Локации";
+        legalCell.classList.add("legal-cell", "rowGrid1");
+        legalCell.classList.toggle("is-empty", !legalEntity);
+    }
+
+    const locationSelect = document.querySelector("#locationSelect");
+    const selected = locationSelect?.options?.[locationSelect.selectedIndex];
+    if (selected) {
+        selected.setAttribute("data-legal", legalEntity);
+    }
+
+    if (typeof window.refreshRowSearchBlob === "function") {
+        window.refreshRowSearchBlob(row);
+    }
+}
 
 /**
  * Инициализирует селекты на основе данных, переданных из PHP.

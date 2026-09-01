@@ -42,7 +42,7 @@ try {
     $historyOperations = $historyController->getHistoryOperations($inventoryItem->ID_TMC);
 
     $currentLocationId = (int) ($inventoryItem->IDLocation ?? 0);
-    $currentLegal = trim((string) ($inventoryItem->Location->FormsJointStockCompanies ?? ''));
+    $currentLegal = trim((string) ($inventoryItem->Location?->FormsJointStockCompanies ?? ''));
 } catch (Exception $e) {
     echo '<div class="alert alert-danger">Ошибка загрузки: ' . htmlspecialchars($e->getMessage()) . '</div>';
     exit;
@@ -130,7 +130,6 @@ try {
                     data-legal="<?= htmlspecialchars($locLegal, ENT_QUOTES) ?>"
                     <?= $currentLocationId === $locId ? 'selected' : '' ?>>
                     <?= htmlspecialchars($loc->NameLocation ?? '') ?>
-                    <?= $locLegal !== '' ? ' — ' . htmlspecialchars($locLegal) : '' ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -255,10 +254,6 @@ try {
             const selected = locationSelect.options[locationSelect.selectedIndex];
             if (selected) {
                 selected.setAttribute('data-legal', legalEntity);
-                const baseName = (selected.textContent || '').split(' — ')[0].trim();
-                selected.textContent = legalEntity
-                    ? `${baseName} — ${legalEntity}`
-                    : baseName;
             }
 
             // Обновляем колонку «Юр. лицо» в главной таблице
@@ -276,7 +271,10 @@ try {
                 }
                 const locationCell = row.cells?.[6];
                 if (locationCell && selected) {
-                    locationCell.textContent = (selected.textContent || '').split(' — ')[0].trim();
+                    locationCell.textContent = (selected.textContent || '').trim();
+                }
+                if (typeof refreshRowSearchBlob === 'function') {
+                    refreshRowSearchBlob(row);
                 }
             }
 

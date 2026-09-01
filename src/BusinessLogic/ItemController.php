@@ -130,6 +130,13 @@ class ItemController
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $inventoryItem = $inventoryItemRepository->findById((int) $idItem, "ID_TMC");
 
+        if ($inventoryItem && (int) ($inventoryItem->IDLocation ?? 0) > 0) {
+            $locationRepository = $this->container->get(LocationRepository::class);
+            $inventoryItem->Location = $locationRepository->findById(
+                (int) $inventoryItem->IDLocation,
+                'IDLocation'
+            );
+        }
 
         return $inventoryItem;
     }
@@ -335,13 +342,18 @@ class ItemController
         return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmItem);
     }
     /**
-     * Получить элементы которые требует подтверждения ремонта
-     * @param int $statusUser
-     * @param int $idUser
+     * Ремонты без счёта для архива администратора (+ устаревшие «Подтвердить ремонт»).
+     * @return array|null
      */
-    public function getConfirmRepairItems(int $statusUser, int $idUser): ?Collection
+    public function getConfirmRepairItems(int $statusUser, int $idUser): ?array
     {
-        return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmRepairTMC);
+        if ($statusUser != 0) {
+            return null;
+        }
+        require_once __DIR__ . '/ItemRepairController.php';
+        $repairController = new ItemRepairController();
+        $items = $repairController->getRepairsPendingInvoice();
+        return count($items) > 0 ? $items : null;
     }
     public function getBrigadesToItems(int $statusUser, int $idUser): ?Collection
     {
@@ -709,24 +721,24 @@ class ItemController
     }
 
     /**
-     * Отправить/вернуть ТМЦ в ремонт. После отправки в ремонт, нужно выполнить подтверждение ремонта с заполнением формы о ремонте!
-     * @param int $tmcId
-     * @param int $statusService
-     * @param string $note
-     * @return bool
+     * Отправить/вернуть ТМЦ в сервис.
+     * Отправка: сразу статус «В ремонте» + запись в архив (счёт можно приложить позже).
+     * Возврат: не зависит от наличия счёта у администратора.
      */
     public function sendToService(int $tmcId, int $statusService, string $note): bool
     {
         try {
+            $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+            $inventoryItem = $inventoryItemRepository->findById((int) $tmcId, 'ID_TMC');
+            if ($inventoryItem === null) {
+                return false;
+            }
 
-            $brigadeId_current = 0;
             $linkBrigadesToItemRepository = $this->container->get(LinkBrigadesToItemRepository::class);
             $brigadesToItemRepository = $this->container->get(BrigadesRepository::class);
 
-            if ($statusService == 0) //sendService = 0
-            {
+            if ($statusService == 0) {
                 $lbi = $linkBrigadesToItemRepository->findById($tmcId, 'ID_TMC');
-
                 if ($lbi != null) {
                     $brigade = $brigadesToItemRepository->findById($lbi->IDBrigade, 'IDBrigade');
                     $brigadeId_current = $brigade->IDBrigade ?? 0;
@@ -735,21 +747,36 @@ class ItemController
                     }
                 }
 
-                $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::ACCEPT_FOR_REPAIR));
-                $this->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $note);
+                require_once __DIR__ . '/ItemRepairController.php';
+                $repairController = new ItemRepairController();
+                $repairController->registerPendingServiceSend($tmcId, $note);
                 return true;
             }
-            if ($statusService == 1) //  returnService = 1;
-            {
-                $this->changeDateReturnService($tmcId);
-                $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::RETURN_FROM_REPAIR));
+
+            if ($statusService == 1) {
+                $status = (int) ($inventoryItem->Status ?? -1);
+                if (!in_array($status, [StatusItem::Repair, StatusItem::ConfirmRepairTMC], true)) {
+                    error_log("sendToService return: TMC {$tmcId} has invalid status {$status}");
+                    return false;
+                }
+
+                try {
+                    $this->changeDateReturnService($tmcId);
+                } catch (Exception $e) {
+                    error_log('sendToService return (no repair row): ' . $e->getMessage());
+                }
+
+                $this->changeStatusTMC(
+                    $tmcId,
+                    OperationType::getStatusTransition(OperationType::RETURN_FROM_REPAIR)
+                );
                 $this->logHistoryOperation(OperationType::RETURN_FROM_REPAIR, $tmcId, null, $note);
                 return true;
             }
 
             return false;
-        } catch (PDOException $e) {
-            error_log("Error sending to service: " . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('Error sending to service: ' . $e->getMessage());
             return false;
         }
     }

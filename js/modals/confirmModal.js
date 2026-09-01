@@ -43,7 +43,7 @@ function processItem(tmcId, action) {
         }
         if (notification) {
           if (!countText) {
-            notification.textContent = `Проверить УПД / принять ${count} ТМЦ`;
+            notification.textContent = `Принять ${count} ТМЦ`;
           }
           notification.classList.toggle("is-empty", count === 0);
           if (count === 0 && !countText) {

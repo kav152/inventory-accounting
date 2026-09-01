@@ -181,17 +181,6 @@ async function handleDistributeFormSubmit(modalElement) {
   let tmc_ids = window.selectedTMCIds;
   formData['tmc_ids'] = JSON.stringify(tmc_ids);
 
-  const fromRepair = (tmc_ids || []).some((id) => {
-    const row = document.querySelector(`#inventoryTable tr.row-container[data-id="${id}"]`);
-    return Number(row?.getAttribute("data-status")) === StatusItem.Repair;
-  });
-  const upd = (form.querySelector('[name="upd"]')?.value || "").trim();
-  if (fromRepair && !upd) {
-    showNotification(TypeMessage.notification, "Укажите № УПД для отправки из сервиса на объект");
-    form.querySelector('[name="upd"]')?.focus();
-    return;
-  }
-
   try {
     const result = await executeEntityAction({
       action: Action.UPDATE,

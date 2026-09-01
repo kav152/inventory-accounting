@@ -95,7 +95,7 @@ include __DIR__ . '/message_modal.php';
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Проверка УПД / принять ТМЦ на объект</h5>
+                <h5 class="modal-title">Принять ТМЦ на объект</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -141,7 +141,7 @@ include __DIR__ . '/message_modal.php';
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p class="confirm-empty">Нет ТМЦ, ожидающих проверки УПД и приёмки на объект.</p>
+                    <p class="confirm-empty">Нет ТМЦ, ожидающих приёмки на объект.</p>
                 <?php endif; ?>
             </div>
         </div>

@@ -291,10 +291,7 @@ export function initCardWriteOffHandlers(modalElement) {
           `repairs[${index}][InvoiceNumber]`,
           repair.querySelector(".invoice-number").value
         );
-        formData.append(
-          `repairs[${index}][UPD]`,
-          repair.querySelector(".upd-number")?.value || ""
-        );
+        // UPD убрали — только счёт
         formData.append(
           `repairs[${index}][RepairCost]`,
           repair.querySelector(".repair-cost").value

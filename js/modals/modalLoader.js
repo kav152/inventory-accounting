@@ -322,15 +322,21 @@ function getActionDisplayText(action) {
  * @param {*} validStatuses - список статусов
  */
 function getServiceModalParams(validStatuses) {
-  let params = {};
-  if (validStatuses.includes(StatusItem.Repair)) {
+  const isReturnMode =
+    validStatuses.includes(StatusItem.Repair) ||
+    validStatuses.includes(StatusItem.ConfirmRepairTMC);
+  const isSendMode =
+    validStatuses.includes(StatusItem.Released) ||
+    validStatuses.includes(StatusItem.AtWorkTMC);
+
+  let params;
+  if (isReturnMode && !isSendMode) {
     params = {
       nameColumn: "Комментарии",
       nameBt: "Вернуть",
       title: "Вернуть из сервиса",
       statusService: ServiceStatus.returnService,
     };
-    console.log("StatusItem.Repair ");
   } else {
     params = {
       nameColumn: "Причина ремонта",
@@ -343,8 +349,6 @@ function getServiceModalParams(validStatuses) {
   document.getElementById("colReason").textContent = params.nameColumn;
   document.getElementById("title").textContent = params.title;
   document.getElementById("btnSubmitService").textContent = params.nameBt;
-
-  //console.log("serviceModal");
 
   const sm = document.getElementById("serviceModal");
   if (sm) sm.setAttribute("data-status", params.statusService);

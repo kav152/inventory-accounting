@@ -441,6 +441,58 @@ body.writeoff-page {
   color: #475569;
 }
 
+.stat-pending { color: #d97706; }
+.stat-verified { color: #059669; }
+
+/* вкладки архива на write_off */
+.archive-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.archive-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.archive-tab:hover {
+  color: #0f766e;
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.archive-tab.active {
+  color: #0f766e;
+  background: #ccfbf1;
+  border-color: #5eead4;
+}
+
+.status-verified {
+  background: #d1fae5;
+  color: #047857;
+}
+
+/* нет счёта — ждём админа */
+.status-pending-invoice {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-verified i,
+.status-pending-invoice i {
+  margin-right: 4px;
+}
+
 .doc-stack {
   display: flex;
   align-items: center;
