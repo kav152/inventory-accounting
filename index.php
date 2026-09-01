@@ -15,19 +15,12 @@ $logAccess->logPageAccess('index.php');
 $router = new Routes();
 
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-/*$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
 if ($basePath !== '' && str_starts_with($uri, $basePath)) {
     $uri = substr($uri, strlen($basePath)) ?: '/';
-}*/
-
-$uri = preg_replace('#/index\.(php|html?)$#', '/', $uri);
-// Если после нормализации получилось "/" или пусто, направляем на login
-if ($uri === '/' || $uri === '' || $uri === '/index.php' || $uri === '/index.html') {
+}
+if ($uri === '/' || $uri === '') {
     $uri = '/login';
 }
-//$router->dispatch($uri);
-
-//var_dump($uri, $basePath);
-//exit;
 
 $router->dispatch($uri);
