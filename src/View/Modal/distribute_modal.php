@@ -141,11 +141,11 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
                                         data-legal="<?= htmlspecialchars($legal) ?>"
                                         data-name="<?= htmlspecialchars($location->NameLocation ?? '') ?>">
                                         <?= htmlspecialchars($location->NameLocation) ?>
-                                        <?= $legal !== '' ? ' (' . htmlspecialchars($legal) . ')' : '' ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Ответственный</label>
@@ -155,12 +155,6 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
                                     <option value="<?= $user->IDUser ?>"><?= htmlspecialchars($user->FIO) ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">№ УПД (проверка)</label>
-                            <input type="text" name="upd" id="distributeUpdInput" class="form-control"
-                                placeholder="Номер УПД при отправке на объект">
-                            <div class="form-text">Для ТМЦ из сервиса укажите УПД — админ получит уведомление на приёмку.</div>
                         </div>
                     </div>
 

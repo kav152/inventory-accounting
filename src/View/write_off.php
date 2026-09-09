@@ -29,8 +29,81 @@ $locations = [];
 
 $startTime = microtime(true);
 
-$onlyWrittenOff = (($_GET['filter'] ?? '') === 'written-off');
+$pageFilter = (string) ($_GET['filter'] ?? '');
+$onlyWrittenOff = ($pageFilter === 'written-off');
+// pending / verified — вкладки архива на странице списания
+$archiveFilter = in_array($pageFilter, ['pending', 'verified'], true) ? $pageFilter : '';
 require_once __DIR__ . '/../BusinessLogic/StatusItem.php';
+
+// счёт считаем заполненным, если не пустой и не прочерк/нули/плейсхолдер
+function repairHasInvoice($repair): bool
+{
+    $invoice = trim((string) ($repair->InvoiceNumber ?? ''));
+    if ($invoice === '' || $invoice === '-') {
+        return false;
+    }
+    if (preg_match('/^0+$/', $invoice)) {
+        return false;
+    }
+    $normalized = mb_strtolower(preg_replace('/\s+/u', ' ', $invoice));
+    $normalized = str_replace('ё', 'е', $normalized);
+    $placeholders = [
+        'без счета',
+        'без счета.',
+        'нет счета',
+        'нет счета.',
+        'без счет',
+        'без счет.',
+    ];
+    return !in_array($normalized, $placeholders, true);
+}
+
+// подпись статуса ТМЦ на объекте для архива
+function archiveObjectStatusLabel(int $status): string
+{
+    $map = [
+        StatusItem::Repair => 'В ремонте',
+        StatusItem::ConfirmRepairTMC => 'Согласование',
+        StatusItem::Released => 'На объекте',
+        StatusItem::AtWorkTMC => 'В работе',
+        StatusItem::WrittenOff => 'Списано',
+    ];
+    return $map[$status] ?? ((new StatusItem())->getDescription($status) ?? '—');
+}
+
+function archiveObjectStatusClass(int $status): string
+{
+    if ($status === StatusItem::Repair) {
+        return 'status-repair';
+    }
+    if ($status === StatusItem::ConfirmRepairTMC) {
+        return 'status-pending-invoice';
+    }
+    if ($status === StatusItem::AtWorkTMC) {
+        return 'status-at-work';
+    }
+    if ($status === StatusItem::Released) {
+        return 'status-on-site';
+    }
+    if ($status === StatusItem::WrittenOff) {
+        return 'status-written-off';
+    }
+    return 'status-default';
+}
+
+// по всем ремонтам строки — иначе «ожидает счёт»
+function repairsAreVerified(array $repairs): bool
+{
+    if ($repairs === []) {
+        return false;
+    }
+    foreach ($repairs as $repair) {
+        if (!repairHasInvoice($repair)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 if ($onlyWrittenOff) {
     $groupedItems = $repairContainer->getWrittenOffGroupedItems();
@@ -87,6 +160,25 @@ if (!$onlyWrittenOff) {
     }
 }
 
+$pendingCount = 0;
+$verifiedCount = 0;
+// счётчики для шапки — считаем до фильтра вкладок
+foreach ($groupedItems as $item) {
+    if (repairsAreVerified($item['repairs'])) {
+        $verifiedCount++;
+    } else {
+        $pendingCount++;
+    }
+}
+
+// ?filter=pending|verified — отбор на клиенте (data-verified), счётчик для шапки
+$visibleRecordCount = count($groupedItems);
+if ($archiveFilter === 'verified') {
+    $visibleRecordCount = $verifiedCount;
+} elseif ($archiveFilter === 'pending') {
+    $visibleRecordCount = $pendingCount;
+}
+
 // Вычисляем общую сумму ремонта
 $totalRepairCost = 0;
 foreach ($groupedItems as $item) {
@@ -107,17 +199,15 @@ error_log("Время группировки данных по ID_TMC для о�
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Списание/затраты на ремонт</title>
+    <title>Архив ремонтов / списание</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <?php
-      $filterCssVer = @filemtime(__DIR__ . '/../../styles/filterStyle.css') ?: time();
       $writeOffCssVer = @filemtime(__DIR__ . '/../../styles/writeOff.css') ?: time();
     ?>
-    <link href="/styles/filterStyle.css?v=<?= $filterCssVer ?>" rel="stylesheet">
     <link href="/styles/writeOff.css?v=<?= $writeOffCssVer ?>" rel="stylesheet">
     <style>
       /* Safety net: selected row must stay light even if main CSS is stale */
@@ -150,7 +240,7 @@ error_log("Время группировки данных по ID_TMC для о�
             <div class="brand-mark"><i class="bi bi-wrench-adjustable"></i></div>
             <div class="brand-text">
                 <strong>ТМЦ</strong>
-                <span>Списания</span>
+                <span>Архив ремонтов</span>
             </div>
         </div>
         <div class="sidebar-label">Действия</div>
@@ -158,7 +248,7 @@ error_log("Время группировки данных по ID_TMC для о�
             <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil-square"></i><span>Редактировать</span></a></li>
             <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-bar-graph"></i><span>Сформировать отчет</span></a></li>
             <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart3"></i><span>Корзина</span></a></li>
-            <li><a href="#" onclick="returnToWorkTMC()"><i class="bi bi-arrow-counterclockwise"></i><span>Вернуть в работу</span></a></li>
+            <li><a href="#" onclick="event.preventDefault(); returnToWorkTMC();"><i class="bi bi-arrow-counterclockwise"></i><span>Вернуть в работу</span></a></li>
         </ul>
         <div class="sidebar-footer">
             <a href="/home" class="sidebar-home"><i class="bi bi-house-door"></i><span>На главную</span></a>
@@ -168,19 +258,29 @@ error_log("Время группировки данных по ID_TMC для о�
     <div class="main-content">
         <header class="page-hero">
             <div class="hero-copy">
-                <p class="hero-kicker">Учёт затрат</p>
+                <p class="hero-kicker">Архив ремонтов</p>
                 <h1 class="page-title"><?= $onlyWrittenOff ? 'Все списанные' : 'Списание / ремонт' ?></h1>
                 <p class="page-subtitle">
                     <?= $onlyWrittenOff
-                        ? 'Только ТМЦ со статусом «Списано» — счета, УПД и история'
-                        : 'Счета, УПД и история ремонтов по каждой единице ТМЦ' ?>
+                        ? 'Только ТМЦ со статусом «Списано» — счета и история ремонтов'
+                        : 'Только ТМЦ на согласовании ремонта (без счёта). Администратор согласовывает или отказывает по каждой записи. Списанные — отдельный реестр.' ?>
                 </p>
             </div>
             <div class="hero-stats">
                 <div class="stat-card">
                     <span class="stat-label">Записей</span>
-                    <strong class="stat-value"><?= count($groupedItems) ?></strong>
+                    <strong class="stat-value"><?= $visibleRecordCount ?? count($groupedItems) ?></strong>
                 </div>
+                <?php if (!$onlyWrittenOff): ?>
+                <div class="stat-card">
+                    <span class="stat-label">Ожидают счёт</span>
+                    <strong class="stat-value stat-pending"><?= $pendingCount ?></strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Проверено</span>
+                    <strong class="stat-value stat-verified"><?= $verifiedCount ?></strong>
+                </div>
+                <?php endif; ?>
                 <div class="stat-card stat-card-accent">
                     <span class="stat-label">Сумма ремонта</span>
                     <strong class="stat-value" id="hero-total-sum"><?= number_format($totalRepairCost, 2, ',', ' ') ?> ₽</strong>
@@ -200,6 +300,15 @@ error_log("Время группировки данных по ID_TMC для о�
                         placeholder="Поиск: id, наименование, серийный, бренд, локация…"
                         autocomplete="off">
                 </div>
+                <?php if (!$onlyWrittenOff): ?>
+                <?php // быстрый отбор для админа ?>
+                <div class="archive-tabs" data-archive-filter="<?= htmlspecialchars($archiveFilter) ?>">
+                    <a href="write_off.php" class="archive-tab<?= $archiveFilter === '' ? ' active' : '' ?>" data-filter="">Все</a>
+                    <a href="write_off.php?filter=pending" class="archive-tab<?= $archiveFilter === 'pending' ? ' active' : '' ?>" data-filter="pending">Ожидают счёт</a>
+                    <a href="write_off.php?filter=verified" class="archive-tab<?= $archiveFilter === 'verified' ? ' active' : '' ?>" data-filter="verified">Проверено</a>
+                    <a href="write_off.php?filter=written-off" class="archive-tab<?= $onlyWrittenOff ? ' active' : '' ?>" data-filter="written-off">Списанные</a>
+                </div>
+                <?php endif; ?>
                 <div class="toolbar-hint">
                     <?php if ($onlyWrittenOff): ?>
                         <a href="/src/View/write_off.php" style="color:inherit;text-decoration:none;">← Все записи</a>
@@ -217,7 +326,8 @@ error_log("Время группировки данных по ID_TMC для о�
                             <th>Бренд</th>
                             <th>Серийный номер</th>
                             <th>Ответственный</th>
-                            <th>Статус</th>
+                            <th>Статус на объекте</th>
+                            <th>Проверка</th>
                             <th>Локация</th>
                             <th>№ счета</th>
                             <th>№ УПД</th>
@@ -234,22 +344,21 @@ error_log("Время группировки данных по ID_TMC для о�
                             $updList = [];
                             foreach ($repairs as $repair) {
                                 $totalCost += $repair->RepairCost;
-                                $invoice = trim((string) ($repair->InvoiceNumber ?? ''));
-                                if ($invoice !== '' && $invoice !== '-' && !preg_match('/^0+$/', $invoice)) {
-                                    $invoices[] = $invoice;
+                                if (repairHasInvoice($repair)) {
+                                    $invoices[] = trim((string) $repair->InvoiceNumber);
                                 }
-                                $upd = trim((string) ($repair->UPD ?? ''));
-                                if ($upd !== '' && $upd !== '-') {
-                                    $updList[] = $upd;
+                                $updVal = trim((string) ($repair->UPD ?? ''));
+                                if ($updVal !== '') {
+                                    $updList[] = $updVal;
                                 }
                             }
                             $invoices = array_values(array_unique($invoices));
                             $updList = array_values(array_unique($updList));
+                            $isVerified = repairsAreVerified($repairs);
                             $statusValue = (int) $mainItem->InventoryItem->Status;
-                            $statusText = (new StatusItem())->getDescription($statusValue);
-                            $statusClass = $statusValue === StatusItem::WrittenOff
-                                ? 'status-written-off'
-                                : ($statusValue === StatusItem::Repair ? 'status-repair' : 'status-default');
+                            $statusText = archiveObjectStatusLabel($statusValue);
+                            $verificationText = $isVerified ? 'проверено' : 'ожидает счёт';
+                            $statusClass = archiveObjectStatusClass($statusValue);
                             $brand = $mainItem->InventoryItem->BrandTMC->NameBrand ?? '';
                             $searchBlob = mb_strtolower(trim(implode(' ', [
                                 (string) $mainItem->ID_TMC,
@@ -258,10 +367,14 @@ error_log("Время группировки данных по ID_TMC для о�
                                 (string) $brand,
                                 (string) ($mainItem->InventoryItem->Location->NameLocation ?? ''),
                                 (string) ($statusText ?? ''),
+                                (string) $verificationText,
+                                implode(' ', $invoices),
+                                implode(' ', $updList),
                             ])));
                         ?>
                             <tr class="main-row" data-id="<?= $mainItem->ID_TMC ?>"
                                 data-status="<?= $statusValue ?>"
+                                data-verified="<?= $isVerified ? '1' : '0' ?>"
                                 data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?>"
                                 data-location="<?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?>"
                                 data-total-cost="<?= $totalCost ?>"
@@ -279,6 +392,13 @@ error_log("Время группировки данных по ID_TMC для о�
                                 <td><?= htmlspecialchars($mainItem->RegistrationInventoryItem->User->FIO ?? '') ?: '—' ?></td>
                                 <td>
                                     <span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($statusText) ?></span>
+                                </td>
+                                <td>
+                                    <?php if ($isVerified): ?>
+                                        <span class="status-badge status-verified"><i class="bi bi-check-circle-fill"></i> Проверено</span>
+                                    <?php else: ?>
+                                        <span class="status-badge status-pending-invoice"><i class="bi bi-hourglass-split"></i> Ожидает счёт</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= htmlspecialchars($mainItem->InventoryItem->Location->NameLocation ?? '') ?: '—' ?></td>
                                 <td class="col-doc">
@@ -298,7 +418,7 @@ error_log("Время группировки данных по ID_TMC для о�
                                 <td class="col-doc">
                                     <?php if ($updList): ?>
                                         <div class="doc-stack">
-                                            <span class="doc-chip doc-chip-upd" title="<?= htmlspecialchars(implode(', ', $updList)) ?>">
+                                            <span class="doc-chip" title="<?= htmlspecialchars(implode(', ', $updList)) ?>">
                                                 <?= htmlspecialchars($updList[0]) ?>
                                             </span>
                                             <?php if (count($updList) > 1): ?>
@@ -329,7 +449,7 @@ error_log("Время группировки данных по ID_TMC для о�
                                 </td>
                             </tr>
                             <tr class="repair-details-row" id="details-<?= $mainItem->ID_TMC ?>" style="display: none;">
-                                <td colspan="11">
+                                <td colspan="12">
                                     <div class="repair-details">
                                         <div class="repair-details-head">
                                             <h6>История ремонтов</h6>
@@ -340,6 +460,7 @@ error_log("Время группировки данных по ID_TMC для о�
                                                 <tr>
                                                     <th>№ счета</th>
                                                     <th>№ УПД</th>
+                                                    <th>Проверка</th>
                                                     <th>Стоимость</th>
                                                     <th>Дата отправки</th>
                                                     <th>Дата возвращения</th>
@@ -349,31 +470,87 @@ error_log("Время группировки данных по ID_TMC для о�
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($repairs as $repair): ?>
-                                                    <tr class="repair-line" data-repair-id="<?= (int) $repair->ID_Repair ?>"
-                                                        data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
-                                                        <td><?= htmlspecialchars($repair->InvoiceNumber ?? '') ?: '—' ?></td>
-                                                        <td><?= htmlspecialchars($repair->UPD ?? '') ?: '—' ?></td>
-                                                        <td><?= number_format($repair->RepairCost, 2, ',', ' ') ?> ₽</td>
+                                                <?php foreach ($repairs as $repair):
+                                                    $lineVerified = repairHasInvoice($repair);
+                                                    $lineRepairId = (int) $repair->ID_Repair;
+                                                    $lineLocationId = (int) ($repair->IDLocation ?? $repair->Location->IDLocation ?? 0);
+                                                    $lineUpd = trim((string) ($repair->UPD ?? ''));
+                                                ?>
+                                                    <tr class="repair-line" data-repair-id="<?= $lineRepairId ?>"
+                                                        data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                                        data-location-id="<?= $lineLocationId ?>">
+                                                        <td>
+                                                            <?php if (!$lineVerified): ?>
+                                                                <input type="text"
+                                                                    class="form-control form-control-sm repair-invoice-input"
+                                                                    placeholder="№ счёта"
+                                                                    value="<?= htmlspecialchars(trim((string) ($repair->InvoiceNumber ?? ''))) ?>">
+                                                            <?php else: ?>
+                                                                <?= htmlspecialchars($repair->InvoiceNumber ?? '') ?: '—' ?>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if (!$lineVerified): ?>
+                                                                <input type="text"
+                                                                    class="form-control form-control-sm repair-upd-input"
+                                                                    placeholder="№ УПД"
+                                                                    value="<?= htmlspecialchars($lineUpd) ?>">
+                                                            <?php else: ?>
+                                                                <?= htmlspecialchars($lineUpd) !== '' ? htmlspecialchars($lineUpd) : '—' ?>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($lineVerified): ?>
+                                                                <span class="status-badge status-verified">Проверено</span>
+                                                            <?php else: ?>
+                                                                <span class="status-badge status-pending-invoice">Ожидает счёт</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if (!$lineVerified): ?>
+                                                                <input type="number" step="0.01" min="0"
+                                                                    class="form-control form-control-sm repair-cost-input"
+                                                                    value="<?= (float) $repair->RepairCost ?>">
+                                                            <?php else: ?>
+                                                                <?= number_format($repair->RepairCost, 2, ',', ' ') ?> ₽
+                                                            <?php endif; ?>
+                                                        </td>
                                                         <td><?= $repair->DateToService ? date('d.m.Y', strtotime($repair->DateToService)) : '—' ?></td>
                                                         <td><?= $repair->DateReturnService ? date('d.m.Y', strtotime($repair->DateReturnService)) : '—' ?></td>
                                                         <td><?= htmlspecialchars($repair->RepairDescription ?? '') ?: '—' ?></td>
                                                         <td><?= htmlspecialchars($repair->Location->NameLocation ?? '') ?: '—' ?></td>
-                                                        <td class="action-buttons" onclick="event.stopPropagation()">
-                                                            <button type="button"
-                                                                class="btn-action btn-edit repair-edit-btn"
-                                                                title="Изменить запись"
-                                                                data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
-                                                                data-repair-id="<?= (int) $repair->ID_Repair ?>">
-                                                                <i class="bi bi-pencil"></i>
-                                                            </button>
-                                                            <button type="button"
-                                                                class="btn-action btn-delete repair-delete-btn"
-                                                                title="Удалить запись"
-                                                                data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
-                                                                data-repair-id="<?= (int) $repair->ID_Repair ?>">
-                                                                <i class="bi bi-trash3"></i>
-                                                            </button>
+                                                        <td class="action-buttons repair-actions" onclick="event.stopPropagation()">
+                                                            <?php if (!$lineVerified): ?>
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-success repair-approve-btn"
+                                                                    title="Согласовать ремонт"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                                                    data-repair-id="<?= $lineRepairId ?>">
+                                                                    Согласовать
+                                                                </button>
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-danger repair-reject-btn"
+                                                                    title="Отказать"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                                                    data-repair-id="<?= $lineRepairId ?>">
+                                                                    Отказать
+                                                                </button>
+                                                            <?php else: ?>
+                                                                <button type="button"
+                                                                    class="btn-action btn-edit repair-edit-btn"
+                                                                    title="Изменить запись"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                                                    data-repair-id="<?= $lineRepairId ?>">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
+                                                                <button type="button"
+                                                                    class="btn-action btn-delete repair-delete-btn"
+                                                                    title="Удалить запись"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                                                    data-repair-id="<?= $lineRepairId ?>">
+                                                                    <i class="bi bi-trash3"></i>
+                                                                </button>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -401,33 +578,13 @@ error_log("Время группировки данных по ID_TMC для о�
     <script type="module" src="/js/writeOffFunctions.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-
-    <script type="module">
-        import {
-            initFilter
-        } from '../../js/filters/filterConfigs.js';
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const analyticsFilter = initFilter('WRITE_OFF', {
-                onRowCountChanged: (visible, total) => {
-                    console.log(`Показано ${visible} из ${total} записей`);
-                }
-            });
-
-            // При размонтировании компонента очищаем фильтр
-            window.addEventListener('beforeunload', function() {
-                if (window.homeFilter && window.homeFilter.destroy) {
-                    window.homeFilter.destroy();
-                }
-            });
-        });
-    </script>
-
     <script>
         // Глобальные переменные
         let allItems = <?= json_encode($groupedItems) ?>;
         let selectedRow = null;
+        window.selectedRow = null;
         let initialTotal = <?= $totalRepairCost ?>;
+        window.writeOffArchiveFilter = <?= json_encode($archiveFilter) ?>;
 
         // Функция применения фильтров
         function applyFilters() {
@@ -438,6 +595,7 @@ error_log("Время группировки данных по ID_TMC для о�
             const searchValue = (document.getElementById('writeOffSearchInput')?.value || '')
                 .trim()
                 .toLowerCase();
+            const archiveFilter = window.writeOffArchiveFilter || '';
 
             const rows = document.querySelectorAll('.main-row');
             let visibleCount = 0;
@@ -449,6 +607,13 @@ error_log("Время группировки данных по ID_TMC для о�
                 const location = row.getAttribute('data-location');
                 const cost = parseFloat(row.getAttribute('data-total-cost'));
                 const searchBlob = row.getAttribute('data-search') || '';
+                const isVerified = row.getAttribute('data-verified') === '1';
+
+                if (archiveFilter === 'verified' && !isVerified) {
+                    visible = false;
+                } else if (archiveFilter === 'pending' && isVerified) {
+                    visible = false;
+                }
 
                 if (filters.name.length > 0 && !filters.name.includes(name)) {
                     visible = false;
@@ -480,6 +645,11 @@ error_log("Время группировки данных по ID_TMC для о�
 
             // Обновляем общую сумму
             updateTotalSum(filteredTotal);
+
+            const recordsStat = document.querySelector('.hero-stats .stat-card .stat-value');
+            if (recordsStat && archiveFilter !== '') {
+                recordsStat.textContent = String(visibleCount);
+            }
         }
 
         // Функция обновления общей суммы
@@ -558,6 +728,7 @@ error_log("Время группировки данных по ID_TMC для о�
             // Выделяем текущую строку
             row.classList.add('selected');
             selectedRow = row;
+            window.selectedRow = row;
 
             // Показываем/скрываем детали
             const id = row.getAttribute('data-id');
@@ -603,7 +774,9 @@ error_log("Время группировки данных по ID_TMC для о�
 
         // Функция редактирования выбранной записи
         function editSelected(idFromBtn = null, repairId = null) {
-            const id = idFromBtn || (selectedRow ? selectedRow.getAttribute('data-id') : null);
+            const id = idFromBtn
+                || (window.selectedRow ? window.selectedRow.getAttribute('data-id') : null)
+                || document.querySelector('#writeOffTable tbody tr.main-row.selected')?.getAttribute('data-id');
             if (!id) {
                 showNotification(TypeMessage.notification, 'Пожалуйста, выберите запись для редактирования.');
                 return;
@@ -723,6 +896,26 @@ error_log("Время группировки данных по ID_TMC для о�
                     deleteRepairLine(repairId, tmcId);
                 });
             });
+
+            document.querySelectorAll('.repair-approve-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (typeof window.approveRepairLine === 'function') {
+                        window.approveRepairLine(this);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.repair-reject-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (typeof window.rejectRepairLine === 'function') {
+                        window.rejectRepairLine(this);
+                    }
+                });
+            });
+
+            applyFilters();
         });
     </script>
 

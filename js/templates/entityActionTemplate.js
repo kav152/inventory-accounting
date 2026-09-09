@@ -2,6 +2,19 @@ import { TypeMessage } from "../../src/constants/typeMessage.js";
 import { showNotification } from "../modals/setting.js";
 import { Action } from "../../src/constants/actions.js";
 
+async function parseJsonResponse(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    const preview = text.replace(/\s+/g, " ").trim().slice(0, 160);
+    if (preview.startsWith("<")) {
+      throw new Error("Сервер вернул HTML вместо JSON. Проверьте лог на сервере.");
+    }
+    throw new Error(preview || "Ответ сервера не является JSON");
+  }
+}
+
 /**
  * Универсальный шаблон для выполнения CUD операций с сущностями
  * @param {Object} config - Конфигурация операции
@@ -47,7 +60,7 @@ export async function executeEntityAction(config) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
+    const result = await parseJsonResponse(response);
 
     if (result.success) {
       if (successMessage) {
@@ -63,7 +76,7 @@ export async function executeEntityAction(config) {
   } catch (error) {
     console.error(`Ошибка при выполнении действия ${action}:`, error);
     const errorMessage =
-      error || `Ошибка при выполнении действия ${action}`;
+      error?.message || `Ошибка при выполнении действия ${action}`;
 
     if (errorCallback) {
       errorCallback(error);

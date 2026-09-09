@@ -130,6 +130,13 @@ class ItemController
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $inventoryItem = $inventoryItemRepository->findById((int) $idItem, "ID_TMC");
 
+        if ($inventoryItem && (int) ($inventoryItem->IDLocation ?? 0) > 0) {
+            $locationRepository = $this->container->get(LocationRepository::class);
+            $inventoryItem->Location = $locationRepository->findById(
+                (int) $inventoryItem->IDLocation,
+                'IDLocation'
+            );
+        }
 
         return $inventoryItem;
     }
@@ -268,8 +275,10 @@ class ItemController
             $userRepository = $this->container->get(UserRepository::class);
 
             $registrationInventory = $registrationInventoryItemRepository->findById($result->getId(), 'IDRegItem');
-            $userResult = $userRepository->findById($registrationInventory->CurrentUser, "IDUser");
-            $result->User = $userResult;
+            if ($registrationInventory) {
+                $userResult = $userRepository->findById($registrationInventory->CurrentUser, "IDUser");
+                $result->User = $userResult;
+            }
 
             $brandTMCRepository = $this->container->get(BrandTMCRepository::class);
             $brandResult = $brandTMCRepository->findById($result->IDBrandTMC, "IDBrandTMC");
@@ -335,13 +344,30 @@ class ItemController
         return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmItem);
     }
     /**
-     * Получить элементы которые требует подтверждения ремонта
-     * @param int $statusUser
-     * @param int $idUser
+     * Ремонты без счёта для архива администратора (+ устаревшие «Подтвердить ремонт»).
+     * @return array|null
      */
-    public function getConfirmRepairItems(int $statusUser, int $idUser): ?Collection
+    public function getConfirmRepairItems(int $statusUser, int $idUser): ?array
     {
-        return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmRepairTMC);
+        if ($statusUser != 0) {
+            return null;
+        }
+        require_once __DIR__ . '/ItemRepairController.php';
+        $repairController = new ItemRepairController();
+        $items = $repairController->getRepairsPendingInvoice();
+        if (count($items) === 0) {
+            return null;
+        }
+
+        $byTmc = [];
+        foreach ($items as $entry) {
+            $id = (int) ($entry->ID_TMC ?? 0);
+            if ($id > 0 && !isset($byTmc[$id])) {
+                $byTmc[$id] = $entry;
+            }
+        }
+
+        return count($byTmc) > 0 ? array_values($byTmc) : null;
     }
     public function getBrigadesToItems(int $statusUser, int $idUser): ?Collection
     {
@@ -709,24 +735,26 @@ class ItemController
     }
 
     /**
-     * Отправить/вернуть ТМЦ в ремонт. После отправки в ремонт, нужно выполнить подтверждение ремонта с заполнением формы о ремонте!
-     * @param int $tmcId
-     * @param int $statusService
-     * @param string $note
-     * @return bool
+     * Отправить/вернуть ТМЦ в сервис.
+     * Отправка: статус «Согласование» + запись в архив (счёт приложит администратор).
+     * Возврат: не зависит от наличия счёта у администратора.
+     * @param string $operationDate дата отправки/возврата (Y-m-d), пусто = сегодня
      */
-    public function sendToService(int $tmcId, int $statusService, string $note): bool
+    public function sendToService(int $tmcId, int $statusService, string $note, string $operationDate = ''): bool
     {
         try {
+            $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+            $inventoryItem = $inventoryItemRepository->findById((int) $tmcId, 'ID_TMC');
+            if ($inventoryItem === null) {
+                return false;
+            }
 
-            $brigadeId_current = 0;
             $linkBrigadesToItemRepository = $this->container->get(LinkBrigadesToItemRepository::class);
             $brigadesToItemRepository = $this->container->get(BrigadesRepository::class);
+            $opDate = $this->normalizeOperationDate($operationDate);
 
-            if ($statusService == 0) //sendService = 0
-            {
+            if ($statusService == 0) {
                 $lbi = $linkBrigadesToItemRepository->findById($tmcId, 'ID_TMC');
-
                 if ($lbi != null) {
                     $brigade = $brigadesToItemRepository->findById($lbi->IDBrigade, 'IDBrigade');
                     $brigadeId_current = $brigade->IDBrigade ?? 0;
@@ -735,22 +763,50 @@ class ItemController
                     }
                 }
 
-                $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::ACCEPT_FOR_REPAIR));
-                $this->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $note);
+                require_once __DIR__ . '/ItemRepairController.php';
+                $repairController = new ItemRepairController();
+                $repairController->registerPendingServiceSend($tmcId, $note, $opDate);
                 return true;
             }
-            if ($statusService == 1) //  returnService = 1;
-            {
-                $this->changeDateReturnService($tmcId);
-                $this->changeStatusTMC($tmcId, OperationType::getStatusTransition(OperationType::RETURN_FROM_REPAIR));
+
+            if ($statusService == 1) {
+                $status = (int) ($inventoryItem->Status ?? -1);
+                if (!in_array($status, [StatusItem::Repair, StatusItem::ConfirmRepairTMC], true)) {
+                    error_log("sendToService return: TMC {$tmcId} has invalid status {$status}");
+                    return false;
+                }
+
+                try {
+                    $this->changeDateReturnService($tmcId, $opDate);
+                } catch (Exception $e) {
+                    error_log('sendToService return (no repair row): ' . $e->getMessage());
+                }
+
+                $this->changeStatusTMC(
+                    $tmcId,
+                    OperationType::getStatusTransition(OperationType::RETURN_FROM_REPAIR)
+                );
                 $this->logHistoryOperation(OperationType::RETURN_FROM_REPAIR, $tmcId, null, $note);
                 return true;
             }
 
             return false;
-        } catch (PDOException $e) {
-            error_log("Error sending to service: " . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('Error sending to service: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    private function normalizeOperationDate(string $operationDate): string
+    {
+        $operationDate = trim($operationDate);
+        if ($operationDate === '') {
+            return date('Y-m-d');
+        }
+        try {
+            return (new DateTime($operationDate))->format('Y-m-d');
+        } catch (Exception $e) {
+            return date('Y-m-d');
         }
     }
 
@@ -854,12 +910,13 @@ class ItemController
     }
 
     /**
-     * Установить дату возврещения ТМЦ из сервиса
+     * Установить дату возвращения ТМЦ из сервиса
      * @param int $id
+     * @param string $operationDate Y-m-d, пусто = сегодня
      * @throws \Exception
      * @return void
      */
-    public function changeDateReturnService(int $id)
+    public function changeDateReturnService(int $id, string $operationDate = '')
     {
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $repairs = $repairItemRepository->findBy("where ID_TMC = " . (int) $id . " order by ID_Repair");
@@ -871,8 +928,10 @@ class ItemController
             throw new Exception("Не найдено записи об отправке в ремонт ТМЦ id:{$id}");
         }
 
-        $result = $repairItemRepository->updateDateWithGetDate($repairItem->ID_Repair, 'DateReturnService');
-        if (!$result) {
+        $date = $this->normalizeOperationDate($operationDate);
+        $repairItem->DateReturnService = (new DateTime($date))->format('Y-m-d\TH:i:s');
+        $saved = $repairItemRepository->save($repairItem);
+        if ($saved === null) {
             throw new Exception("Ошибка указания даты возвращения из сервиса для ТМЦ id:{$id}");
         }
     }

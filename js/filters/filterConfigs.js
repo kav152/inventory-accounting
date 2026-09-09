@@ -9,6 +9,7 @@ export const FilterConfigs = {
         containerId: 'cont1',
         rowSelector: 'tbody tr.row-container',
         excludeColumns: [],
+        compactHeaderColumns: [2, 3],
         onRowCountChanged: (visibleCount, totalCount) => {
             const counter = document.getElementById('row-counter');
             if (counter) {
@@ -21,8 +22,8 @@ export const FilterConfigs = {
         tableId: 'writeOffTable',
         containerId: 'idTableResponsive',
         rowSelector: 'tbody tr.main-row',
-        // Не фильтруем: № счета, № УПД, сумма, действия
-        excludeColumns: [7, 8, 9, 10],
+        // Не фильтруем: проверка(6) не в списке — по ней и так вкладки; 8-10: счёт, сумма, кнопки
+        excludeColumns: [8, 9, 10],
         onFilterApplied: (filters, visibleCount) => {
             let total = 0;
             document.querySelectorAll('.main-row').forEach(row => {

@@ -79,6 +79,10 @@ class LocationController
     public function create($object): ?object
     {
         $result = $this->cudFactory->create($object);
+        if (!$result) {
+            return null;
+        }
+
         $cityRepository = $this->container->get(CityRepository::class);
         $city = $cityRepository->findById($result->IDCity, "IDCity");
 
@@ -93,6 +97,10 @@ class LocationController
     public function update($object): ?object
     {
         $result = $this->cudFactory->update($object);
+        if (!$result) {
+            throw new Exception('Не удалось сохранить локацию в базе данных');
+        }
+
         $cityRepository = $this->container->get(CityRepository::class);
         $city = $cityRepository->findById($result->IDCity, "IDCity");
 

@@ -92,14 +92,21 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <link href="/styles/homeStyle.css?v=<?= @filemtime(__DIR__ . '/../../styles/homeStyle.css') ?: time() ?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
-    <script type="module" src="/src/constants/properties.js"></script>
-    <script type="module" src="/src/constants/statusItem.js"></script>
-    <script type="module" src="/src/constants/statusService.js"></script>
-    <script type="module" src="/src/constants/actions.js"></script>
-    <script type="module" src="/src/constants/typeMessage.js"></script>
-    <script type="module" src="/js/modals/setting.js"></script>
-    <script type="module" src="/js/filters/tableFilter.js"></script>
-    <script async src="/app.js"></script>
+    <?php
+      $jsVer = static function (string $relPath): string {
+          $full = __DIR__ . '/../../' . ltrim($relPath, '/');
+          return (string) (@filemtime($full) ?: time());
+      };
+    ?>
+    <script type="module" src="/src/constants/properties.js?v=<?= $jsVer('src/constants/properties.js') ?>"></script>
+    <script type="module" src="/src/constants/statusItem.js?v=<?= $jsVer('src/constants/statusItem.js') ?>"></script>
+    <script type="module" src="/src/constants/statusService.js?v=<?= $jsVer('src/constants/statusService.js') ?>"></script>
+    <script type="module" src="/src/constants/actions.js?v=<?= $jsVer('src/constants/actions.js') ?>"></script>
+    <script type="module" src="/src/constants/typeMessage.js?v=<?= $jsVer('src/constants/typeMessage.js') ?>"></script>
+    <script type="module" src="/js/modals/setting.js?v=<?= $jsVer('js/modals/setting.js') ?>"></script>
+    <script type="module" src="/js/cardItemPanel.js?v=<?= $jsVer('js/cardItemPanel.js') ?>"></script>
+    <script type="module" src="/js/filters/tableFilter.js?v=<?= $jsVer('js/filters/tableFilter.js') ?>"></script>
+    <script async src="/app.js?v=<?= $jsVer('app.js') ?>"></script>
 
 
     <style>
@@ -310,21 +317,23 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             </div>
             <div class="notifications-container">
                 <?php if ($isAdmin): ?>
-                    <div class="notification-alert <?= $confirmCount > 0 ? '' : 'is-empty' ?>" id="confirmNotification"
+                    <?php if ($confirmCount > 0): ?>
+                    <div class="notification-alert" id="confirmNotification"
                         onclick="openConfirmModal()">
-                        Проверить УПД / принять <span id="confirmCountText"><?= $confirmCount ?></span> ТМЦ
+                        Принять <span id="confirmCountText"><?= $confirmCount ?></span> ТМЦ
                     </div>
+                    <?php endif; ?>
                 <?php elseif ($confirmCount > 0): ?>
                     <div class="notification-alert" id="confirmNotification" onclick="openConfirmModal()">
-                        Проверить УПД / принять <?= $confirmCount ?> ТМЦ
+                        Принять <?= $confirmCount ?> ТМЦ
                     </div>
                 <?php endif; ?>
 
-                <?php if ($isAdmin): ?>
-                    <div class="notification-alert notification-repair-alert <?= $confirmRepairCount > 0 ? '' : 'is-empty' ?>"
+                <?php if ($isAdmin && $confirmRepairCount > 0): ?>
+                    <div class="notification-alert notification-repair-alert"
                         id="confirmRepairNotification"
                         onclick="openConfirmRepairModal()">
-                        Подтвердить ремонт <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
+                        Согласование ремонта <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
                     </div>
                     <a class="notification-alert notification-writeoff-alert" id="writeOffNotification"
                         href="#"
@@ -412,17 +421,17 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             </li>
 
             <li>
-                <a href="#" onclick="sendToService('row-container', 0)">
+                <a href="#" onclick="event.preventDefault(); sendToService('row-container', 0, event)">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#1f1f1f">
+                        fill="#e3e3e3">
                         <path
-                            d="M754-81q-8 0-15-2.5T726-92L522-296q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l85-85q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l204 204q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-85 85q-6 6-13 8.5T754-81Zm0-95 29-29-147-147-29 29 147 147ZM205-80q-8 0-15.5-3T176-92l-84-84q-6-6-9-13.5T80-205q0-8 3-15t9-13l212-212h85l34-34-165-165h-57L80-765l113-113 121 121v57l165 165 116-116-43-43 56-56H495l-28-28 142-142 28 28v113l56-56 142 142q17 17 26 38.5t9 45.5q0 24-9 46t-26 39l-85-85-56 56-42-42-207 207v84L233-92q-6 6-13 9t-15 3Zm0-96 170-170v-29h-29L176-205l29 29Zm0 0-29-29 15 14 14 15Zm549 0 29-29-29 29Z" />
+                            d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-40-82v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 210T440-162Zm276-102q41-45 62.5-100.5T800-480q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z" />
                     </svg>
                     <span>Отправить в сервис</span>
                 </a>
             </li>
             <li>
-                <a href="#" onclick="sendToService('row-container', 1)">
+                <a href="#" onclick="event.preventDefault(); sendToService('row-container', 1, event)">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                         fill="#1f1f1f">
                         <path
@@ -524,15 +533,15 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                         <input type="search" id="inventorySearchInput" placeholder="Поиск: локация, юр. лицо, наименование…"
                             autocomplete="off">
                     </label>
-                    <span class="inventory-search-hint">Фильтры в шапке — по объекту и юр. лицу</span>
+                    <span class="inventory-search-hint">Фильтры в шапке таблицы — по всем столбцам, в т.ч. серийный номер и бренд</span>
                 </div>
                 <table id="inventoryTable">
                     <thead>
                         <tr class="header-container">
                             <th>Ид.</th>
                             <th>Наименование</th>
-                            <th>Сер. номер</th>
-                            <th>Бренд</th>
+                            <th title="Серийный номер">Сер. №</th>
+                            <th title="Бренд">Бренд</th>
                             <th>Статус</th>
                             <th>Ответств.</th>
                             <th>Локация</th>
@@ -809,18 +818,19 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
         }
     </script>
 
-    <script type="module" src="/js/templates/expandableSection.js"></script>
-    <script type="module" src="/js/templates/entityActionTemplate.js"></script>
-    <script type="module" src="/js/modalTypes.js"></script>
-    <script type="module" src="/js/updateFunctions.js"></script>
-    <script type="module" src="/js/modals/modalLoader.js"></script>
-    <script type="module" src="/js/modals/cardItemModal.js"></script>
-    <script type="module" src="/js/modals/distributeModal.js"></script>
-    <script type="module" src="/js/modals/workModal.js"></script>
-    <script type="module" src="/js/modals/confirmModal.js"></script>
-    <script type="module" src="/js/modals/confirmRepairModal.js"></script>
-    <script type="module" src="/js/modals/serviceModal.js"></script>
-    <script type="module" src="/js/writeOffFunctions.js"></script>
+    <script type="module" src="/js/templates/cudRowsInTable.js?v=<?= $jsVer('js/templates/cudRowsInTable.js') ?>"></script>
+    <script type="module" src="/js/templates/expandableSection.js?v=<?= $jsVer('js/templates/expandableSection.js') ?>"></script>
+    <script type="module" src="/js/templates/entityActionTemplate.js?v=<?= $jsVer('js/templates/entityActionTemplate.js') ?>"></script>
+    <script type="module" src="/js/modalTypes.js?v=<?= $jsVer('js/modalTypes.js') ?>"></script>
+    <script type="module" src="/js/updateFunctions.js?v=<?= $jsVer('js/updateFunctions.js') ?>"></script>
+    <script type="module" src="/js/modals/modalLoader.js?v=<?= $jsVer('js/modals/modalLoader.js') ?>"></script>
+    <script type="module" src="/js/modals/cardItemModal.js?v=<?= $jsVer('js/modals/cardItemModal.js') ?>"></script>
+    <script type="module" src="/js/modals/distributeModal.js?v=<?= $jsVer('js/modals/distributeModal.js') ?>"></script>
+    <script type="module" src="/js/modals/workModal.js?v=<?= $jsVer('js/modals/workModal.js') ?>"></script>
+    <script type="module" src="/js/modals/confirmModal.js?v=<?= $jsVer('js/modals/confirmModal.js') ?>"></script>
+    <script type="module" src="/js/modals/confirmRepairModal.js?v=<?= $jsVer('js/modals/confirmRepairModal.js') ?>"></script>
+    <script type="module" src="/js/modals/serviceModal.js?v=<?= $jsVer('js/modals/serviceModal.js') ?>"></script>
+    <script type="module" src="/js/writeOffFunctions.js?v=<?= $jsVer('js/writeOffFunctions.js') ?>"></script>
 
     <div id="modalContainer"></div>
 

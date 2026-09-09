@@ -9,7 +9,7 @@ class ConfirmRepairModalLoader extends ModalLoader
 
         DatabaseFactory::setConfig();
         $container = new ItemController();
-        $confirmRepairItems = $container->getConfirmRepairItems($_SESSION["Status"], $_SESSION["IDUser"]);
+        $confirmRepairItems = $container->getConfirmRepairItems($_SESSION["Status"], $_SESSION["IDUser"]) ?? [];
         $confirmRepairCount = count($confirmRepairItems);
         $locationRepairs = $container->getLocations(true);
 

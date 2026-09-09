@@ -28,14 +28,24 @@ try {
     $messages = [];
 
     foreach ($items as $item) {
-        $result = $itemController->sendToService($item['id'], $statusService,$item['reason']);
-        if (!$result) {
+        try {
+            $result = $itemController->sendToService(
+                (int) $item['id'],
+                (int) $statusService,
+                (string) ($item['reason'] ?? ''),
+                trim((string) ($item['operationDate'] ?? $item['date'] ?? ''))
+            );
+            if (!$result) {
+                $success = false;
+                $messages[] = "Ошибка при отправке ТМЦ в сервис: {$item['id']}";
+            }
+        } catch (Exception $e) {
             $success = false;
-            $messages[] = "Ошибка при отправке ТМЦ в сервис: {$item['id']}";
+            $messages[] = "ТМЦ {$item['id']}: " . $e->getMessage();
         }
     }
 
     echo json_encode(['success' => $success, 'message' => implode(', ', $messages)]);
-} catch (PDOException $e) {
+} catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }

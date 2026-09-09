@@ -266,29 +266,39 @@ body.main-body {
 }
 
 #inventoryTable th {
-  padding: 10px;
+  padding: 8px 6px;
   text-align: left;
   background-color: #f1f5f9;
   font-weight: 600;
   color: #334155;
   position: relative;
-  font-size: 1.15em;
-  /* Шрифт заголовка чуть больше */
+  font-size: 0.95em;
   border-radius: 8px;
-  /* Скругленные углы */
-  overflow: hidden;
+  overflow: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 #inventoryTable td {
-  padding: 10px;
+  padding: 8px 6px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 1.1em;
-  /* Уменьшенный размер шрифта */
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.95em;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  align-self: start;
+}
+
+#inventoryTable td:nth-child(2) {
+  line-height: 1.4;
 }
 
 #inventoryTable tbody.scroll {
@@ -308,13 +318,23 @@ body.main-body {
   margin-bottom: 4px;
   width: 100%;
   box-sizing: border-box;
-  grid-template-columns: 5% 20% 11% 8% 12% 12% 14% 14%;
-  gap: 0.1em;
+  grid-template-columns:
+    minmax(40px, 0.42fr)
+    minmax(100px, 1.45fr)
+    minmax(104px, 1.12fr)
+    minmax(94px, 0.92fr)
+    minmax(84px, 0.95fr)
+    minmax(90px, 1fr)
+    minmax(94px, 1fr)
+    minmax(94px, 1fr);
+  gap: 0.25em;
   border: 1px solid var(--line-clr);
   cursor: pointer;
-  /* Добавляем курсор-указатель */
   user-select: none;
-  /* Запрещаем выделение текста */
+}
+
+.row-container {
+  align-items: start;
 }
 
 .rowGrid1.legal-cell {
@@ -326,6 +346,52 @@ body.main-body {
 .rowGrid1.legal-cell.is-empty {
   color: #94a3b8;
   font-weight: 500;
+}
+
+#inventoryTable th .th-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#inventoryTable th .filter-btn {
+  flex: 0 0 22px;
+  width: 22px;
+  min-width: 22px;
+  margin-left: 0;
+}
+
+/* серийник и бренд — после юр. лица места мало, фильтр не должен уезжать */
+#inventoryTable th:nth-child(3),
+#inventoryTable th:nth-child(4) {
+  gap: 1px;
+  padding-right: 2px;
+}
+
+#inventoryTable th:nth-child(3) .th-label,
+#inventoryTable th:nth-child(4) .th-label {
+  flex: 1 1 0;
+  max-width: calc(100% - 24px);
+  font-size: 0.84em;
+}
+
+#inventoryTable th.th-filter-compact {
+  flex-wrap: wrap;
+  align-content: center;
+  row-gap: 1px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#inventoryTable th.th-filter-compact .th-label {
+  flex: 1 1 100%;
+  max-width: 100%;
+  line-height: 1.15;
+}
+
+#inventoryTable th.th-filter-compact .filter-btn {
+  margin-left: auto;
 }
 
 .row-container:hover {

@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 date_default_timezone_set('Europe/Moscow');
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -155,9 +158,13 @@ class processCUDInventoryItem extends CUDHandler
             return;
         }
 
-        $location->FormsJointStockCompanies = $legalEntity;
         $locationRepo = new LocationRepository(DatabaseFactory::create());
-        $locationRepo->save($location);
+        try {
+            $locationRepo->updateLegalEntity((int) $location->IDLocation, $legalEntity);
+            $location->FormsJointStockCompanies = $legalEntity;
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage());
+        }
     }
 
     private function getMainWarehouse(): ?Location

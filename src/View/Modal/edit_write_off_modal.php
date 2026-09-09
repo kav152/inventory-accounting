@@ -71,15 +71,18 @@ $singleRepairMode = !empty($singleRepairMode);
                                         <?php if (!$singleRepairMode): ?>
                                             <div class="mb-2 text-muted small">Запись №<?= (int) $repair->ID_Repair ?></div>
                                         <?php endif; ?>
+                                        <?php // после сохранения счёта строка в реестре станет «проверено» ?>
                                         <div class="row mb-2">
                                             <div class="col-md-4">
                                                 <label class="form-label">№ счета</label>
                                                 <input type="text" class="form-control invoice-number"
+                                                    placeholder="Укажите номер счёта"
                                                     value="<?= htmlspecialchars($repair->InvoiceNumber ?? '') ?>">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">№ УПД</label>
                                                 <input type="text" class="form-control upd-number"
+                                                    placeholder="Укажите номер УПД"
                                                     value="<?= htmlspecialchars($repair->UPD ?? '') ?>">
                                             </div>
                                             <div class="col-md-4">

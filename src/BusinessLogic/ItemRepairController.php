@@ -7,6 +7,7 @@ ini_set('error_log', __DIR__ . '/../storage/logs/ItemRepairController.log');
 require_once __DIR__ . '/../BusinessLogic/ItemController.php';
 
 require_once __DIR__ . '/../Repositories/RepairItemRepository.php';
+require_once __DIR__ . '/Action.php';
 require_once __DIR__ . '/../Repositories/InventoryItemRepository.php';
 require_once __DIR__ . '/../Repositories/LocationRepository.php';
 
@@ -57,6 +58,256 @@ class ItemRepairController
     {
         $ressult = $this->repairManager($data, $filename, OperationType::SEND_REPAIR) ?? null;
         return $ressult;
+    }
+
+    /**
+     * Кладовщик кидает в сервис — сразу «В ремонте», счёт потом в архиве.
+     */
+    public function registerPendingServiceSend(int $tmcId, string $note, string $operationDate = ''): ?RepairItem
+    {
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $item = $inventoryItemRepository->findById($tmcId, 'ID_TMC');
+        if ($item === null) {
+            throw new Exception("ТМЦ {$tmcId} не найден");
+        }
+
+        $status = (int) ($item->Status ?? -1);
+        if ($status === StatusItem::WrittenOff) {
+            throw new Exception("ТМЦ {$tmcId} списан");
+        }
+
+        $dateToService = $this->normalizeRepairDate($operationDate);
+
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $openRepairs = $repairItemRepository->findBy(
+            'WHERE ID_TMC = ' . (int) $tmcId . ' AND DateReturnService IS NULL ORDER BY ID_Repair'
+        );
+
+        $itemController = new ItemController();
+        if ($openRepairs !== null && $openRepairs->count() > 0) {
+            $open = $openRepairs->last();
+            if ($dateToService !== '' && (string) ($open->DateToService ?? '') !== $dateToService) {
+                $open->DateToService = $dateToService;
+                $repairItemRepository->save($open);
+            }
+            $itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC);
+            $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $note);
+            return $open;
+        }
+
+        if ($status === StatusItem::Repair) {
+            throw new Exception("ТМЦ {$tmcId} уже в сервисе — сначала верните из сервиса");
+        }
+
+        // Устаревшие записи «Подтвердить ремонт» — переводим в нормальный поток
+        if ($status === StatusItem::ConfirmRepairTMC) {
+            $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
+            $locationId = (int) ($item->IDLocation ?? 0);
+            if ($locationId <= 0) {
+                $main = $itemController->getMainWarehouse();
+                $locationId = (int) ($main->IDLocation ?? 0);
+            }
+            $repairItem = new RepairItem([
+                'ID_TMC' => $tmcId,
+                'IDLocation' => $locationId,
+                'InvoiceNumber' => '',
+                'RepairCost' => 0,
+                'RepairDescription' => $description,
+                'UPD' => '',
+                'DateToService' => $dateToService,
+            ]);
+            $saved = $repairItemRepository->save($repairItem, Action::CREATE);
+            if (!$saved) {
+                throw new Exception("Не удалось создать запись ремонта для ТМЦ {$tmcId}");
+            }
+            $itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC);
+            $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $description);
+            return $saved;
+        }
+
+        $locationId = (int) ($item->IDLocation ?? 0);
+        if ($locationId <= 0) {
+            $main = $itemController->getMainWarehouse();
+            $locationId = (int) ($main->IDLocation ?? 0);
+        }
+        if ($locationId <= 0) {
+            throw new Exception("Не указана локация для ТМЦ {$tmcId}");
+        }
+
+        $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
+        $repairItem = new RepairItem([
+            'ID_TMC' => $tmcId,
+            'IDLocation' => $locationId,
+            'InvoiceNumber' => '',
+            'RepairCost' => 0,
+            'RepairDescription' => $description,
+            'UPD' => '',
+            'DateToService' => $dateToService,
+        ]);
+
+        $saved = $repairItemRepository->save($repairItem, Action::CREATE);
+        if (!$saved) {
+            throw new Exception("Не удалось создать запись ремонта для ТМЦ {$tmcId}");
+        }
+
+        $itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC);
+        $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $description);
+
+        return $saved;
+    }
+
+    private function normalizeRepairDate(string $operationDate): string
+    {
+        $operationDate = trim($operationDate);
+        if ($operationDate === '') {
+            return date('Y-m-d\TH:i:s');
+        }
+        try {
+            return (new DateTime($operationDate))->format('Y-m-d\TH:i:s');
+        } catch (Exception $e) {
+            return date('Y-m-d\TH:i:s');
+        }
+    }
+
+    /**
+     * Админ согласовал ремонт — сохраняем счёт, переводим в «В ремонте».
+     */
+    public function approveRepair(int $repairId, int $tmcId, array $data): bool
+    {
+        $invoice = trim((string) ($data['InvoiceNumber'] ?? ''));
+        if ($invoice === '') {
+            throw new Exception('Укажите № счёта');
+        }
+        $upd = trim((string) ($data['UPD'] ?? ''));
+
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        if ($repairId > 0) {
+            $current = $repairItemRepository->findById($repairId, 'ID_Repair');
+            if (!$current) {
+                throw new Exception('Запись ремонта не найдена');
+            }
+            $this->updateRepair([
+                'ID_Repair' => $repairId,
+                'ID_TMC' => $tmcId,
+                'IDLocation' => (int) ($data['IDLocation'] ?? $current->IDLocation ?? 0),
+                'InvoiceNumber' => $invoice,
+                'RepairCost' => (float) ($data['RepairCost'] ?? $current->RepairCost ?? 0),
+                'RepairDescription' => (string) ($data['RepairDescription'] ?? $current->RepairDescription ?? ''),
+                'UPD' => $upd !== '' ? $upd : (string) ($current->UPD ?? ''),
+                'inBasket' => 0,
+            ]);
+        } else {
+            $itemController = new ItemController();
+            $item = $itemController->getInventoryItem($tmcId);
+            $locationId = (int) ($data['IDLocation'] ?? $item->IDLocation ?? 0);
+            if ($locationId <= 0) {
+                throw new Exception('Не указана организация сервиса');
+            }
+            $repairItem = new RepairItem([
+                'ID_TMC' => $tmcId,
+                'IDLocation' => $locationId,
+                'InvoiceNumber' => $invoice,
+                'RepairCost' => (float) ($data['RepairCost'] ?? 0),
+                'RepairDescription' => (string) ($data['RepairDescription'] ?? 'Согласовано'),
+                'UPD' => $upd,
+            ]);
+            $saved = $repairItemRepository->save($repairItem, Action::CREATE);
+            if (!$saved) {
+                throw new Exception('Не удалось создать запись ремонта');
+            }
+        }
+
+        $itemController = new ItemController();
+        $itemController->changeStatusTMC($tmcId, StatusItem::Repair);
+        $itemController->logHistoryOperation(
+            OperationType::SEND_REPAIR,
+            $tmcId,
+            null,
+            $invoice
+        );
+
+        return true;
+    }
+
+    /**
+     * Админ отказал в ремонте — возврат ТМЦ на объект.
+     */
+    public function rejectRepair(int $tmcId, string $reason = ''): bool
+    {
+        $itemController = new ItemController();
+        $reason = trim($reason) !== '' ? trim($reason) : 'Отказ в согласовании ремонта';
+        return $itemController->sendToService($tmcId, 1, $reason);
+    }
+
+    /**
+     * ТМЦ без счёта + старые записи в статусе ConfirmRepairTMC.
+     * @return array<int, object|RepairItem>
+     */
+    public function getRepairsPendingInvoice(): array
+    {
+        $items = [];
+        $seenTmc = [];
+
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $locationRepository = $this->container->get(LocationRepository::class);
+
+        $repairItemRepository->addRelationship('InventoryItem', $inventoryItemRepository, 'ID_TMC', 'ID_TMC');
+        $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+
+        $query = "SELECT RepairItem.*, InventoryItem.*, Location.*
+            FROM RepairItem
+            LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
+            LEFT JOIN Location ON RepairItem.IDLocation = Location.IDLocation
+            WHERE RepairItem.inBasket = 0
+              AND InventoryItem.Status IN (" . StatusItem::Repair . ", " . StatusItem::ConfirmRepairTMC . ")
+              AND (
+                RepairItem.InvoiceNumber IS NULL
+                OR LTRIM(RTRIM(RepairItem.InvoiceNumber)) = ''
+              )
+            ORDER BY RepairItem.DateToService DESC";
+
+        $repairs = $repairItemRepository->getAll($query);
+        if ($repairs) {
+            foreach ($repairs as $repair) {
+                $items[] = $repair;
+                $seenTmc[(int) $repair->ID_TMC] = true;
+            }
+        }
+
+        $inventoryItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+        $legacy = $inventoryItemRepository->findBy(
+            'WHERE Status = ' . StatusItem::ConfirmRepairTMC . ' ORDER BY NameTMC'
+        );
+        if ($legacy) {
+            foreach ($legacy as $inv) {
+                $id = (int) ($inv->ID_TMC ?? 0);
+                if ($id > 0 && !isset($seenTmc[$id])) {
+                    $items[] = (object) [
+                        'ID_Repair' => 0,
+                        'ID_TMC' => $id,
+                        'isLegacyConfirm' => true,
+                        'InventoryItem' => $inv,
+                        'RepairDescription' => '',
+                        'InvoiceNumber' => '',
+                    ];
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    public function countRepairsPendingInvoice(): int
+    {
+        $seen = [];
+        foreach ($this->getRepairsPendingInvoice() as $item) {
+            $id = (int) ($item->ID_TMC ?? 0);
+            if ($id > 0) {
+                $seen[$id] = true;
+            }
+        }
+        return count($seen);
     }
     public function writeOffItem($data, $filename): ?object
     {
@@ -256,6 +507,10 @@ class ItemRepairController
             LEFT JOIN User ON RegistrationInventoryItem.CurrentUser = User.IDUser          
             WHERE RepairItem.inBasket = 0";*/
 
+        $statusRepair = (int) StatusItem::Repair;
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+
+        // архив: только ТМЦ на согласовании / в ремонте (без списанных и «на объекте»)
         $query = "SELECT 
             RepairItem.*,
             InventoryItem.*,
@@ -264,12 +519,13 @@ class ItemRepairController
             [User].*,
             RegistrationInventoryItem.*
         FROM RepairItem
-        LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
+        INNER JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
         LEFT JOIN Location ON InventoryItem.IDLocation = Location.IDLocation
         LEFT JOIN BrandTMC ON InventoryItem.IDBrandTMC = BrandTMC.IDBrandTMC
         LEFT JOIN RegistrationInventoryItem ON InventoryItem.ID_TMC = RegistrationInventoryItem.IDRegItem
         LEFT JOIN [User] ON RegistrationInventoryItem.CurrentUser = [User].IDUser
-        WHERE RepairItem.inBasket = 0";
+        WHERE RepairItem.inBasket = 0
+          AND InventoryItem.Status IN ({$statusRepair}, {$statusConfirm})";
 
         $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
         $repairItemRepository->addRelationship('InventoryItem', $inventoryItemRepository, 'ID_TMC', 'ID_TMC');
@@ -592,11 +848,13 @@ class ItemRepairController
     }
 
     /**
-     * Списанные ТМЦ для мини-окна на главной
+     * Краткий список списанных для модалки на home.
+     * Берём по Status=Списано, без истории ремонтов.
      */
     public function getWrittenOffSummary(int $limit = 50): array
     {
-        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $limit = max(1, min(200, (int) $limit));
+        $statusWrittenOff = (int) StatusItem::WrittenOff;
         $sql = "
             SELECT TOP {$limit}
                 ii.ID_TMC,
@@ -608,10 +866,19 @@ class ItemRepairController
             FROM InventoryItem ii
             LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
             LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
-            WHERE ii.Status = " . StatusItem::WrittenOff . "
+            WHERE ii.Status = {$statusWrittenOff}
             ORDER BY ii.ID_TMC DESC
         ";
-        $rows = $inventoryItemRepository->getAll_array($sql) ?? [];
+
+        $pdo = DatabaseFactory::create()->getConnection();
+        $stmt = $pdo->query($sql);
+        if ($stmt === false) {
+            // query() молча падает — лучше явная ошибка в json
+            $error = $pdo->errorInfo();
+            throw new Exception($error[2] ?? 'Ошибка запроса списанных ТМЦ');
+        }
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $items = [];
         foreach ($rows as $row) {
             $items[] = [

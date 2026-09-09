@@ -41,6 +41,14 @@ class CUDGenericService
             // $errors = $this->validateEntity($entityObject);
 
             $result = $this->repository->save($entityObject);
+            if ($result === null) {
+                throw new ValidationException(
+                    "Не удалось создать {$this->entityName} в базе данных",
+                    500,
+                    null,
+                    [$this->entityName => $entityObject->name ?? 'Unknown']
+                );
+            }
             // $this->logger->info("{$this->entityName} создан: " . $entityObject->name);
             return $result;
         } catch (Exception $e) {
@@ -79,6 +87,14 @@ class CUDGenericService
 
             $this->updateProperties($entityObject, $existingEntity);
             $result = $this->repository->save($existingEntity);
+            if ($result === null) {
+                throw new ValidationException(
+                    "Не удалось сохранить {$this->entityName} в базе данных",
+                    500,
+                    null,
+                    ['id' => $entityObject->getID()]
+                );
+            }
 
             // $this->logger->info("{$this->entityName} обновлен: " . $existingEntity->name);
             return $result;

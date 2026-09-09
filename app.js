@@ -29,14 +29,35 @@
     const id = event.currentTarget.dataset.id;
     event.preventDefault();
 
-    // Обновляем URL без перезагрузки страницы
-    //history.pushState(null, `?selected=${id}`);
+    // выделяем строку для действий меню (в сервис / передать и т.д.)
+    document.querySelectorAll("#inventoryTable tr.row-container.selected").forEach((r) => {
+      r.classList.remove("selected");
+    });
+    event.currentTarget.classList.add("selected");
+
     try {
       const response = await fetch(
         `/src/View/cardItem.php?id=${encodeURIComponent(id)}`
       );
       const data = await response.text();
-      document.getElementById("resultContainer").innerHTML = data;
+      const container = document.getElementById("resultContainer");
+      container.innerHTML = data;
+
+      // inline-скрипты из cardItem.php не выполняются при innerHTML
+      container.querySelectorAll("script").forEach((script) => {
+        const run = document.createElement("script");
+        if (script.src) {
+          run.src = script.src;
+        } else {
+          run.textContent = script.textContent;
+        }
+        document.body.appendChild(run);
+        run.remove();
+      });
+
+      if (typeof window.initCardItemPanel === "function") {
+        window.initCardItemPanel(container);
+      }
     } catch (error) {
       console.error("Ошибка:", error);
       document.getElementById(

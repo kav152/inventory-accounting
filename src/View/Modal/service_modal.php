@@ -55,14 +55,21 @@
         border-bottom-right-radius: 6px;
     }
 
-    /* Особые стили для столбца с причиной ремонта */
-    .service-items-table td:nth-child(3) {
-        min-width: 300px;
-        /* Минимальная ширина столбца */
-        width: 50%;
-        /* Стартовая ширина */
-        max-width: 600px;
-        /* Максимальная ширина */
+    .service-items-table td:nth-child(4) {
+        min-width: 280px;
+        width: 45%;
+        max-width: 560px;
+    }
+
+    .service-date-input {
+        width: 100%;
+        min-width: 150px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: white;
+        color: black;
+        box-sizing: border-box;
     }
 
     .repair-reason-input {
@@ -88,7 +95,8 @@
         /* Добавляем скролл при необходимости */
     }
 
-    .repair-reason-input.error {
+    .repair-reason-input.error,
+    .service-date-input.error {
         border-color: #dc3545;
         box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
     }
@@ -106,6 +114,7 @@
                         <tr>
                             <th>Ид.</th>
                             <th>Наименование</th>
+                            <th id="colServiceDate">Дата отправки в ремонт</th>
                             <th id="colReason">Причина ремонта</th>
                         </tr>
                     </thead>

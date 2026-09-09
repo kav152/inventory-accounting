@@ -22,8 +22,6 @@ abstract class CUDHandler
      */
     public function handleRequest()
     {
-        header('Content-Type: application/json');
-
         try {
             // Проверка метода
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -47,11 +45,26 @@ abstract class CUDHandler
             $result = $this->executeAction($action, $data, $id, $patofID);
 
             // Формирование ответа
+            $this->beginJsonResponse();
             $this->sendSuccessResponse($result, $action);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            error_log('CUDHandler [' . $this->entityClass . ']: ' . $e->getMessage());
+            $this->beginJsonResponse();
             $this->sendErrorResponse($e->getMessage());
         }
+    }
+
+    private function beginJsonResponse(): void
+    {
+        while (ob_get_level() > 0) {
+            $stray = ob_get_clean();
+            if (is_string($stray) && trim($stray) !== '') {
+                error_log('CUDHandler stray output: ' . substr($stray, 0, 500));
+            }
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
     }
 
     /**
@@ -139,15 +152,16 @@ abstract class CUDHandler
         //error_log('Тут результаты успешного добавления сущности');
         //error_log(print_r($result, true));
 
+        $resultEntity = $this->prepareResultEntity($result);
         $response = [
             'success' => true,
             'message' => $this->getSuccessMessage($action),
-            'resultEntity' => $this->prepareResultEntity($result),
-            'fields' => $this->getFields($this->prepareResultEntity($result)),
+            'resultEntity' => $resultEntity,
+            'fields' => is_array($resultEntity) ? $this->getFields($resultEntity) : [],
             'statusCUD' => $action
         ];
 
-        echo json_encode($response);
+        echo json_encode($response, JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -158,7 +172,7 @@ abstract class CUDHandler
         echo json_encode([
             'success' => false,
             'message' => $message
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
     }
 
     /**

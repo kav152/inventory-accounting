@@ -81,7 +81,7 @@ async function sendServiceForm(tmcId) {
   const data = await response.json();
   if (data.success) {
     removeAtWorkItemFromModal(tmcId);
-    updateInventoryStatus([tmcId], StatusItem.ConfirmRepairTMC);
+    updateInventoryStatus([tmcId], StatusItem.Repair);
     updateCounters({ brigadesToItemsCount: -1, confirmRepairCount: 1 });
   } else {
     showNotification(TypeMessage.error, data.message || "Ошибка при отправке в сервис");

@@ -162,15 +162,29 @@ function updateRowsInTable(
 
   // Обновляем ячейки
   fields.forEach((column, index) => {
-    console.log(column);
     const td = existingRow.cells[index];
-    console.log(`Строка - ${td}`);
-    if (td) {
-      let value = getNestedValue(entity, column);
-      if (column.format && typeof column.format === "function") {
-        value = column.format(value);
+    if (!td) return;
+
+    let value = getNestedValue(entity, column);
+    if (column.format && typeof column.format === "function") {
+      value = column.format(value);
+    }
+
+    const text = value || "";
+    td.textContent = text;
+
+    if (tableId === "inventoryTable" && index === 7) {
+      const legalText = text.trim();
+      td.classList.add("rowGrid1", "legal-cell");
+      td.classList.toggle("is-empty", !legalText);
+      td.textContent = legalText || "не указано";
+      td.title = legalText
+        ? legalText
+        : "Заполните юр. лицо в Админка → Локации";
+      existingRow.setAttribute("data-legal", legalText);
+      if (typeof window.refreshRowSearchBlob === "function") {
+        window.refreshRowSearchBlob(existingRow);
       }
-      td.textContent = value || "";
     }
   });
 }

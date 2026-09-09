@@ -348,7 +348,11 @@ class GenericRepository implements RepositoryInterface
                 $placeholders[] = 'GETDATE()';
             } else {
                 $placeholders[] = ":$prop";
-                $params[":$prop"] = $entity->$prop;
+                $value = $entity->$prop;
+                if (is_bool($value)) {
+                    $value = $value ? 1 : 0;
+                }
+                $params[":$prop"] = $value;
             }
         }
 
@@ -413,7 +417,11 @@ class GenericRepository implements RepositoryInterface
                 $setParts[] = "$prop = GETDATE()"; //для mysql - NOW()
             } else {
                 $setParts[] = "$prop = :$prop";
-                $params[":$prop"] = $entity->$prop;
+                $value = $entity->$prop;
+                if (is_bool($value)) {
+                    $value = $value ? 1 : 0;
+                }
+                $params[":$prop"] = $value;
             }
         }
 
@@ -520,6 +528,47 @@ class GenericRepository implements RepositoryInterface
                 'id' => $id
             ]);
             return false;
+        }
+    }
+
+    /**
+     * Обновить одно поле без полного save() сущности
+     */
+    public function updateScalarField(
+        int $id,
+        string $field,
+        mixed $value,
+        ?string $idField = null
+    ): bool {
+        if ($idField === null) {
+            $tempEntity = new $this->entityClass([]);
+            $idField = $tempEntity instanceof BaseEntity
+                ? $tempEntity->getIdFieldName()
+                : 'id';
+        }
+
+        if (is_bool($value)) {
+            $value = $value ? 1 : 0;
+        }
+
+        $sql = "UPDATE {$this->tableName} SET {$field} = :value WHERE {$idField} = :id";
+
+        try {
+            $pdo = $this->database->getConnection();
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $stmt = $pdo->prepare($sql);
+            return $stmt->execute([
+                ':value' => $value,
+                ':id' => $id,
+            ]);
+        } catch (PDOException $e) {
+            $this->logAction('ERROR', 'Ошибка обновления поля', [
+                'message' => $e->getMessage(),
+                'sql' => $sql,
+                'id' => $id,
+                'field' => $field,
+            ]);
+            throw $e;
         }
     }
 }
