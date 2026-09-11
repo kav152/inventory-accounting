@@ -1,4 +1,5 @@
 <?php
+ob_start();
 date_default_timezone_set('Europe/Moscow');
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -32,7 +33,7 @@ class processCUDLocation extends CUDHandler
             'Email' => $postData['Email'] ?? null,
             'idRelatedEntity' => $postData['idRelatedEntity'] ?? null,
             'isMainWarehouse' => isset($postData['isMainWarehouse']) ? (int) $postData['isMainWarehouse'] : 0,
-            'FormsJointStockCompanies' => $postData['FormsJointStockCompanies'] ?? null,
+            'FormsJointStockCompanies' => trim((string) ($postData['FormsJointStockCompanies'] ?? '')),
             'IsRepair' => isset($postData['IsRepair']) ? (int) $postData['IsRepair'] : 0,
             'IDCity' => isset($postData['IDCity']) ? (int) $postData['IDCity'] : null,
         ];
@@ -41,17 +42,29 @@ class processCUDLocation extends CUDHandler
     protected function create($data, ?int $patofID = null)
     {
         $location = parent::create($data);
-        return $location;
+        if (!$location || !$location->getId()) {
+            return $location;
+        }
+        return $this->locationController->getLocation((int) $location->getId());
     }
+
     protected function update($id, $data, int|null $patofID = null)
     {
-        $location = parent::update($data['IDLocation'], $data);
-        $this->locationController->getLocation($data['IDLocation']);
+        parent::update($id, $data);
+        $location = $this->locationController->getLocation((int) $data['IDLocation']);
+        if (!$location || !$location->getId()) {
+            throw new Exception('Не удалось загрузить локацию после сохранения');
+        }
+
         return $location;
     }
 
     protected function prepareResultEntity($location)
     {
+        if (!$location) {
+            throw new Exception('Локация не найдена');
+        }
+
         return [
             'id' => $location->getId(),
             'NameLocation' => $location->NameLocation ?? '',
@@ -61,8 +74,10 @@ class processCUDLocation extends CUDHandler
             'Contacts' => $location->Contacts ?? '',
             'Email' => $location->Email ?? '',
             'FormsJointStockCompanies' => $location->FormsJointStockCompanies ?? '',
+            'isMainWarehouse' => (int) ($location->isMainWarehouse ?? 0),
             'City' => [
                 'NameCity' => $location->City?->NameCity ?? '',
+                'Address' => $location->City?->Address ?? '',
             ],
         ];
     }

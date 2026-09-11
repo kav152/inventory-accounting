@@ -9,6 +9,7 @@ export const FilterConfigs = {
         containerId: 'cont1',
         rowSelector: 'tbody tr.row-container',
         excludeColumns: [],
+        compactHeaderColumns: [2, 3],
         onRowCountChanged: (visibleCount, totalCount) => {
             const counter = document.getElementById('row-counter');
             if (counter) {

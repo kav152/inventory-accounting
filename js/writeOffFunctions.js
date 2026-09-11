@@ -2,10 +2,38 @@ import { showNotification } from './modals/setting.js';
 import { TypeMessage } from '../src/constants/typeMessage.js';
 import { Action } from '../src/constants/actions.js';
 import { StatusItem } from '../src/constants/statusItem.js';
+import { ServiceStatus } from '../src/constants/statusService.js';
 import {
   executeEntityAction,
   getCollectFormData,
 } from "./templates/entityActionTemplate.js";
+
+function getWriteOffSelection(idFromBtn = null) {
+  if (idFromBtn != null && idFromBtn !== "") {
+    const row = document.querySelector(`.main-row[data-id="${idFromBtn}"]`);
+    return { id: String(idFromBtn), row };
+  }
+
+  const row =
+    window.selectedRow ||
+    document.querySelector("#writeOffTable tbody tr.main-row.selected");
+
+  if (!row) {
+    return { id: null, row: null };
+  }
+
+  return { id: row.getAttribute("data-id"), row };
+}
+
+function removeWriteOffRow(id) {
+  const row = document.querySelector(`.main-row[data-id="${id}"]`);
+  const detailsRow = document.getElementById(`details-${id}`);
+  row?.remove();
+  detailsRow?.remove();
+  if (window.selectedRow?.getAttribute("data-id") === String(id)) {
+    window.selectedRow = null;
+  }
+}
 
 
 (function () {
@@ -116,57 +144,103 @@ import {
     return data;
   }
 
+  async function returnFromRepairById(id, note = "Возврат из архива ремонта") {
+    const response = await fetch(
+      "/src/BusinessLogic/ActionsTMC/processSendToService.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          statusService: ServiceStatus.returnService,
+          items: [{ id: parseInt(id, 10), reason: note }],
+        }),
+      }
+    );
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.message || "Не удалось вернуть ТМЦ из ремонта");
+    }
+    return data;
+  }
+
   async function returnToWorkTMC(idFromBtn = null) {
-    const id = idFromBtn || (typeof selectedRow !== "undefined" && selectedRow
-      ? selectedRow.getAttribute("data-id")
-      : null);
-    const row = id
-      ? document.querySelector(`.main-row[data-id="${id}"]`)
-      : (typeof selectedRow !== "undefined" ? selectedRow : null);
+    const { id, row } = getWriteOffSelection(idFromBtn);
 
     if (!id) {
-      showNotification(TypeMessage.notification, "Пожалуйста, выберите списанную запись.");
+      showNotification(TypeMessage.notification, "Выберите запись в таблице");
       return;
     }
 
-    const statusAttr = row?.getAttribute("data-status");
-    if (statusAttr != null && parseInt(statusAttr, 10) !== StatusItem.WrittenOff) {
-      showNotification(TypeMessage.notification, "Выберите списанные ТМЦ");
+    const status = parseInt(row?.getAttribute("data-status"), 10);
+
+    if (status === StatusItem.WrittenOff) {
+      if (!confirm("Вернуть ТМЦ из списания на склад?")) {
+        return;
+      }
+
+      try {
+        await cancelWriteOffById(id);
+        removeWriteOffRow(id);
+
+        const miniRow = document.querySelector(`#writtenOffMiniBody tr[data-id="${id}"]`);
+        miniRow?.remove();
+        const countEl = document.getElementById("writtenOffMiniCount");
+        if (countEl && document.getElementById("writtenOffMiniBody")) {
+          const left = document.querySelectorAll("#writtenOffMiniBody tr[data-id]").length;
+          countEl.textContent = left + " записей";
+        }
+
+        showNotification(TypeMessage.success, "Списанное ТМЦ возвращено на склад");
+        if (typeof applyFilters === "function") {
+          applyFilters();
+        }
+        if (typeof updateInventoryStatus === "function") {
+          updateInventoryStatus([id], StatusItem.NotDistributed);
+        } else if (typeof window.updateInventoryStatus === "function") {
+          window.updateInventoryStatus([id], StatusItem.NotDistributed);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showNotification(TypeMessage.error, error.message || String(error));
+      }
       return;
     }
 
-    if (!confirm("Вернуть ТМЦ из списания на склад?")) {
+    if (
+      status === StatusItem.Repair ||
+      status === StatusItem.ConfirmRepairTMC
+    ) {
+      if (!confirm("Вернуть ТМЦ из ремонта в работу?")) {
+        return;
+      }
+
+      try {
+        await returnFromRepairById(id);
+        removeWriteOffRow(id);
+
+        showNotification(TypeMessage.success, "ТМЦ возвращено из ремонта");
+        if (typeof applyFilters === "function") {
+          applyFilters();
+        }
+        if (typeof updateInventoryStatus === "function") {
+          updateInventoryStatus([id], StatusItem.Released);
+        } else if (typeof window.updateInventoryStatus === "function") {
+          window.updateInventoryStatus([id], StatusItem.Released);
+        }
+        if (typeof window.updateCounters === "function") {
+          window.updateCounters({ confirmRepairCount: -1 });
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showNotification(TypeMessage.error, error.message || String(error));
+      }
       return;
     }
 
-    try {
-      await cancelWriteOffById(id);
-
-      const detailsRow = document.getElementById(`details-${id}`);
-      row?.remove();
-      detailsRow?.remove();
-
-      const miniRow = document.querySelector(`#writtenOffMiniBody tr[data-id="${id}"]`);
-      miniRow?.remove();
-      const countEl = document.getElementById("writtenOffMiniCount");
-      if (countEl && document.getElementById("writtenOffMiniBody")) {
-        const left = document.querySelectorAll("#writtenOffMiniBody tr[data-id]").length;
-        countEl.textContent = left + " записей";
-      }
-
-      showNotification(TypeMessage.success, "Списанное ТМЦ возвращено на склад");
-      if (typeof applyFilters === "function") {
-        applyFilters();
-      }
-      if (typeof updateInventoryStatus === "function") {
-        updateInventoryStatus([id], StatusItem.NotDistributed);
-      } else if (typeof window.updateInventoryStatus === "function") {
-        window.updateInventoryStatus([id], StatusItem.NotDistributed);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      showNotification(TypeMessage.error, error.message || String(error));
-    }
+    showNotification(
+      TypeMessage.notification,
+      "Возврат доступен только для списанных или находящихся в ремонте ТМЦ"
+    );
   }
 
   window.deleteRow = deleteRow;
@@ -174,6 +248,84 @@ import {
   window.returnToWorkTMC = returnToWorkTMC;
   window.cancelWriteOffById = cancelWriteOffById;
 })();
+
+async function postRepairApproval(payload) {
+  const response = await fetch(
+    "/src/BusinessLogic/ActionsTMC/processRepairApproval.php",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.message || "Ошибка операции");
+  }
+  return data;
+}
+
+export async function approveRepairLine(button) {
+  const row = button.closest(".repair-line");
+  if (!row) return;
+
+  const tmcId = parseInt(button.getAttribute("data-tmc-id") || row.dataset.tmcId, 10);
+  const repairId = parseInt(button.getAttribute("data-repair-id") || row.dataset.repairId, 10);
+  const invoice = (row.querySelector(".repair-invoice-input")?.value || "").trim();
+  const upd = (row.querySelector(".repair-upd-input")?.value || "").trim();
+  const repairCost = row.querySelector(".repair-cost-input")?.value || "0";
+  const locationId = parseInt(row.dataset.locationId || "0", 10);
+
+  if (!invoice) {
+    showNotification(TypeMessage.notification, "Укажите № счёта");
+    row.querySelector(".repair-invoice-input")?.focus();
+    return;
+  }
+
+  try {
+    await postRepairApproval({
+      action: "approve",
+      tmcId,
+      repairId,
+      invoiceNumber: invoice,
+      updNumber: upd,
+      repairCost,
+      locationId,
+    });
+    showNotification(TypeMessage.success, "Ремонт согласован");
+    window.location.reload();
+  } catch (error) {
+    showNotification(TypeMessage.error, error.message || "Ошибка согласования");
+  }
+}
+
+export async function rejectRepairLine(button) {
+  const row = button.closest(".repair-line");
+  if (!row) return;
+
+  const tmcId = parseInt(button.getAttribute("data-tmc-id") || row.dataset.tmcId, 10);
+  const repairId = parseInt(button.getAttribute("data-repair-id") || row.dataset.repairId, 10);
+
+  if (!confirm("Отказать в согласовании ремонта и вернуть ТМЦ на объект?")) {
+    return;
+  }
+
+  try {
+    await postRepairApproval({
+      action: "reject",
+      tmcId,
+      repairId,
+      reason: "Отказ в согласовании ремонта",
+    });
+    showNotification(TypeMessage.success, "В согласовании отказано");
+    window.location.reload();
+  } catch (error) {
+    showNotification(TypeMessage.error, error.message || "Ошибка отказа");
+  }
+}
+
+window.approveRepairLine = approveRepairLine;
+window.rejectRepairLine = rejectRepairLine;
 
 async function writeOffToolDirect() {
   const rows = document.querySelectorAll("#inventoryTable tr.row-container.selected");

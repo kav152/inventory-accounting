@@ -150,7 +150,7 @@ function updateStatusClasses(row, newStatus) {
         if (countText) {
           countText.textContent = newCount;
         } else if (notification) {
-          notification.innerHTML = `Ремонты без счёта <span id="confirmRepairCountText">${newCount}</span> ТМЦ`;
+          notification.innerHTML = `Согласование ремонта <span id="confirmRepairCountText">${newCount}</span> ТМЦ`;
         }
         if (notification) {
           notification.style.display = newCount > 0 ? "block" : "none";

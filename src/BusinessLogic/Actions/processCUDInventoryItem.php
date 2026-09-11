@@ -158,11 +158,12 @@ class processCUDInventoryItem extends CUDHandler
             return;
         }
 
-        $location->FormsJointStockCompanies = $legalEntity;
         $locationRepo = new LocationRepository(DatabaseFactory::create());
-        $saved = $locationRepo->save($location);
-        if ($saved === null) {
-            throw new Exception('Не удалось сохранить юр. лицо для локации');
+        try {
+            $locationRepo->updateLegalEntity((int) $location->IDLocation, $legalEntity);
+            $location->FormsJointStockCompanies = $legalEntity;
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage());
         }
     }
 

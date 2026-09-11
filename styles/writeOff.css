@@ -493,6 +493,27 @@ body.writeoff-page {
   margin-right: 4px;
 }
 
+.status-on-site {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-at-work {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.repair-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.repair-actions .btn {
+  white-space: nowrap;
+}
+
 .doc-stack {
   display: flex;
   align-items: center;

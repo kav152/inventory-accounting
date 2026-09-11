@@ -17,6 +17,7 @@ import { showNotification } from './setting.js';
   window.openModalAction = openModalAction;
   window.openEntityModal = openEntityModal;
   window.statusEntity = statusEntity;
+  window.currentModalType = null;
 })();
 
 /**
@@ -115,6 +116,7 @@ async function openModalAction(
   additionalParams = {}
 ) {
   const modalContainer = document.getElementById("modalContainer");
+  window.currentModalType = type;
   try {
     const params = new URLSearchParams();
     params.append("type", type);
@@ -280,13 +282,18 @@ function fillInTable(type, cells = [], row = null) {
     }
     case "serviceModal":
       const id = cells[0].textContent.trim();
+      const today = new Date().toISOString().slice(0, 10);
       html = `
             <tr>
                 <td>${id}</td>
                 <td>${cells[1].textContent}</td>
                 <td>
+                    <input type="date" class="service-date-input"
+                           data-id="${id}" value="${today}" required>
+                </td>
+                <td>
                     <textarea class="repair-reason-input" 
-                              data-id="${cells[0].textContent.trim()}" 
+                              data-id="${id}" 
                               required></textarea>
                 </td>
             </tr>
@@ -333,6 +340,7 @@ function getServiceModalParams(validStatuses) {
   if (isReturnMode && !isSendMode) {
     params = {
       nameColumn: "Комментарии",
+      dateColumn: "Дата возврата",
       nameBt: "Вернуть",
       title: "Вернуть из сервиса",
       statusService: ServiceStatus.returnService,
@@ -340,6 +348,7 @@ function getServiceModalParams(validStatuses) {
   } else {
     params = {
       nameColumn: "Причина ремонта",
+      dateColumn: "Дата отправки в ремонт",
       nameBt: "Отправить",
       title: "Отправить в сервис",
       statusService: ServiceStatus.sendService,
@@ -347,6 +356,8 @@ function getServiceModalParams(validStatuses) {
   }
 
   document.getElementById("colReason").textContent = params.nameColumn;
+  const colDate = document.getElementById("colServiceDate");
+  if (colDate) colDate.textContent = params.dateColumn;
   document.getElementById("title").textContent = params.title;
   document.getElementById("btnSubmitService").textContent = params.nameBt;
 

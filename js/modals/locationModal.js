@@ -3,9 +3,8 @@ import {
   getCollectFormData,
 } from "../templates/entityActionTemplate.js";
 import { Action } from "../../src/constants/actions.js";
-import { executeActionForCUD } from "../templates/cudRowsInTable.js";
-
-(function () {})();
+import { modalRegistry } from "../modalTypes.js";
+import { syncLocationTableRow } from "./locationTableRows.js";
 
 /**
  * Обработчик работы модального окна location
@@ -50,6 +49,16 @@ function initDynamicElements(modalElement) {
       : "Добавить локацию";
 }
 
+function getLocationTableTarget() {
+  const modalType = window.currentModalType || "locationModal";
+  const config = modalRegistry.getByModalType(modalType);
+  return {
+    tableId: config?.tableContainerId || "locationTableContainer",
+    rowClass: config?.rowClass || "row-location",
+    showMainBadge: modalType === "locationModal",
+  };
+}
+
 async function handleLocationFormSubmit(modalElement) {
   const form = modalElement.querySelector("#locationForm");
 
@@ -71,17 +80,19 @@ async function handleLocationFormSubmit(modalElement) {
         (window.statusEntity === Action.CREATE ? "добавлена" : "обновлена"),
     });
 
-    executeActionForCUD(
+    const { tableId, rowClass, showMainBadge } = getLocationTableTarget();
+    syncLocationTableRow(
       window.statusEntity,
       result.resultEntity,
-      "locationTableContainer",
-      result.fields,
-      "row-location",
-      "id"
+      tableId,
+      rowClass,
+      { showMainBadge },
     );
 
-    needFullReload = true;
-    hideGlobalLoader();
+    if (typeof window.hideGlobalLoader === "function") {
+      window.hideGlobalLoader();
+    }
+
     const modalInstance = bootstrap.Modal.getInstance(modalElement);
     modalInstance.hide();
   } catch (error) {

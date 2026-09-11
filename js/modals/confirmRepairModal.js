@@ -48,7 +48,7 @@ function decrementRepairArchiveCounter() {
     notification.classList.toggle("is-empty", count === 0);
     notification.style.display = count > 0 ? "block" : "none";
     if (count === 0) {
-      notification.innerHTML = `Ремонты без счёта <span id="confirmRepairCountText">0</span> ТМЦ`;
+      notification.innerHTML = `Согласование ремонта <span id="confirmRepairCountText">0</span> ТМЦ`;
     }
   }
 }
@@ -75,6 +75,38 @@ function removeRepairArchiveRows(idTMC) {
       form.elements.ID_Repair?.value || form.dataset.repairId || "0",
       10,
     );
+
+    if (action === "reject") {
+      if (!confirm("Отказать в согласовании ремонта и вернуть ТМЦ на объект?")) {
+        return;
+      }
+      try {
+        const response = await fetch(
+          "/src/BusinessLogic/ActionsTMC/processRepairApproval.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "reject",
+              tmcId: parseInt(idTMC, 10),
+              repairId: repairId,
+              reason: "Отказ в согласовании ремонта",
+            }),
+          },
+        );
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || "Не удалось отклонить ремонт");
+        }
+        showNotification(TypeMessage.success, data.message || "Отказано");
+        removeRepairArchiveRows(idTMC);
+        updateInventoryStatus([idTMC], StatusItem.Released);
+        decrementRepairArchiveCounter();
+      } catch (error) {
+        showNotification(TypeMessage.error, error.message || "Ошибка отказа");
+      }
+      return;
+    }
 
     if (action === "writeOff") {
       const requiredFields = {
@@ -111,38 +143,42 @@ function removeRepairArchiveRows(idTMC) {
     }
 
     // Архив: счёт к уже отправленному в сервис ремонту
-    if (repairId > 0) {
+    if (repairId > 0 || parseInt(idTMC, 10) > 0) {
       const invoice = (form.elements.InvoiceNumber?.value || "").trim();
       if (!invoice) {
-        showNotification(TypeMessage.error, 'Укажите № счета или «Без счета»');
+        showNotification(TypeMessage.error, 'Укажите № счета');
         form.elements.InvoiceNumber?.focus();
         return;
       }
 
-      const fd = new FormData();
-      fd.append("repairs[0][ID_Repair]", String(repairId));
-      fd.append("repairs[0][InvoiceNumber]", invoice);
-      fd.append("repairs[0][UPD]", form.elements.UPD?.value || "");
-      fd.append("repairs[0][RepairCost]", form.elements.RepairCost?.value || "0");
-      fd.append(
-        "repairs[0][RepairDescription]",
-        form.elements.RepairDescription?.value || "",
-      );
-
       try {
         const response = await fetch(
-          "/src/BusinessLogic/ActionsTMC/processUpdateRepairs.php",
-          { method: "POST", body: fd },
+          "/src/BusinessLogic/ActionsTMC/processRepairApproval.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "approve",
+              tmcId: parseInt(idTMC, 10),
+              repairId: repairId,
+              invoiceNumber: invoice,
+              updNumber: form.elements.UPD?.value || "",
+              repairCost: form.elements.RepairCost?.value || "0",
+              repairDescription: form.elements.RepairDescription?.value || "",
+              locationId: parseInt(form.elements.IDLocation?.value || "0", 10),
+            }),
+          },
         );
         const data = await response.json();
         if (!data.success) {
-          throw new Error(data.message || "Не удалось сохранить счёт");
+          throw new Error(data.message || "Не удалось согласовать ремонт");
         }
-        showNotification(TypeMessage.success, "Счёт сохранён в архиве");
+        showNotification(TypeMessage.success, data.message || "Ремонт согласован");
         removeRepairArchiveRows(idTMC);
+        updateInventoryStatus([idTMC], StatusItem.Repair);
         decrementRepairArchiveCounter();
       } catch (error) {
-        showNotification(TypeMessage.error, error.message || "Ошибка сохранения счёта");
+        showNotification(TypeMessage.error, error.message || "Ошибка согласования");
       }
       return;
     }

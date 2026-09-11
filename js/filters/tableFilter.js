@@ -11,6 +11,7 @@ export class TableFilter {
       excludeColumns: [],
       onFilterApplied: null,
       onRowCountChanged: null,
+      compactHeaderColumns: [],
       ...config,
     };
 
@@ -71,8 +72,15 @@ export class TableFilter {
         const label = document.createElement("span");
         label.className = "th-label";
         label.textContent = header.textContent.trim();
+        if (header.getAttribute("title")) {
+          label.title = header.getAttribute("title");
+        }
         header.textContent = "";
         header.appendChild(label);
+      }
+
+      if ((this.config.compactHeaderColumns || []).includes(columnIndex)) {
+        header.classList.add("th-filter-compact");
       }
 
       // Создаем кнопку фильтра
@@ -176,7 +184,8 @@ export class TableFilter {
 
   getColumnValues(columnIndex) {
     const values = new Set();
-    const rows = this.getVisibleRows();
+    // все строки таблицы, иначе после фильтра список значений «залипает»
+    const rows = this.table.querySelectorAll(this.config.rowSelector);
 
     rows.forEach((row) => {
       const cell = row.cells[columnIndex];
@@ -268,11 +277,17 @@ export class TableFilter {
     applyBtn.className = "filter-apply";
     applyBtn.textContent = "Применить";
 
+    const resetBtn = document.createElement("button");
+    resetBtn.className = "filter-reset";
+    resetBtn.type = "button";
+    resetBtn.textContent = "Сбросить";
+
     const cancelBtn = document.createElement("button");
     cancelBtn.className = "filter-cancel";
     cancelBtn.textContent = "Отмена";
 
     actions.appendChild(applyBtn);
+    actions.appendChild(resetBtn);
     actions.appendChild(cancelBtn);
 
     dropdown.appendChild(searchInput);
@@ -363,9 +378,33 @@ export class TableFilter {
         }
       });
 
-      this.filters[columnIndex].selected = selectedValues;
+      const selectAllEl = filterList.querySelector(
+        `#select-all-${columnIndex}`,
+      );
+      const allValues = values;
+      const allSelected =
+        !!selectAllEl?.checked ||
+        (allValues.length > 0 &&
+          selectedValues.length === allValues.length &&
+          allValues.every((v) => selectedValues.includes(v)));
+
+      // пусто или «всё» = показать все строки (фильтр снят)
+      if (selectedValues.length === 0 || allSelected) {
+        this.filters[columnIndex].selected = [];
+      } else {
+        this.filters[columnIndex].selected = selectedValues;
+      }
       this.applyFilters();
 
+      container.classList.remove("show");
+      container.innerHTML = "";
+      this.currentDropdown = null;
+    });
+
+    // Сбросить фильтр колонки → снова «всё»
+    resetBtn.addEventListener("click", () => {
+      this.filters[columnIndex].selected = [];
+      this.applyFilters();
       container.classList.remove("show");
       container.innerHTML = "";
       this.currentDropdown = null;
@@ -549,6 +588,7 @@ export class FilterFactory {
       containerId: "cont1",
       rowSelector: "tbody tr.row-container",
       excludeColumns: [], // Все столбцы фильтруются
+      compactHeaderColumns: [2, 3],
       onRowCountChanged: (visibleCount, totalCount) => {
         const counter = document.getElementById("row-counter");
         if (counter) {

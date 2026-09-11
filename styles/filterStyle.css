@@ -133,6 +133,16 @@
     background-color: #2563eb;
 }
 
+.filter-reset {
+    background: none;
+    border: 1px solid #f59e0b;
+    color: #b45309;
+}
+
+.filter-reset:hover {
+    background-color: #fffbeb;
+}
+
 .filter-cancel {
     background: none;
     border: 1px solid #cbd5e1;

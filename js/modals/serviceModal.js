@@ -7,10 +7,32 @@ import { executeEntityAction } from "../templates/entityActionTemplate.js";
 import { updateInventoryStatus } from "../updateFunctions.js";
 
 (function () {
-  function sendToService(NameClassContainer, serviceStatus) {
-    const selectedRows = document.querySelectorAll(
-      `.${NameClassContainer}.selected`,
+  function sendToService(NameClassContainer, serviceStatus, clickEvent = null) {
+    clickEvent?.preventDefault?.();
+
+    let selectedRows = Array.from(
+      document.querySelectorAll(`.${NameClassContainer}.selected`),
     );
+
+    // если строка не выделена, но открыта карточка справа — берём её
+    if (selectedRows.length === 0) {
+      const cardId = document
+        .querySelector("#cardContainer[data-id], #resultContainer [data-id]")
+        ?.getAttribute("data-id");
+      if (cardId) {
+        const row = document.querySelector(
+          `.${NameClassContainer}[data-id="${cardId}"]`,
+        );
+        if (row) {
+          document
+            .querySelectorAll(`.${NameClassContainer}.selected`)
+            .forEach((r) => r.classList.remove("selected"));
+          row.classList.add("selected");
+          selectedRows = [row];
+        }
+      }
+    }
+
     if (selectedRows.length === 0) {
       showNotification(
         TypeMessage.notification,
@@ -19,17 +41,29 @@ import { updateInventoryStatus } from "../updateFunctions.js";
       return;
     }
 
+    const status = Number(serviceStatus);
     let validStatuses = [];
-    switch (serviceStatus) {
+    switch (status) {
       case ServiceStatus.sendService:
         validStatuses = [StatusItem.Released, StatusItem.AtWorkTMC];
         break;
       case ServiceStatus.returnService:
         validStatuses = [StatusItem.Repair, StatusItem.ConfirmRepairTMC];
         break;
+      default:
+        showNotification(TypeMessage.error, "Неизвестный тип операции сервиса");
+        return;
     }
 
-    openModalAction("serviceModal", selectedRows, validStatuses);
+    if (typeof window.openModalAction !== "function") {
+      showNotification(
+        TypeMessage.error,
+        "Модуль модальных окон не загружен. Обновите страницу (Ctrl+F5).",
+      );
+      return;
+    }
+
+    window.openModalAction("serviceModal", selectedRows, validStatuses);
   }
 
   window.sendToService = sendToService;
@@ -43,18 +77,38 @@ export function initSendToServiceModalHandlers(modalElement) {
         "#selectedServiceItemsContainer .repair-reason-input",
       );
       let allFilled = true;
+      let datesOk = true;
       const items = [];
       const statusService = document
         .getElementById("serviceModal")
         .getAttribute("data-status");
 
       inputs.forEach((textarea) => {
+        const id = textarea.dataset.id;
         const reason = textarea.value.trim();
-        items.push({ id: textarea.dataset.id, reason });
+        const dateInput = document.querySelector(
+          `#selectedServiceItemsContainer .service-date-input[data-id="${id}"]`,
+        );
+        const operationDate = (dateInput?.value || "").trim();
+        items.push({ id, reason, operationDate });
         if (ServiceStatus.sendService == statusService && !reason) {
           allFilled = false;
         }
+        if (!operationDate) {
+          datesOk = false;
+          dateInput?.classList.add("error");
+        } else {
+          dateInput?.classList.remove("error");
+        }
       });
+
+      if (!datesOk) {
+        showNotification(
+          TypeMessage.notification,
+          "Укажите дату для каждого выбранного ТМЦ",
+        );
+        return;
+      }
 
       if (!allFilled && ServiceStatus.sendService == statusService) {
         showNotification(

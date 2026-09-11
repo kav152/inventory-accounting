@@ -81,15 +81,13 @@ class RepairItem extends BaseEntity
 
     public function getReadOnlyFields(): array
     {
-        return ['DateToService']; // Поле не будет обновляться
+        return [];
     }
 
     public function getAutoDateFields(): array
     {
-        return [
-            'DateToService',
-            $this->DateReturnService === null ? null : 'DateReturnService'
-        ];
+        // даты задаём из формы / конструктора, не через GETDATE()
+        return [];
     }
 
     private function formatDateForSQL($dateString): ?string

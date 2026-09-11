@@ -93,7 +93,10 @@ async function handleFormSubmit(modalElement) {
 
     } catch (error) {
         console.error("Ошибка сохранения ТМЦ:", error);
-        showNotification(TypeMessage.error, "Ошибка при сохранении ТМЦ");
+        showNotification(
+            TypeMessage.error,
+            error?.message || "Ошибка при сохранении ТМЦ"
+        );
     }
 }
 

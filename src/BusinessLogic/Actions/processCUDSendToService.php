@@ -47,7 +47,8 @@ class processCUDSendToService extends CUDHandler
                 $result = $itemController->sendToService(
                     (int) $item['id'],
                     (int) $statusService,
-                    (string) ($item['reason'] ?? '')
+                    (string) ($item['reason'] ?? ''),
+                    trim((string) ($item['operationDate'] ?? ''))
                 );
                 if (!$result) {
                     $this->success = false;

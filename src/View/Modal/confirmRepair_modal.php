@@ -51,7 +51,7 @@ include __DIR__ . '/message_modal.php';
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Архив ремонтов — приложить счёт</h5>
+                <h5 class="modal-title">Согласование ремонта</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
@@ -145,7 +145,11 @@ include __DIR__ . '/message_modal.php';
                                             <div class="d-flex flex-wrap gap-2">
                                                 <button type="button" class="btn btn-confirm-repair text-white btn-submit-repair"
                                                     onclick="sendForRepair(<?= $tmcId ?>, 'repair')">
-                                                    <?= $isArchive ? 'Сохранить счёт' : 'Подтвердить ремонт' ?>
+                                                    Согласовать ремонт
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-submit-reject"
+                                                    onclick="sendForRepair(<?= $tmcId ?>, 'reject')">
+                                                    Отказать
                                                 </button>
                                                 <button type="button" class="btn btn-danger btn-submit-write-off"
                                                     onclick="sendForRepair(<?= $tmcId ?>, 'writeOff')">

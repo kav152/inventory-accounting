@@ -79,7 +79,13 @@ $singleRepairMode = !empty($singleRepairMode);
                                                     placeholder="Укажите номер счёта"
                                                     value="<?= htmlspecialchars($repair->InvoiceNumber ?? '') ?>">
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
+                                                <label class="form-label">№ УПД</label>
+                                                <input type="text" class="form-control upd-number"
+                                                    placeholder="Укажите номер УПД"
+                                                    value="<?= htmlspecialchars($repair->UPD ?? '') ?>">
+                                            </div>
+                                            <div class="col-md-4">
                                                 <label class="form-label">Стоимость (руб.)</label>
                                                 <input type="number" step="0.01" class="form-control repair-cost"
                                                     value="<?= $repair->RepairCost ?>">
