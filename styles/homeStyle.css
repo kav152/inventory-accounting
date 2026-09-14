@@ -286,7 +286,9 @@ body.main-body {
 #inventoryTable td {
   padding: 8px 6px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  /* без border-bottom: при grid + align-items:start короткие ячейки
+     рисуют «обрывки» линий под ФИО/серийником посреди строки */
+  border-bottom: none;
   font-size: 0.95em;
   min-width: 0;
   white-space: normal;
