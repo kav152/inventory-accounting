@@ -580,10 +580,10 @@ error_log("Время группировки данных по ID_TMC для о�
 
     <script>
         // Глобальные переменные
-        let allItems = <?= json_encode($groupedItems) ?>;
+        // не json_encode($groupedItems) — объекты Entity ломают скрипт (let allItems = ;)
         let selectedRow = null;
         window.selectedRow = null;
-        let initialTotal = <?= $totalRepairCost ?>;
+        let initialTotal = <?= (float) $totalRepairCost ?>;
         window.writeOffArchiveFilter = <?= json_encode($archiveFilter) ?>;
 
         // Функция применения фильтров

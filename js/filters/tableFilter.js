@@ -87,9 +87,9 @@ export class TableFilter {
       const filterBtn = this.createFilterButton(columnIndex);
       header.appendChild(filterBtn);
 
-      // Создаем контейнер для dropdown
-      const dropdownContainer = this.createDropdownContainer(columnIndex);
-      header.appendChild(dropdownContainer);
+      // dropdown в body (createDropdownContainer) — не переносить в th,
+      // иначе клип/оверфлоу ломают показ
+      this.createDropdownContainer(columnIndex);
 
       // Инициализируем фильтр
       this.filters[columnIndex] = {
@@ -159,13 +159,14 @@ export class TableFilter {
     // Вместо добавления в header, добавляем в body для корректного позиционирования
     document.body.appendChild(container);
 
-    // Функция для обновления позиции
+    // position:fixed — координаты только viewport (без scrollX/scrollY),
+    // иначе после прокрутки dropdown уезжает и фильтр «не работает»
     const updatePosition = () => {
       if (header) {
         const rect = header.getBoundingClientRect();
         container.style.position = "fixed";
-        container.style.left = `${rect.left + window.scrollX}px`;
-        container.style.top = `${rect.bottom + window.scrollY}px`;
+        container.style.left = `${rect.left}px`;
+        container.style.top = `${rect.bottom + 4}px`;
         container.style.zIndex = "1000";
       }
     };
@@ -173,8 +174,9 @@ export class TableFilter {
     // Обновляем позицию при создании
     updatePosition();
 
-    // Обновляем позицию при изменении размера окна
+    // Обновляем позицию при ресайзе и скролле (таблица + окно)
     window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
 
     // Сохраняем функцию для обновления позиции
     container.updatePosition = updatePosition;
