@@ -340,6 +340,7 @@ error_log("Время группировки данных по ID_TMC для о�
                             $repairs = $itemData['repairs'];
                             $totalCost = 0;
                             $invoices = [];
+                            $updList = [];
                             foreach ($repairs as $repair) {
                                 $totalCost += $repair->RepairCost;
                                 if (repairHasInvoice($repair)) {
