@@ -57,9 +57,9 @@ include __DIR__ . '/message_modal.php';
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <?php if ($confirmRepairCount > 0): ?>
                     <p class="archive-hint mb-2">
-                        Инструмент уже может быть в сервисе или возвращён кладовщиком.
-                        Счёт и документы можно добавить позже — это не блокирует работу склада.
-                        <a href="/src/View/write_off.php">Полный реестр ремонтов</a>
+                        Ожидают согласования администратором (статус «Подтвердить ремонт»).
+                        Уже принятые в ремонт («В ремонте») и счета — в
+                        <a href="/src/View/write_off.php">архиве ремонтов</a>.
                     </p>
                     <table class="table">
                         <thead>

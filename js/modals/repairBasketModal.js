@@ -17,6 +17,7 @@ import { executeActionForCUD } from "../templates/cudRowsInTable.js";
 
   window.openRepairBasketModal = openRepairBasketModal;
   window.returnFromBasket = returnFromBasket;
+  window.clearBasket = clearBasket;
 })();
 
 /**
@@ -80,6 +81,53 @@ async function handleRepairBasketFormSubmit(modalElement) {
     modalInstance.hide();
   } catch (error) {
     console.error("Ошибка:", error);
+  }
+}
+
+/** Очистить всю корзину ремонта */
+async function clearBasket() {
+  const rows = document.querySelectorAll("#repairBasketModal tbody tr[id^='basket-item-']");
+  if (rows.length === 0) {
+    showNotification(TypeMessage.notification, "Корзина уже пуста");
+    return;
+  }
+
+  if (!confirm("Очистить корзину? Все позиции будут возвращены из корзины.")) {
+    return;
+  }
+
+  try {
+    const result = await executeEntityAction({
+      action: Action.DELETE,
+      formData: {},
+      url: "/src/BusinessLogic/Actions/processCUDRepairInBasket.php",
+      successMessage: "Корзина очищена",
+    });
+
+    if (result.success) {
+      const tableWrap = document.querySelector("#repairBasketModal .table-responsive");
+      if (tableWrap) {
+        tableWrap.remove();
+      } else {
+        document.querySelector("#repairBasketModal table")?.remove();
+      }
+
+      const header = document.querySelector("#repairBasketModal .report-header");
+      if (header) {
+        header.innerHTML = `
+          <p>Дата формирования: ${new Date().toLocaleDateString("ru-RU")}</p>
+          <p>Количество позиций: 0</p>
+          <p>Общая сумма ремонта: <strong>0,00 руб.</strong></p>
+          <p>Корзина пуста</p>`;
+      }
+
+      document.getElementById("clearBasketBtn")?.remove();
+    } else {
+      showNotification(TypeMessage.error, result.message || "Не удалось очистить корзину");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    showNotification(TypeMessage.error, error?.message || error);
   }
 }
 

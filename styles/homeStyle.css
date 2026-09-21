@@ -517,7 +517,8 @@ body.main-body {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #ff9800;
+  /* серый как статус «Подтвердить ТМЦ», не путать с оранжевым «В ремонте» */
+  background-color: #96918a;
   color: white;
   border-radius: 50%;
   width: 30px;
@@ -534,7 +535,7 @@ body.main-body {
   position: fixed;
   bottom: 25px;
   right: 60px;
-  background-color: #ff9800;
+  background-color: #96918a;
   color: white;
   padding: 10px 15px;
   border-radius: 20px;
