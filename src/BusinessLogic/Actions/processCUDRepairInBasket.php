@@ -53,6 +53,18 @@ class processCUDRepairInBasket extends CUDHandler
         return null;
     }
 
+    /** Очистить всю корзину (statusEntity = delete) */
+    protected function delete($data): bool
+    {
+        $itemRepairController = new ItemRepairController();
+        if (!$itemRepairController->clearBasket()) {
+            throw new Exception('Не удалось очистить корзину');
+        }
+        $this->totalCount = 0;
+        $this->totalRepairCost_Basket = 0;
+        return true;
+    }
+
     protected function prepareResultEntity($repairItem)
     {
         return [

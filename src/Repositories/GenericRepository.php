@@ -12,6 +12,7 @@ class GenericRepository implements RepositoryInterface
     private string $tableName;
     private array $relationships = [];
     private array $cache = []; // Кэш для связанных сущностей
+    private ?string $lastError = null;
 
     public function __construct(
         private Database $database,
@@ -24,6 +25,11 @@ class GenericRepository implements RepositoryInterface
         if (!class_exists($entityClass)) {
             throw new InvalidArgumentException("Класс $entityClass не существует!");
         }
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     public function clearCache(): void
@@ -362,7 +368,7 @@ class GenericRepository implements RepositoryInterface
         $sql = "INSERT INTO {$this->tableName} ($columnsStr) VALUES ($placeholdersStr);";
         //error_log($sql);
 
-
+        $this->lastError = null;
         try {
             $pdo = $this->database->getConnection();
 
@@ -381,6 +387,7 @@ class GenericRepository implements RepositoryInterface
 
             return $entity;
         } catch (PDOException $e) {
+            $this->lastError = $e->getMessage();
             // Логируем ошибку с деталями
             $this->logAction('ERROR', 'Ошибка БД', [
                 'message' => $e->getMessage(),
@@ -433,6 +440,7 @@ class GenericRepository implements RepositoryInterface
 
         /*$this->logAction('update', $sql, $params);*/
 
+        $this->lastError = null;
         try {
             $pdo = $this->database->getConnection();
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -446,6 +454,7 @@ class GenericRepository implements RepositoryInterface
 
             return $entity;
         } catch (PDOException $e) {
+            $this->lastError = $e->getMessage();
             $this->logAction('ERROR', 'Ошибка БД при обновлении', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),

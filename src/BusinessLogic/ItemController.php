@@ -344,7 +344,8 @@ class ItemController
         return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmItem);
     }
     /**
-     * Ремонты без счёта для архива администратора (+ устаревшие «Подтвердить ремонт»).
+     * ТМЦ на согласовании ремонта (фиол. статус «Подтвердить ремонт»).
+     * Не считает уже принятые «В ремонте» — иначе цифра на главной раздувается.
      * @return array|null
      */
     public function getConfirmRepairItems(int $statusUser, int $idUser): ?array
@@ -354,7 +355,7 @@ class ItemController
         }
         require_once __DIR__ . '/ItemRepairController.php';
         $repairController = new ItemRepairController();
-        $items = $repairController->getRepairsPendingInvoice();
+        $items = $repairController->getItemsAwaitingRepairApproval();
         if (count($items) === 0) {
             return null;
         }

@@ -160,12 +160,12 @@ class ItemRepairController
     {
         $operationDate = trim($operationDate);
         if ($operationDate === '') {
-            return date('Y-m-d\TH:i:s');
+            return date('Y-m-d H:i:s');
         }
         try {
-            return (new DateTime($operationDate))->format('Y-m-d\TH:i:s');
+            return (new DateTime($operationDate))->format('Y-m-d H:i:s');
         } catch (Exception $e) {
-            return date('Y-m-d\TH:i:s');
+            return date('Y-m-d H:i:s');
         }
     }
 
@@ -237,6 +237,69 @@ class ItemRepairController
         $itemController = new ItemController();
         $reason = trim($reason) !== '' ? trim($reason) : 'Отказ в согласовании ремонта';
         return $itemController->sendToService($tmcId, 1, $reason);
+    }
+
+    /**
+     * ТМЦ на согласовании ремонта (статус ConfirmRepairTMC) — для кнопки на главной.
+     * Не включает уже принятые «В ремонте» (даже без счёта) — те в архиве write_off.
+     * @return array<int, object|RepairItem>
+     */
+    public function getItemsAwaitingRepairApproval(): array
+    {
+        $items = [];
+        $seenTmc = [];
+
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $locationRepository = $this->container->get(LocationRepository::class);
+
+        $repairItemRepository->addRelationship('InventoryItem', $inventoryItemRepository, 'ID_TMC', 'ID_TMC');
+        $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+        $query = "SELECT RepairItem.*, InventoryItem.*, Location.*
+            FROM RepairItem
+            LEFT JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
+            LEFT JOIN Location ON RepairItem.IDLocation = Location.IDLocation
+            WHERE RepairItem.inBasket = 0
+              AND InventoryItem.Status = {$statusConfirm}
+            ORDER BY RepairItem.DateToService DESC";
+
+        $repairs = $repairItemRepository->getAll($query);
+        if ($repairs) {
+            foreach ($repairs as $repair) {
+                $id = (int) ($repair->ID_TMC ?? 0);
+                if ($id <= 0 || isset($seenTmc[$id])) {
+                    continue;
+                }
+                $seenTmc[$id] = true;
+                $items[] = $repair;
+            }
+        }
+
+        // Устаревшие ТМЦ в статусе «Подтвердить ремонт» без записи RepairItem
+        $inventoryItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+        $legacy = $inventoryItemRepository->findBy(
+            'WHERE Status = ' . $statusConfirm . ' ORDER BY NameTMC'
+        );
+        if ($legacy) {
+            foreach ($legacy as $inv) {
+                $id = (int) ($inv->ID_TMC ?? 0);
+                if ($id > 0 && !isset($seenTmc[$id])) {
+                    $seenTmc[$id] = true;
+                    $items[] = (object) [
+                        'ID_Repair' => 0,
+                        'ID_TMC' => $id,
+                        'isLegacyConfirm' => true,
+                        'InventoryItem' => $inv,
+                        'RepairDescription' => '',
+                        'InvoiceNumber' => '',
+                    ];
+                }
+            }
+        }
+
+        return $items;
     }
 
     /**
@@ -380,20 +443,76 @@ class ItemRepairController
     private function repairManager($data, $filename, $operationType): ?object
     {
         $ID_TMC = isset($data['ID_TMC']) ? (int) $data['ID_TMC'] : 0;
+        $ID_Repair = isset($data['ID_Repair']) ? (int) $data['ID_Repair'] : 0;
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $repairItem = new RepairItem($data);
-        $repairItem->UPD = $filename ?? null;
-        if ($operationType === OperationType::SEND_REPAIR)
-            $repairItem->DateReturnService = null;
-        else
-            $repairItem->DateReturnService = (new \DateTime())->format('Y-m-d H:i:s');
-        $repair = $repairItemRepository->save($repairItem, Action::CREATE);
-        if (!$repair) {
-            throw new Exception("Ошибка создания repair в repairManager. RepairCost = {$repairItem->RepairCost}");
+        $now = (new \DateTime())->format('Y-m-d H:i:s');
+        $updValue = ($filename !== null && $filename !== '')
+            ? (string) $filename
+            : (string) ($data['UPD'] ?? '');
+
+        $repairItem = null;
+
+        // Списание по уже открытой записи — обновляем её, не плодим дубликат INSERT
+        if ($operationType === OperationType::WRITE_OFF && $ID_Repair > 0) {
+            $existing = $repairItemRepository->findById($ID_Repair, 'ID_Repair');
+            if ($existing) {
+                $existing->IDLocation = (int) ($data['IDLocation'] ?? $existing->IDLocation ?? 0);
+                $existing->InvoiceNumber = (string) ($data['InvoiceNumber'] ?? $existing->InvoiceNumber ?? '');
+                $existing->RepairCost = (float) ($data['RepairCost'] ?? $existing->RepairCost ?? 0);
+                $existing->RepairDescription = (string) ($data['RepairDescription'] ?? $existing->RepairDescription ?? '');
+                if ($updValue !== '') {
+                    $existing->UPD = $updValue;
+                } elseif ($existing->UPD === null) {
+                    $existing->UPD = '';
+                }
+                $existing->DateReturnService = $now;
+                $existing->inBasket = false;
+                $repairItem = $repairItemRepository->save($existing);
+                if (!$repairItem) {
+                    $err = $repairItemRepository->getLastError() ?: 'неизвестная ошибка БД';
+                    throw new Exception("Ошибка обновления repair при списании: {$err}");
+                }
+            }
         }
 
-        //error_log('Передача ID_TMC');
-        //error_log($ID_TMC);
+        if ($repairItem === null) {
+            $payload = $data;
+            $payload['UPD'] = $updValue;
+            if (empty($payload['DateToService'])) {
+                $payload['DateToService'] = $now;
+            }
+            if ($operationType === OperationType::WRITE_OFF) {
+                $payload['DateReturnService'] = $now;
+            }
+
+            $locationId = (int) ($payload['IDLocation'] ?? 0);
+            if ($ID_TMC <= 0) {
+                throw new Exception('Не указан ID ТМЦ для записи ремонта');
+            }
+            if ($locationId <= 0) {
+                throw new Exception('Не указана организация (локация) для записи ремонта');
+            }
+
+            $repairItem = new RepairItem($payload);
+            if ($operationType === OperationType::SEND_REPAIR) {
+                $repairItem->DateReturnService = null;
+            } else {
+                $repairItem->DateReturnService = $now;
+            }
+            if ($repairItem->UPD === null) {
+                $repairItem->UPD = '';
+            }
+
+            $repair = $repairItemRepository->save($repairItem, Action::CREATE);
+            if (!$repair) {
+                $err = $repairItemRepository->getLastError() ?: 'неизвестная ошибка БД';
+                throw new Exception(
+                    "Ошибка создания repair в repairManager (RepairCost={$repairItem->RepairCost}): {$err}"
+                );
+            }
+            $repairItem = $repair;
+        }
+
         $itemController = new ItemController();
         if ($operationType === OperationType::WRITE_OFF) {
             $itemController->unlinkFromBrigade($ID_TMC);
@@ -667,6 +786,26 @@ class ItemRepairController
             $result = $repairItemRepository->save($item);
             if ($result == null)
                 return false;
+        }
+        return true;
+    }
+
+    /**
+     * Очистить корзину ремонта — вернуть все позиции (inBasket = 0)
+     */
+    public function clearBasket(): bool
+    {
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $repairItems = $repairItemRepository->findBy("WHERE inBasket = 1");
+        if (!$repairItems || count($repairItems) === 0) {
+            return true;
+        }
+
+        foreach ($repairItems as $item) {
+            $item->inBasket = false;
+            if ($repairItemRepository->save($item) === null) {
+                return false;
+            }
         }
         return true;
     }

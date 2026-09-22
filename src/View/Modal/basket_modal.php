@@ -89,6 +89,12 @@ foreach ($basketItems as $item) {
                 <?php endif; ?>
             </div>
             <div class="modal-footer">
+                <?php if ($totalCount > 0): ?>
+                <button type="button" class="btn btn-outline-danger me-auto" id="clearBasketBtn"
+                    onclick="clearBasket()">
+                    Очистить
+                </button>
+                <?php endif; ?>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
             </div>
         </div>

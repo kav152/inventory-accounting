@@ -98,7 +98,7 @@ class RepairItem extends BaseEntity
 
         try {
             $date = new DateTime($dateString);
-            return $date->format('Y-m-d\TH:i:s'); // Формат для SQL Server
+            return $date->format('Y-m-d H:i:s'); // SQL Server datetime
         } catch (Exception $e) {
             // Если не удалось преобразовать, возвращаем null
             return null;
