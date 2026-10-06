@@ -43,6 +43,32 @@ try {
 
     $currentLocationId = (int) ($inventoryItem->IDLocation ?? 0);
     $currentLegal = trim((string) ($inventoryItem->Location?->FormsJointStockCompanies ?? ''));
+    $legalEntities = [];
+    try {
+        require_once __DIR__ . '/../BusinessLogic/LegalEntityController.php';
+        $legalController = new LegalEntityController();
+        foreach ($legalController->getLegalEntityNames(true) as $name) {
+            $legalEntities[$name] = $name;
+        }
+    } catch (Throwable $e) {
+        error_log('cardItem legal entities: ' . $e->getMessage());
+    }
+    // также из локаций (на случай ещё не перенесённых)
+    foreach ($locations as $loc) {
+        $locLegal = trim((string) ($loc->FormsJointStockCompanies ?? ''));
+        if ($locLegal !== '') {
+            $legalEntities[$locLegal] = $locLegal;
+        }
+    }
+    if ($currentLegal !== '' && !isset($legalEntities[$currentLegal])) {
+        $legalEntities[$currentLegal] = $currentLegal;
+    }
+    ksort($legalEntities, SORT_NATURAL | SORT_FLAG_CASE);
+
+    $serialDisplay = trim((string) ($inventoryItem->SerialNumber ?? ''));
+    if ($serialDisplay === '' || mb_strtolower($serialDisplay) === 'серийный номер отсутствует') {
+        $serialDisplay = '';
+    }
 } catch (Exception $e) {
     echo '<div class="alert alert-danger">Ошибка загрузки: ' . htmlspecialchars($e->getMessage()) . '</div>';
     exit;
@@ -57,12 +83,12 @@ try {
     data-brand="<?= (int) ($inventoryItem->IDBrandTMC ?? 0) ?>"
     data-model="<?= (int) ($inventoryItem->IDModel ?? 0) ?>"
     data-name="<?= htmlspecialchars($inventoryItem->NameTMC ?? '', ENT_QUOTES) ?>"
-    data-serial="<?= htmlspecialchars((string) ($inventoryItem->SerialNumber ?? ''), ENT_QUOTES) ?>">
+    data-serial="<?= htmlspecialchars($serialDisplay, ENT_QUOTES) ?>">
     <h3>Статус ТМЦ - <?= htmlspecialchars((new StatusItem())->getDescription($inventoryItem->Status) ?? '') ?></h3>
 
     <div class="form-group">
-        <label class="lb" id="selectTypeTMC">Тип ТМЦ:</label>
-        <select class="form-select" aria-label="Тип ТМЦ" id="idTypeTMC" disabled>
+        <label class="lb" for="idTypeTMC">Тип ТМЦ:</label>
+        <select class="form-select" aria-label="Тип ТМЦ" id="idTypeTMC" name="idTypeTMC">
             <option value="0"></option>
             <?php foreach ($typeTMCs as $value): ?>
                 <option value="<?= $value->IDTypesTMC ?>" <?= $value->IDTypesTMC == $inventoryItem->IDTypesTMC ? 'selected' : '' ?>>
@@ -73,8 +99,8 @@ try {
     </div>
 
     <div class="form-group">
-        <label class="lb">Бренд:</label>
-        <select class="form-select" aria-label="Бренд" id="idBrandTMC" disabled>
+        <label class="lb" for="idBrandTMC">Бренд:</label>
+        <select class="form-select" aria-label="Бренд" id="idBrandTMC" name="idBrandTMC">
             <option value="0"></option>
             <?php foreach ($brandTMCs as $value): ?>
                 <?php
@@ -89,8 +115,8 @@ try {
     </div>
 
     <div class="form-group">
-        <label class="lb">Модель:</label>
-        <select class="form-select" aria-label="Модель" id="idModelTMC" disabled>
+        <label class="lb" for="idModelTMC">Модель:</label>
+        <select class="form-select" aria-label="Модель" id="idModelTMC" name="idModelTMC">
             <option value="0"></option>
             <?php foreach ($modelTMCs as $value): ?>
                 <?php
@@ -105,16 +131,16 @@ try {
     </div>
 
     <div class="form-group">
-        <label class="lb">Наименование:</label>
+        <label class="lb" for="txtNameTMC">Наименование:</label>
         <textarea class="form-control auto-expand" id="txtNameTMC" name="nameTMC" placeholder="Укажите наименование"
-            rows="1" aria-label="Наименование" readonly><?= htmlspecialchars($inventoryItem->NameTMC ?? '') ?></textarea>
+            rows="1" aria-label="Наименование"><?= htmlspecialchars($inventoryItem->NameTMC ?? '') ?></textarea>
     </div>
 
     <div class="form-group">
-        <label class="lb">Серийный номер:</label>
-        <input type="text" class="form-control" id="txtSerialNum" placeholder="Укажите серийный номер"
-            aria-label="Серийный номер" readonly
-            value="<?= htmlspecialchars($inventoryItem->SerialNumber ?: 'Серийный номер отсутствует') ?>">
+        <label class="lb" for="txtSerialNum">Серийный номер:</label>
+        <input type="text" class="form-control" id="txtSerialNum" name="serialNumber"
+            placeholder="Укажите серийный номер" aria-label="Серийный номер"
+            value="<?= htmlspecialchars($serialDisplay) ?>">
     </div>
 
     <div class="form-group">
@@ -137,17 +163,23 @@ try {
 
     <div class="form-group">
         <label class="lb" for="cardLegalEntity">Юр. лицо:</label>
-        <input type="text" class="form-control" id="cardLegalEntity" name="legalEntity"
-            placeholder="Укажите юр. лицо локации"
-            value="<?= htmlspecialchars($currentLegal) ?>">
+        <select class="form-select" id="cardLegalEntity" name="legalEntity">
+            <option value="">Не указано</option>
+            <?php foreach ($legalEntities as $legal): ?>
+                <option value="<?= htmlspecialchars($legal, ENT_QUOTES) ?>"
+                    <?= $currentLegal === $legal ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($legal) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
         <div class="form-text" style="font-size:12px;color:#64748b;margin-top:4px;">
-            Привязано к локации. Можно изменить и сохранить.
+            Список из справочника «Юр. лица» (Админка).
         </div>
     </div>
 
     <div class="form-group" style="display:flex;gap:8px;align-items:center;">
         <button type="button" class="btn btn-primary btn-sm" id="btnSaveCardLegal">
-            Сохранить юр. лицо
+            Сохранить
         </button>
         <span id="cardLegalSaveStatus" style="font-size:12px;color:#64748b;"></span>
     </div>

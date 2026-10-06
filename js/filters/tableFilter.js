@@ -301,26 +301,10 @@ export class TableFilter {
     const populateList = (filterText = "") => {
       filterList.innerHTML = "";
 
-      // "Выбрать все"
-      const selectAllItem = document.createElement("div");
-      selectAllItem.className = "filter-item";
+      const selected = this.filters[columnIndex].selected || [];
+      const hasActiveSelection = selected.length > 0;
 
-      const selectAllCheckbox = document.createElement("input");
-      selectAllCheckbox.type = "checkbox";
-      selectAllCheckbox.id = `select-all-${columnIndex}`;
-      selectAllCheckbox.checked =
-        !this.filters[columnIndex].selected ||
-        this.filters[columnIndex].selected.length === 0;
-
-      const selectAllLabel = document.createElement("label");
-      selectAllLabel.htmlFor = `select-all-${columnIndex}`;
-      selectAllLabel.textContent = "Выбрать все";
-
-      selectAllItem.appendChild(selectAllCheckbox);
-      selectAllItem.appendChild(selectAllLabel);
-      filterList.appendChild(selectAllItem);
-
-      // Значения столбца
+      // Значения столбца (без «Выбрать все»: пустой выбор = показать всё)
       const filteredValues = values.filter((value) =>
         value.toLowerCase().includes(filterText.toLowerCase()),
       );
@@ -333,12 +317,7 @@ export class TableFilter {
         checkbox.type = "checkbox";
         checkbox.value = value;
         checkbox.id = `filter-${columnIndex}-${value}`;
-
-        if (this.filters[columnIndex].selected.includes(value)) {
-          checkbox.checked = true;
-        } else if (!this.filters[columnIndex].selected) {
-          checkbox.checked = true;
-        }
+        checkbox.checked = hasActiveSelection && selected.includes(value);
 
         const label = document.createElement("label");
         label.htmlFor = `filter-${columnIndex}-${value}`;
@@ -347,16 +326,6 @@ export class TableFilter {
         item.appendChild(checkbox);
         item.appendChild(label);
         filterList.appendChild(item);
-      });
-
-      // Обработчик "Выбрать все"
-      selectAllCheckbox.addEventListener("change", function () {
-        const checkboxes = filterList.querySelectorAll(
-          `input[type="checkbox"]:not(#select-all-${columnIndex})`,
-        );
-        checkboxes.forEach((checkbox) => {
-          checkbox.checked = this.checked;
-        });
       });
     };
 
@@ -370,7 +339,7 @@ export class TableFilter {
     // Применить фильтр
     applyBtn.addEventListener("click", () => {
       const checkboxes = filterList.querySelectorAll(
-        `input[type="checkbox"]:not(#select-all-${columnIndex})`,
+        `input[type="checkbox"]`,
       );
       const selectedValues = [];
 
@@ -380,17 +349,13 @@ export class TableFilter {
         }
       });
 
-      const selectAllEl = filterList.querySelector(
-        `#select-all-${columnIndex}`,
-      );
       const allValues = values;
       const allSelected =
-        !!selectAllEl?.checked ||
-        (allValues.length > 0 &&
-          selectedValues.length === allValues.length &&
-          allValues.every((v) => selectedValues.includes(v)));
+        allValues.length > 0 &&
+        selectedValues.length === allValues.length &&
+        allValues.every((v) => selectedValues.includes(v));
 
-      // пусто или «всё» = показать все строки (фильтр снят)
+      // ничего не выбрано или отмечены все = фильтр снят, показываем всё
       if (selectedValues.length === 0 || allSelected) {
         this.filters[columnIndex].selected = [];
       } else {
@@ -487,8 +452,15 @@ export class TableFilter {
         if (!cell) return;
 
         const cellValue = cell.textContent.trim();
-        // Если значение не входит в выбранные - скрываем строку
-        if (!this.filters[columnIndex].selected.includes(cellValue)) {
+        const selected = this.filters[columnIndex].selected;
+        // «В ремонте» и «Подтвердить ремонт» — одна группа в фильтре
+        const repairGroup = ["В ремонте", "Подтвердить ремонт"];
+        const selectedRepair = selected.some((v) => repairGroup.includes(v));
+        const cellIsRepair = repairGroup.includes(cellValue);
+        const matched =
+          selected.includes(cellValue) ||
+          (selectedRepair && cellIsRepair);
+        if (!matched) {
           row.style.display = "none";
         }
       });
@@ -590,7 +562,6 @@ export class FilterFactory {
       containerId: "cont1",
       rowSelector: "tbody tr.row-container",
       excludeColumns: [], // Все столбцы фильтруются
-      compactHeaderColumns: [2, 3],
       onRowCountChanged: (visibleCount, totalCount) => {
         const counter = document.getElementById("row-counter");
         if (counter) {

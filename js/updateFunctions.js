@@ -1,33 +1,60 @@
 import { StatusItem } from "../src/constants/statusItem.js";
 
 /**
- * Функция для обновления статуса в главной таблице
- * @param {*} tmcIds 
- * @param {*} newStatus 
+ * Функция для обновления статуса в главной таблице.
+ * Списанные ТМЦ сразу убираются с главной (остаются в «Все списанные»).
+ * @param {*} tmcIds
+ * @param {*} newStatus
  */
 export function updateInventoryStatus(tmcIds, newStatus) {
-  //console.log(`Перечень tmcIds: ${tmcIds}`);
-  tmcIds.forEach((id) => {
-    const row = document.querySelector(`.row-container[data-id="${id}"]`);
-    //console.log(`.row-container[data-id="${id}"]`);
-    if (row) {
-      // Обновляем ячейку статуса (5-я ячейка в строке)
-      const statusCell = row.cells[4];
-      //console.log(statusCell.textContent);
-      //console.log(`Новый статус: ${StatusItem.getDescription(newStatus)}`);
-      statusCell.textContent = StatusItem.getDescription(newStatus);
+  const ids = Array.isArray(tmcIds) ? tmcIds : [tmcIds];
+  let removed = 0;
 
-      // Обновляем классы статуса
-      updateStatusClasses(row, newStatus);
-
-      // ОБНОВЛЯЕМ АТРИБУТ DATA-STATUS - добавляем эту строку
-      row.setAttribute('data-status', newStatus);
-      refreshRowSearchBlob(row);
-    }
-    else{
+  ids.forEach((id) => {
+    const row = document.querySelector(`#inventoryTable tr.row-container[data-id="${id}"]`)
+      || document.querySelector(`.row-container[data-id="${id}"]`);
+    if (!row) {
       console.log(`Строка с id = ${id} не найдена - статус не изменен`);
+      return;
     }
+
+    // Списано → убрать с главной
+    if (Number(newStatus) === StatusItem.WrittenOff) {
+      const card = document.querySelector(`#cardContainer[data-id="${id}"]`);
+      if (card) {
+        const container = document.getElementById("resultContainer");
+        if (container) {
+          container.innerHTML = '<div class="alert alert-info">Выберите элемент из списка</div>';
+        }
+      }
+      row.remove();
+      removed += 1;
+      return;
+    }
+
+    const statusCell = row.cells[4];
+    if (statusCell) {
+      statusCell.textContent = StatusItem.getDescription(newStatus);
+    }
+    updateStatusClasses(row, newStatus);
+    row.setAttribute("data-status", newStatus);
+    refreshRowSearchBlob(row);
   });
+
+  if (removed > 0) {
+    const counter = document.getElementById("row-counter");
+    if (counter) {
+      const match = (counter.textContent || "").match(/(\d+)\s+из\s+(\d+)/);
+      if (match) {
+        const visible = Math.max(0, parseInt(match[1], 10) - removed);
+        const total = Math.max(0, parseInt(match[2], 10) - removed);
+        counter.textContent = `Кол-во строк: ${visible} из ${total}`;
+      }
+    }
+    if (typeof window.removingSelection === "function") {
+      window.removingSelection();
+    }
+  }
 }
 
 /**
@@ -67,7 +94,7 @@ export function updateInventoryAfterTransfer(tmcIds, updates = {}) {
       row.cells[7].textContent = legalText || "не указано";
       row.cells[7].title = legalText
         ? legalText
-        : "Заполните юр. лицо в Админка → Локации";
+        : "Заполните юр. лицо в Админка → Юр. лица";
       row.cells[7].classList.toggle("is-empty", !legalText);
       row.cells[7].classList.add("legal-cell");
     }
@@ -144,11 +171,11 @@ function updateStatusClasses(row, newStatus) {
         const current = parseInt((badge?.textContent || countText?.textContent || "0"), 10) || 0;
         const newCount = Math.max(0, current + counters.confirmRepairCount);
         if (badge) {
-          badge.textContent = newCount;
-          badge.style.display = newCount > 0 ? "block" : "none";
+          badge.textContent = String(newCount);
+          badge.style.display = newCount > 0 ? "" : "none";
         }
         if (countText) {
-          countText.textContent = newCount;
+          countText.textContent = String(newCount);
         } else if (notification) {
           notification.innerHTML = `Согласование ремонта <span id="confirmRepairCountText">${newCount}</span> ТМЦ`;
         }
@@ -171,6 +198,29 @@ function updateStatusClasses(row, newStatus) {
         notification.innerHTML = `Выдано в работу <span id="atWorkCount">${newCount}</span> ТМЦ`;
 
         badge.style.display = newCount > 0 ? "block" : "none";
+        notification.style.display = newCount > 0 ? "block" : "none";
+      }
+    }
+
+    // Предложения списания от кладовщиков (для админа)
+    if (counters.proposeWriteOffCount !== undefined) {
+      const badge = document.getElementById("proposeWriteOffBadge");
+      const notification = document.getElementById("proposeWriteOffNotification");
+      const countText = document.getElementById("proposeWriteOffCountText");
+      const current =
+        parseInt((badge?.textContent || countText?.textContent || "0").trim(), 10) || 0;
+      const newCount = Math.max(0, current + counters.proposeWriteOffCount);
+      if (badge) {
+        badge.textContent = String(newCount);
+        badge.style.display = newCount > 0 ? "" : "none";
+      }
+      if (countText) {
+        countText.textContent = String(newCount);
+      } else if (notification) {
+        notification.innerHTML =
+          `Согласование списания <span id="proposeWriteOffCountText">${newCount}</span> ТМЦ`;
+      }
+      if (notification) {
         notification.style.display = newCount > 0 ? "block" : "none";
       }
     }

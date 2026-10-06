@@ -31,13 +31,23 @@ class RepairItem extends BaseEntity
                 $this->UPD = $data['UPD'] ?? '';
 
             $this->RepairDescription = $data['RepairDescription'] ?? '';
-            $this->DateToService = isset($data['DateToService']) && !empty($data['DateToService'])
-                ? $this->formatDateForSQL($data['DateToService'])
-                : $this->formatDateForSQL(date("Y-m-d H:i:s"));
+            // дату отправки не подставляем «сегодня» молча — только если передали явно
+            if (array_key_exists('DateToService', $data) && $data['DateToService'] !== null && $data['DateToService'] !== '') {
+                $formatted = self::formatDateForSQL($data['DateToService']);
+                if ($formatted !== null) {
+                    $this->DateToService = $formatted;
+                }
+            }
 
-            $this->DateReturnService = isset($data['DateReturnService']) && !empty($data['DateReturnService'])
-                ? $this->formatDateForSQL($data['DateReturnService'])
-                : null;
+            if (array_key_exists('DateReturnService', $data)) {
+                if ($data['DateReturnService'] === null || $data['DateReturnService'] === '') {
+                    $this->DateReturnService = null;
+                } else {
+                    $this->DateReturnService = self::formatDateForSQL($data['DateReturnService']);
+                }
+            } else {
+                $this->DateReturnService = null;
+            }
 
             $this->inBasket = isset($data['inBasket']) ? ($data['inBasket'] != 0) : false;
         }
@@ -89,17 +99,62 @@ class RepairItem extends BaseEntity
         return [];
     }
 
-    private function formatDateForSQL($dateString): ?string
+    /**
+     * Нормализация даты для SQL Server (datetime): всегда Y-m-d H:i:s.
+     * Принимает дд.мм.гггг, ISO, DateTime из PDO.
+     */
+    public static function formatDateForSQL($dateString): ?string
     {
-        if (empty($dateString)) {
+        if ($dateString === null || $dateString === '') {
             return null;
+        }
+        if ($dateString instanceof DateTimeInterface) {
+            return $dateString->format('Y-m-d H:i:s');
+        }
+
+        $dateString = trim((string) $dateString);
+        if ($dateString === '') {
+            return null;
+        }
+        // убрать лишнее из маски/автозаполнения
+        $dateString = preg_replace('#[^\d.\-/ :T]#u', '', $dateString) ?? $dateString;
+        $dateString = trim($dateString);
+
+        // ДД.ММ.ГГ или ДД.ММ.ГГГГ (и с пробелами)
+        if (preg_match('#^(\d{1,2})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{2}|\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$#', $dateString, $m)) {
+            $day = (int) $m[1];
+            $month = (int) $m[2];
+            $year = (int) $m[3];
+            if ($year < 100) {
+                $year += ($year >= 70) ? 1900 : 2000;
+            }
+            if (!checkdate($month, $day, $year)) {
+                return null;
+            }
+            $h = isset($m[4]) ? (int) $m[4] : 0;
+            $i = isset($m[5]) ? (int) $m[5] : 0;
+            $s = isset($m[6]) ? (int) $m[6] : 0;
+            return sprintf('%04d-%02d-%02d %02d:%02d:%02d', $year, $month, $day, $h, $i, $s);
+        }
+
+        // уже ISO / SQL: 2025-12-19 или 2025-12-19 00:00:00.000
+        if (preg_match('#^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?)?#', $dateString, $m)) {
+            $year = (int) $m[1];
+            $month = (int) $m[2];
+            $day = (int) $m[3];
+            if (!checkdate($month, $day, $year)) {
+                return null;
+            }
+            $h = isset($m[4]) ? (int) $m[4] : 0;
+            $i = isset($m[5]) ? (int) $m[5] : 0;
+            $s = isset($m[6]) ? (int) $m[6] : 0;
+            return sprintf('%04d-%02d-%02d %02d:%02d:%02d', $year, $month, $day, $h, $i, $s);
         }
 
         try {
             $date = new DateTime($dateString);
-            return $date->format('Y-m-d H:i:s'); // SQL Server datetime
+            return $date->format('Y-m-d H:i:s');
         } catch (Exception $e) {
-            // Если не удалось преобразовать, возвращаем null
             return null;
         }
     }

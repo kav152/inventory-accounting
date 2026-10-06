@@ -49,6 +49,13 @@ $importResults = null;
       #locationTableContainer tbody tr.row-location.selected td:first-child {
         box-shadow: inset 3px 0 0 #0d9488;
       }
+      #legalEntityTableContainer tbody tr.row-legal-entity.selected td {
+        background: #ecfdf8 !important;
+        color: #0f172a !important;
+      }
+      #legalEntityTableContainer tbody tr.row-legal-entity.selected td:first-child {
+        box-shadow: inset 3px 0 0 #0d9488;
+      }
     </style>
 
     <style>
@@ -305,13 +312,19 @@ $importResults = null;
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers"
                         type="button">
-                        <i class="bi bi-building"></i> Локации
+                        <i class="bi bi-geo-alt"></i> Локации
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="legal-entities-tab" data-bs-toggle="tab" data-bs-target="#legalEntities"
+                        type="button">
+                        <i class="bi bi-briefcase"></i> Юр. лица
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="convert-tab" data-bs-toggle="tab" data-bs-target="#serviceCenters"
                         type="button">
-                        <i class="bi bi-building"></i> Сервисные центры
+                        <i class="bi bi-tools"></i> Сервисные центры
                     </button>
                 </li>
                 <!-- Можно добавить дополнительные вкладки для тестирования скролла -->
@@ -353,6 +366,11 @@ $importResults = null;
             <!-- Вкладка локации -->
             <div class="tab-pane fade" id="customers" role="tabpanel">
                 <?php include __DIR__ . '/AdminTabs/locations_tab.php'; ?>
+            </div>
+
+            <!-- Вкладка юр. лица -->
+            <div class="tab-pane fade" id="legalEntities" role="tabpanel">
+                <?php include __DIR__ . '/AdminTabs/legalEntities_tab.php'; ?>
             </div>
 
             <!-- Вкладка сервисные центры -->
@@ -532,7 +550,6 @@ $importResults = null;
     <script type="module" src="/js/modals/modalLoader.js"></script>
     <script type="module" src="/js/modals/userModal.js"></script>
     <script type="module" src="/js/modals/locationModal.js"></script>
-    <script type="module" src="/js/modals/legalTransferModal.js"></script>
     <script type="module" src="/js/modals/setting.js"></script>
     <script type="module" src="/js/modalTypes.js"></script>
     <script type="module" src="/js/updateFunctions.js"></script>

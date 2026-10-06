@@ -190,11 +190,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="brigade-actions mb-3">
+                    <div class="brigade-actions mb-3 d-flex flex-wrap gap-2 align-items-center">
                         <button class="btn btn-primary" id="btnReturnTMC">Вернуть ТМЦ</button>
-                        <!--button-- class="btn btn-warning" id="btnSendToService"
-                            onclick="sendToService('row-container1', ServiceStatus.sendService)">Отправить в
-                            сервис</!--button-->
+                        <input type="search" id="atWorkModalSearch" class="form-control form-control-sm"
+                            style="max-width: 340px; margin-left: auto;"
+                            placeholder="Поиск: наименование или серийный номер…"
+                            autocomplete="off">
                     </div>
 
                     <div class="brigade-list">
@@ -226,13 +227,18 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($group['items'] as $item): ?>
+                                                <?php foreach ($group['items'] as $item):
+                                                    $name = (string) ($item->NameTMC ?? '');
+                                                    $serial = (string) ($item->SerialNumber ?? '');
+                                                    $searchBlob = mb_strtolower(trim($name . ' ' . $serial . ' ' . (int) $item->ID_TMC));
+                                                ?>
                                                     <tr class="row-container1" data-id="<?= $item->ID_TMC ?>"
-                                                        data-brigade="<?= $group['id'] ?>" data-status="<?= $item->Status ?>">
+                                                        data-brigade="<?= $group['id'] ?>" data-status="<?= $item->Status ?>"
+                                                        data-search="<?= htmlspecialchars($searchBlob) ?>">
                                                         <td><?= $item->ID_TMC ?></td>
-                                                        <td><?= $item->NameTMC ?></td>
-                                                        <td><?= $item->SerialNumber ?></td>
-                                                        <td><?= $item->User->FIO ?></td>
+                                                        <td><?= htmlspecialchars($name) ?></td>
+                                                        <td><?= htmlspecialchars($serial) ?></td>
+                                                        <td><?= htmlspecialchars($item->User->FIO ?? '') ?></td>
                                                         <td class="text-nowrap">
                                                             <button type="button"
                                                                 class="btn btn-warning btn-sm btn-service"

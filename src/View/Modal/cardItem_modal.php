@@ -235,6 +235,18 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                             $currentLocationId = (int) ($inventoryItem->IDLocation ?? 0);
                             $currentLegal = trim((string) ($inventoryItem->Location?->FormsJointStockCompanies ?? ''));
                             $locationsList = $locations ?? [];
+                            if (!isset($legalEntities) || !is_array($legalEntities)) {
+                                $legalEntities = [];
+                                foreach ($locationsList as $loc) {
+                                    $locLegal = trim((string) ($loc->FormsJointStockCompanies ?? ''));
+                                    if ($locLegal !== '') {
+                                        $legalEntities[$locLegal] = $locLegal;
+                                    }
+                                }
+                            }
+                            if ($currentLegal !== '' && !isset($legalEntities[$currentLegal]) && !in_array($currentLegal, $legalEntities, true)) {
+                                $legalEntities[$currentLegal] = $currentLegal;
+                            }
                             ?>
                             <div class="mb-3">
                                 <label class="form-label fw-bold" for="locationSelect">Локация</label>
@@ -256,10 +268,17 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold" for="txtLegalEntity">Юр. лицо</label>
-                                <input type="text" class="form-control" id="txtLegalEntity" name="legalEntity"
-                                    placeholder="Юр. лицо локации"
-                                    value="<?= htmlspecialchars($currentLegal) ?>">
-                                <div class="form-text">Привязано к выбранной локации. Можно уточнить при создании/редактировании.</div>
+                                <select class="form-select" id="txtLegalEntity" name="legalEntity">
+                                    <option value="">Не указано</option>
+                                    <?php foreach ($legalEntities as $legal): ?>
+                                        <?php $legalName = is_string($legal) ? $legal : (string) $legal; ?>
+                                        <option value="<?= htmlspecialchars($legalName, ENT_QUOTES) ?>"
+                                            <?= $currentLegal === $legalName ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($legalName) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">Справочник: Админка → Юр. лица</div>
                             </div>
                         </div>
 
@@ -310,12 +329,22 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
         });
 
         const locationSelect = document.getElementById("locationSelect");
-        const legalInput = document.getElementById("txtLegalEntity");
-        if (locationSelect && legalInput && !locationSelect.dataset.legalBound) {
+        const legalSelect = document.getElementById("txtLegalEntity");
+        if (locationSelect && legalSelect && !locationSelect.dataset.legalBound) {
             locationSelect.dataset.legalBound = "1";
             locationSelect.addEventListener("change", function () {
                 const selected = this.options[this.selectedIndex];
-                legalInput.value = selected?.getAttribute("data-legal") || "";
+                const legal = (selected?.getAttribute("data-legal") || "").trim();
+                if (!legal) {
+                    legalSelect.value = "";
+                    return;
+                }
+                let opt = Array.from(legalSelect.options).find((o) => o.value === legal);
+                if (!opt) {
+                    opt = new Option(legal, legal, true, true);
+                    legalSelect.add(opt);
+                }
+                legalSelect.value = legal;
             });
         }
 

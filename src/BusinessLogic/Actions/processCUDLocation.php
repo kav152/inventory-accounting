@@ -59,6 +59,23 @@ class processCUDLocation extends CUDHandler
         return $location;
     }
 
+    protected function delete($data)
+    {
+        $entity = new Location($data);
+        $id = (int) $entity->getId();
+        if ($id <= 0) {
+            throw new Exception('Не указан ID локации для удаления');
+        }
+
+        $ok = $this->locationController->delete($entity);
+        if (!$ok) {
+            throw new Exception('Не удалось удалить локацию');
+        }
+
+        // Заглушка с id — нужна для синхронизации строки таблицы после удаления
+        return new Location(['IDLocation' => $id]);
+    }
+
     protected function prepareResultEntity($location)
     {
         if (!$location) {

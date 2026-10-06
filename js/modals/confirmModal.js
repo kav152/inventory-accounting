@@ -75,6 +75,38 @@ export function initСonfirmModalHandlers(modalElement) {
     e.preventDefault();
     await handleСonfirmModalFormSubmit(modalElement);
   });
+
+  const searchInput = modalElement.querySelector("#confirmModalSearch");
+  if (searchInput && searchInput.dataset.bound !== "1") {
+    searchInput.dataset.bound = "1";
+    searchInput.addEventListener("input", () => filterConfirmModalRows(modalElement));
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        searchInput.value = "";
+        filterConfirmModalRows(modalElement);
+      }
+    });
+  }
+}
+
+function filterConfirmModalRows(modalElement) {
+  const q = (
+    modalElement.querySelector("#confirmModalSearch")?.value || ""
+  )
+    .trim()
+    .toLowerCase();
+  const rows = modalElement.querySelectorAll("tr.confirm-item-row");
+  let visible = 0;
+  rows.forEach((row) => {
+    const blob = (row.getAttribute("data-search") || row.textContent || "").toLowerCase();
+    const show = !q || blob.includes(q);
+    row.classList.toggle("confirm-row-hidden", !show);
+    if (show) visible += 1;
+  });
+  const empty = modalElement.querySelector("#confirmSearchEmpty");
+  const table = modalElement.querySelector(".confirm-table");
+  if (empty) empty.style.display = visible === 0 && q ? "block" : "none";
+  if (table) table.style.display = visible === 0 && q ? "none" : "";
 }
 
 async function handleСonfirmModalFormSubmit(modalElement) {

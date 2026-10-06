@@ -110,6 +110,16 @@ class LocationController
     }
 
     /**
+     * Удалить локацию / сервисный центр
+     * @param mixed $object
+     * @return bool
+     */
+    public function delete($object): bool
+    {
+        return $this->cudFactory->delete($object);
+    }
+
+    /**
      * Получить текущую основную локацию (склад)
      */
     public function getMainWarehouse(): ?Location

@@ -204,13 +204,24 @@ window.handleSelectChange = handleSelectChange;
 
 function initLegalEntityHandlers(modalElement) {
     const locationSelect = modalElement.querySelector("#locationSelect");
-    const legalInput = modalElement.querySelector("#txtLegalEntity");
-    if (!locationSelect || !legalInput || locationSelect.dataset.legalBound) return;
+    const legalSelect = modalElement.querySelector("#txtLegalEntity");
+    if (!locationSelect || !legalSelect || locationSelect.dataset.legalBound) return;
 
     locationSelect.dataset.legalBound = "1";
     locationSelect.addEventListener("change", function () {
         const selected = this.options[this.selectedIndex];
-        legalInput.value = selected?.getAttribute("data-legal") || "";
+        const legal = (selected?.getAttribute("data-legal") || "").trim();
+        if (!legal) {
+            legalSelect.value = "";
+            return;
+        }
+        // если такого юр. лица ещё нет в списке — добавляем
+        let opt = Array.from(legalSelect.options).find((o) => o.value === legal);
+        if (!opt) {
+            opt = new Option(legal, legal, true, true);
+            legalSelect.add(opt);
+        }
+        legalSelect.value = legal;
     });
 }
 
@@ -234,7 +245,7 @@ function syncLegalEntityInTable(entity) {
         legalCell.textContent = legalEntity || "не указано";
         legalCell.title = legalEntity
             ? legalEntity
-            : "Заполните юр. лицо в Админка → Локации";
+            : "Заполните юр. лицо в Админка → Юр. лица";
         legalCell.classList.add("legal-cell", "rowGrid1");
         legalCell.classList.toggle("is-empty", !legalEntity);
     }

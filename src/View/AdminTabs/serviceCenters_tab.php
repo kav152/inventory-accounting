@@ -24,7 +24,7 @@ $count = $locations ? count($locations) : 0;
             <button type="button" class="btn loc-btn loc-btn-edit" onclick="openEntityModal(Action.UPDATE, 'locationServiceModal')">
                 <i class="bi bi-pencil"></i> Редактировать
             </button>
-            <button type="button" class="btn loc-btn loc-btn-danger" disabled title="Скоро">
+            <button type="button" class="btn loc-btn loc-btn-danger" onclick="openEntityModal(Action.DELETE, 'locationServiceModal')">
                 <i class="bi bi-trash"></i> Аннулировать
             </button>
         </div>

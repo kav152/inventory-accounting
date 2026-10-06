@@ -59,20 +59,23 @@ class ItemController
     public function getInventoryItems(int $value_statusUser, int $idUser): ?Collection
     {
         $statusUser = new StatusUser();
-        $statusItem = new StatusItem();
-        $sql = "";
+        $writtenOff = (int) StatusItem::WrittenOff;
+        $sql = " WHERE ii.Status != {$writtenOff}";
 
         switch ($statusUser->getDescription($value_statusUser)) {
             case 'Администратор':
-                // Исправлена конкатенация с "+" на "."
-                $sql = " WHERE ii.Status != "
-                    . StatusItem::getByDescription('Списано');
+                // все несписанные
                 break;
             case 'Кладовщик':
-                // Исправлена конкатенация и форматирование
-                $sql = " WHERE ii.Status != " . StatusItem::getByDescription('Списано')
-                    . " AND r.CurrentUser = {$idUser}";
-
+                // Склад видит весь реестр несписанных ТМЦ (не только «свои» CurrentUser).
+                // Иначе после создания админом список у кладовщика пустой.
+                break;
+            case 'Менеджер':
+            case 'Бригадир':
+                $sql .= " AND r.CurrentUser = " . (int) $idUser;
+                break;
+            default:
+                $sql .= " AND r.CurrentUser = " . (int) $idUser;
                 break;
         }
 
@@ -97,7 +100,7 @@ class ItemController
         LEFT JOIN [User] u ON r.CurrentUser = u.IDUser
         LEFT JOIN ModelTMC m ON ii.IDModel = m.IDModel
         {$sql}    
-        ORDER BY ii.NameTMC
+        ORDER BY CASE WHEN ii.Status IN (2, 21) THEN 0 ELSE 1 END, ii.Status, ii.NameTMC
     ";
 
         $inventoryItems = $inventoryItemRepository->getAll($sql1);
@@ -344,8 +347,8 @@ class ItemController
         return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmItem);
     }
     /**
-     * ТМЦ на согласовании ремонта (фиол. статус «Подтвердить ремонт»).
-     * Не считает уже принятые «В ремонте» — иначе цифра на главной раздувается.
+     * ТМЦ в ремонте и на согласовании («В ремонте» + «Подтвердить ремонт»).
+     * Кнопка «Согласование ремонта» на главной.
      * @return array|null
      */
     public function getConfirmRepairItems(int $statusUser, int $idUser): ?array
@@ -631,7 +634,7 @@ class ItemController
      * @param int $userId
      * @return void
      */
-    public function distributeItems(array $tmcIds, int $locationId, int $userId, string $upd = '')
+    public function distributeItems(array $tmcIds, int $locationId, int $userId, string $upd = '', string $legalEntity = '')
     {
         //error_log('Мы в distributeItems: ' . print_r($tmcIds, true));
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
@@ -639,6 +642,19 @@ class ItemController
         $locationRepository = $this->container->get(LocationRepository::class);
         $historyOperations = new HistoryOperationsController();
         $upd = trim($upd);
+        $legalEntity = trim($legalEntity);
+
+        if ($locationId > 0 && $legalEntity !== '') {
+            try {
+                $location = $locationRepository->findById($locationId, 'IDLocation');
+                $currentLegal = trim((string) ($location->FormsJointStockCompanies ?? ''));
+                if ($location && $legalEntity !== $currentLegal) {
+                    $locationRepository->updateLegalEntity($locationId, $legalEntity);
+                }
+            } catch (Throwable $e) {
+                error_log('distributeItems legalEntity: ' . $e->getMessage());
+            }
+        }
 
         foreach ($tmcIds as $id) {
 
@@ -648,7 +664,7 @@ class ItemController
             }
             $prevStatus = (int) ($inventoryItem->Status ?? -1);
 
-            if ($prevStatus === StatusItem::Repair) {
+            if ($prevStatus === StatusItem::Repair || $prevStatus === StatusItem::ConfirmRepairTMC) {
                 try {
                     $this->changeDateReturnService((int) $id);
                 } catch (Exception $e) {
@@ -669,6 +685,9 @@ class ItemController
             $registrationInventoryItemRepository->save($registrationItem);
 
             $location = $locationRepository->findById($inventoryItem->IDLocation, "IDLocation");
+            if ($location && $legalEntity !== '') {
+                $location->FormsJointStockCompanies = $legalEntity;
+            }
             $inventoryItem->Location = $location;
 
             $historyOperations->OperationDistributeTMC($inventoryItem, $upd);
@@ -794,7 +813,8 @@ class ItemController
             return false;
         } catch (Exception $e) {
             error_log('Error sending to service: ' . $e->getMessage());
-            return false;
+            // пробрасываем текст наружу — иначе UI видит только «Ошибка …: 705»
+            throw $e;
         }
     }
 
@@ -920,20 +940,36 @@ class ItemController
     public function changeDateReturnService(int $id, string $operationDate = '')
     {
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $repairs = $repairItemRepository->findBy("where ID_TMC = " . (int) $id . " order by ID_Repair");
-        if ($repairs === null || $repairs->count() === 0) {
-            throw new Exception("Не найдено записи об отправке в ремонт ТМЦ id:{$id}");
+
+        // Закрываем именно открытую запись, а не «последнюю по ID» (она может уже быть сдана)
+        $open = $repairItemRepository->findBy(
+            'WHERE ID_TMC = ' . (int) $id
+            . ' AND inBasket = 0 AND DateReturnService IS NULL ORDER BY ID_Repair'
+        );
+        $repairItem = null;
+        if ($open !== null && $open->count() > 0) {
+            $repairItem = $open->last();
+        } else {
+            $repairs = $repairItemRepository->findBy('WHERE ID_TMC = ' . (int) $id . ' ORDER BY ID_Repair');
+            if ($repairs === null || $repairs->count() === 0) {
+                throw new Exception("Не найдено записи об отправке в ремонт ТМЦ id:{$id}");
+            }
+            $repairItem = $repairs->last();
         }
-        $repairItem = $repairs->last();
         if ($repairItem === null) {
             throw new Exception("Не найдено записи об отправке в ремонт ТМЦ id:{$id}");
         }
 
         $date = $this->normalizeOperationDate($operationDate);
-        $repairItem->DateReturnService = (new DateTime($date))->format('Y-m-d\TH:i:s');
+        $repairItem->DateReturnService = (new DateTime($date))->format('Y-m-d H:i:s');
         $saved = $repairItemRepository->save($repairItem);
         if ($saved === null) {
             throw new Exception("Ошибка указания даты возвращения из сервиса для ТМЦ id:{$id}");
         }
+
+        // Статус на объекте должен совпасть с закрытием ремонта
+        require_once __DIR__ . '/ItemRepairController.php';
+        $repairController = new ItemRepairController();
+        $repairController->reconcileInventoryStatusWithRepairs($id);
     }
 }

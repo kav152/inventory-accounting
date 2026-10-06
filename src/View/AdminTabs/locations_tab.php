@@ -9,13 +9,6 @@ require_once __DIR__ . '/../../BusinessLogic/LocationController.php';
 $locationController = new LocationController();
 $locations = $locationController->getLocations(false);
 $count = $locations ? count($locations) : 0;
-
-// Пользователи для модалки передачи (если ещё не загружены в adminPanel)
-if (!isset($users) || !$users) {
-    require_once __DIR__ . '/../../BusinessLogic/UserController.php';
-    $userController = new UserController();
-    $users = $userController->getUsers();
-}
 ?>
 
 <div class="admin-locations">
@@ -25,17 +18,13 @@ if (!isset($users) || !$users) {
             <span class="toolbar-count"><?= $count ?> записей</span>
         </div>
         <div class="toolbar-actions">
-            <button type="button" class="btn loc-btn loc-btn-legal" onclick="openLegalTransferModal()"
-                title="Передача ТМЦ с объекта на объект с учётом юр. лиц">
-                <i class="bi bi-building"></i> Юр. лица
-            </button>
             <button type="button" class="btn loc-btn loc-btn-add" onclick="openEntityModal(Action.CREATE, 'locationModal')">
                 <i class="bi bi-plus-lg"></i> Добавить
             </button>
             <button type="button" class="btn loc-btn loc-btn-edit" onclick="openEntityModal(Action.UPDATE, 'locationModal')">
                 <i class="bi bi-pencil"></i> Редактировать
             </button>
-            <button type="button" class="btn loc-btn loc-btn-danger" disabled title="Скоро">
+            <button type="button" class="btn loc-btn loc-btn-danger" onclick="openEntityModal(Action.DELETE, 'locationModal')">
                 <i class="bi bi-trash"></i> Аннулировать
             </button>
         </div>
@@ -133,8 +122,6 @@ if (!isset($users) || !$users) {
         </div>
     </div>
 </div>
-
-<?php include __DIR__ . '/../Modal/legalTransfer_modal.php'; ?>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

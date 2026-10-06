@@ -21,9 +21,12 @@ DatabaseFactory::setConfig();
 $confirmCount = 0;
 $confirmRepairCount = 0;
 $brigadesToItemsCount = 0;
+$proposeWriteOffCount = 0;
 
 $statusUser = $_SESSION["Status"];
 $container = new ItemController();
+require_once __DIR__ . '/../BusinessLogic/ItemRepairController.php';
+$repairContainer = new ItemRepairController();
 
 $startTime = microtime(true);
 $inventoryItems = $container->getInventoryItems($_SESSION["Status"], $_SESSION["IDUser"]);
@@ -76,8 +79,12 @@ $endTime = microtime(true);
 $loadTime = $endTime - $startTime;
 //error_log("Время brigadesToItems: " . $loadTime . " секунд.");
 
+if ((int) $statusUser === 0) {
+    $proposeWriteOffCount = $repairContainer->countProposeWriteOff();
+}
+
 // Общее количество уведомлений
-$totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCount;
+$totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCount + $proposeWriteOffCount;
 ?>
 
 <!DOCTYPE html>
@@ -233,6 +240,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
         .notification-repair-alert,
         .notification-atwork-alert,
         .notification-writeoff-alert,
+        .notification-propose-writeoff-alert,
         .notification-repair-badge,
         .notification-atwork-badge {
             position: relative;
@@ -253,6 +261,21 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
             display: block;
             text-align: center;
             font-weight: 700;
+        }
+
+        .notification-propose-writeoff-alert {
+            background: linear-gradient(135deg, #b45309, #d97706) !important;
+            color: #fff !important;
+            text-decoration: none !important;
+            display: block;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .notification-propose-badge {
+            background: #d97706 !important;
+            color: #fff !important;
+            cursor: pointer;
         }
 
         .notification-repair-alert.is-empty {
@@ -299,17 +322,27 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                             </div>
                         <?php endif; ?>
                         <?php if ($isAdmin): ?>
-                            <div class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
-                                data-bs-toggle="modal" data-bs-target="#confirmRepairModal"
-                                style="<?= $confirmRepairCount > 0 ? '' : 'display:none' ?>">
+                            <a class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
+                                href="/src/View/write_off.php?filter=confirm"
+                                title="Согласование ремонта → архив затрат"
+                                style="text-decoration:none;<?= $confirmRepairCount > 0 ? '' : 'display:none' ?>">
                                 <?= $confirmRepairCount ?>
-                            </div>
+                            </a>
                         <?php endif; ?>
                         <?php if ($brigadesToItemsCount > 0): ?>
                             <div class="notification-badge notification-atwork-badge header-badge" id="atWorkBadge"
                                 data-bs-toggle="modal" data-bs-target="#atWorkModal">
                                 <?= $brigadesToItemsCount ?>
                             </div>
+                        <?php endif; ?>
+                        <?php if ($isAdmin): ?>
+                            <a class="notification-badge notification-propose-badge header-badge"
+                                id="proposeWriteOffBadge"
+                                href="/src/View/write_off.php?filter=propose"
+                                title="Предложения списания от кладовщиков"
+                                style="text-decoration:none;<?= $proposeWriteOffCount > 0 ? '' : 'display:none' ?>">
+                                <?= (int) $proposeWriteOffCount ?>
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -330,11 +363,25 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 <?php endif; ?>
 
                 <?php if ($isAdmin && $confirmRepairCount > 0): ?>
-                    <div class="notification-alert notification-repair-alert"
+                    <a class="notification-alert notification-repair-alert"
                         id="confirmRepairNotification"
-                        onclick="openConfirmRepairModal()">
+                        href="/src/View/write_off.php?filter=confirm"
+                        style="text-decoration:none; color:#fff; display:block; text-align:center;"
+                        title="Открыть в архиве списания затрат">
                         Согласование ремонта <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
-                    </div>
+                    </a>
+                <?php endif; ?>
+
+                <?php if ($isAdmin): ?>
+                    <a class="notification-alert notification-propose-writeoff-alert"
+                        id="proposeWriteOffNotification"
+                        href="/src/View/write_off.php?filter=propose"
+                        style="text-decoration:none; color:#fff; display:<?= $proposeWriteOffCount > 0 ? 'block' : 'none' ?>; text-align:center;">
+                        Согласование списания <span id="proposeWriteOffCountText"><?= (int) $proposeWriteOffCount ?></span> ТМЦ
+                    </a>
+                <?php endif; ?>
+
+                <?php if ($isAdmin): ?>
                     <a class="notification-alert notification-writeoff-alert" id="writeOffNotification"
                         href="#"
                         onclick="event.preventDefault(); openWrittenOffMiniModal();"
@@ -388,6 +435,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 </li>
             <?php endif; ?>
 
+            <?php if ($_SESSION["Status"] == 0): ?>
             <li>
                 <a href="#" onclick="openEntityModal(Action.UPDATE, 'cardItemModal')">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
@@ -398,6 +446,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                     <span>Редактировать ТМЦ</span>
                 </a>
             </li>
+            <?php endif; ?>
             <li>
                 <a href="#" onclick="openDistributeModal(<?= $statusUser ?>)">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
@@ -452,6 +501,18 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                         <span>Списать инструмент</span>
                     </a>
                 </li>
+            <?php else: ?>
+                <li>
+                    <a href="#" title="Списать: админу придёт уведомление, можно оставить комментарий"
+                        onclick="event.preventDefault(); proposeWriteOff();">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                            fill="#1f1f1f">
+                            <path
+                                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                        </svg>
+                        <span>Списать</span>
+                    </a>
+                </li>
             <?php endif; ?>
 
             <?php if ($_SESSION["Status"] == 0): ?>
@@ -475,6 +536,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                         <span>Списание/затраты на ремонт</span>
                     </a>
                 </li>
+                <li class="sidebar-divider" aria-hidden="true"><hr></li>
                 <li>
                     <a href="#" title="Мини-список списанных ТМЦ" onclick="event.preventDefault(); openWrittenOffMiniModal();">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
@@ -510,7 +572,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 </a>
             </li>
 
-            <li class="active">
+            <li class="sidebar-exit">
                 <a href="/../../index.php">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                         fill="#1f1f1f">
@@ -584,7 +646,7 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                                     <td class="rowGrid1"><?= htmlspecialchars($userFio) ?></td>
                                     <td class="rowGrid1"><?= htmlspecialchars($locName) ?></td>
                                     <td class="rowGrid1 legal-cell <?= $legalEntity === '' ? 'is-empty' : '' ?>"
-                                        title="<?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'Заполните юр. лицо в Админка → Локации' ?>">
+                                        title="<?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'Заполните юр. лицо в Админка → Юр. лица' ?>">
                                         <?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'не указано' ?>
                                     </td>
                                 </tr>

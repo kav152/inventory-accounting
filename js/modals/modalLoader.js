@@ -88,6 +88,45 @@ export function openEntityModal(action, entityType) {
       break;
 
     case Action.DELETE:
+      selectedRows = window.rowSelectionManager.getSelectedRows(config.tableContainerId);
+
+      if (selectedRows.length === 0) {
+        showNotification(
+          TypeMessage.notification,
+          `Выберите ${config.entityName} для аннулирования`,
+        );
+        return;
+      }
+
+      selectedId = selectedRows[0]["id"];
+
+      if (!confirm(`Аннулировать выбранную запись (ID ${selectedId})?`)) {
+        return;
+      }
+
+      // Локации и сервисные центры — удаление без модального окна
+      if (
+        entityType === "locationModal" ||
+        entityType === "locationServiceModal"
+      ) {
+        const deleteFn =
+          typeof window.deleteLocationById === "function"
+            ? window.deleteLocationById
+            : null;
+        if (!deleteFn) {
+          showNotification(
+            TypeMessage.error,
+            "Обработчик удаления локации не загружен",
+          );
+          return;
+        }
+        deleteFn(selectedId, entityType).finally(() => {
+          window.rowSelectionManager.clearSelection(config.rowClass);
+        });
+        return;
+      }
+
+      break;
 
     default:
       console.warn(`Неизвестное действие: ${action}`);
