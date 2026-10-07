@@ -20,9 +20,9 @@ import { updateInventoryStatus, updateInventoryAfterTransfer } from "../updateFu
       showNotification(TypeMessage.notification, "Выберите ТМЦ для передачи");
       return;
     }
-    let validStatuses = [StatusItem.Released, StatusItem.Repair];
+    let validStatuses = [StatusItem.Released, StatusItem.Repair, StatusItem.ConfirmRepairTMC];
     if (StatusUser == 0) {
-      validStatuses = [StatusItem.Released, StatusItem.NotDistributed, StatusItem.Repair];
+      validStatuses = [StatusItem.Released, StatusItem.NotDistributed, StatusItem.Repair, StatusItem.ConfirmRepairTMC];
     }
 
     //console.log(`selectedRows - ${selectedRows}`);
@@ -102,13 +102,35 @@ export function initDistributeModalHandlers(modalElement) {
   });
 
   const locationSelect = modalElement.querySelector("#distributeLocationSelect");
+  const legalSelect = modalElement.querySelector("#distributeLegalSelect");
+
   if (locationSelect && !locationSelect.dataset.legalBound) {
     locationSelect.dataset.legalBound = "1";
-    locationSelect.addEventListener("change", () => updateDistributeLegalPanel(modalElement));
+    locationSelect.addEventListener("change", () => {
+      const locLegal = (locationSelect.selectedOptions?.[0]?.getAttribute("data-legal") || "").trim();
+      if (legalSelect && locLegal) {
+        ensureLegalOption(legalSelect, locLegal);
+        legalSelect.value = locLegal;
+      }
+      updateDistributeLegalPanel(modalElement);
+    });
+  }
+
+  if (legalSelect && !legalSelect.dataset.legalBound) {
+    legalSelect.dataset.legalBound = "1";
+    legalSelect.addEventListener("change", () => updateDistributeLegalPanel(modalElement));
   }
 
   // Обновляем блок юр. лиц после открытия / заполнения таблицы
   setTimeout(() => updateDistributeLegalPanel(modalElement), 50);
+}
+
+function ensureLegalOption(selectEl, legal) {
+  if (!selectEl || !legal) return;
+  const exists = Array.from(selectEl.options).some((o) => o.value === legal);
+  if (!exists) {
+    selectEl.add(new Option(legal, legal, false, false));
+  }
 }
 
 function collectSourceLegalEntities(modalElement) {
@@ -118,6 +140,14 @@ function collectSourceLegalEntities(modalElement) {
     if (legal) values.add(legal);
   });
   return Array.from(values);
+}
+
+function getDistributeToLegal(modalElement) {
+  const legalSelect = modalElement.querySelector("#distributeLegalSelect");
+  const fromSelect = (legalSelect?.value || "").trim();
+  if (fromSelect) return fromSelect;
+  const locationSelect = modalElement.querySelector("#distributeLocationSelect");
+  return (locationSelect?.selectedOptions?.[0]?.getAttribute("data-legal") || "").trim();
 }
 
 function updateDistributeLegalPanel(modalElement) {
@@ -130,9 +160,7 @@ function updateDistributeLegalPanel(modalElement) {
   if (!panel || !fromEl || !toEl) return;
 
   const fromList = collectSourceLegalEntities(modalElement);
-  const locationSelect = modalElement.querySelector("#distributeLocationSelect");
-  const selectedOption = locationSelect?.selectedOptions?.[0];
-  const toLegal = (selectedOption?.getAttribute("data-legal") || "").trim();
+  const toLegal = getDistributeToLegal(modalElement);
 
   const fromText = fromList.length ? fromList.join(", ") : "—";
   fromEl.textContent = fromText;
@@ -141,7 +169,6 @@ function updateDistributeLegalPanel(modalElement) {
   toEl.textContent = toLegal || "—";
   toEl.classList.toggle("is-empty", !toLegal);
 
-  // Обновляем столбец «Юр. лицо куда» в таблице
   modalElement.querySelectorAll("#selectedItemsTable .legal-to-chip").forEach((chip) => {
     if (toLegal) {
       chip.textContent = toLegal;
@@ -159,13 +186,10 @@ function updateDistributeLegalPanel(modalElement) {
     hasTo &&
     fromList.some((fromLegal) => fromLegal.toLowerCase() !== toLegal.toLowerCase());
 
-  // Показываем панель, если есть хотя бы одно юр. лицо
-  panel.classList.toggle("is-visible", hasFrom || hasTo);
+  panel.classList.add("is-visible");
   hint?.classList.toggle("is-visible", isCross);
   cardFrom?.classList.toggle("legal-card-cross", isCross);
   cardTo?.classList.toggle("legal-card-cross", isCross);
-
-  // Всегда показываем оба столбца юр. лиц в таблице передачи
   modalElement.classList.add("has-dual-legal");
 }
 
@@ -200,7 +224,11 @@ async function handleDistributeFormSubmit(modalElement) {
         locationOpt?.getAttribute("data-name") ||
         (locationOpt?.textContent || "").split("(")[0]
       ).trim();
-      const legal = (locationOpt?.getAttribute("data-legal") || "").trim();
+      const legalSelect = form.querySelector("#distributeLegalSelect");
+      const legal = (
+        (legalSelect?.value || "").trim() ||
+        (locationOpt?.getAttribute("data-legal") || "").trim()
+      );
       const responsible = (userOpt?.textContent || "").trim();
 
       updateInventoryAfterTransfer(tmc_ids, {

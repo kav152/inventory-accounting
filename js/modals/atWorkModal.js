@@ -81,7 +81,7 @@ async function sendServiceForm(tmcId) {
   const data = await response.json();
   if (data.success) {
     removeAtWorkItemFromModal(tmcId);
-    updateInventoryStatus([tmcId], StatusItem.Repair);
+    updateInventoryStatus([tmcId], StatusItem.ConfirmRepairTMC);
     updateCounters({ brigadesToItemsCount: -1, confirmRepairCount: 1 });
   } else {
     showNotification(TypeMessage.error, data.message || "Ошибка при отправке в сервис");
@@ -373,7 +373,53 @@ export function initAtWorkModalModalHandlers(modalElement) {
     }
   });
 
+  const searchInput = modalElement.querySelector("#atWorkModalSearch");
+  if (searchInput && searchInput.dataset.bound !== "1") {
+    searchInput.dataset.bound = "1";
+    searchInput.addEventListener("input", () => filterAtWorkModalRows(modalElement));
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        searchInput.value = "";
+        filterAtWorkModalRows(modalElement);
+      }
+    });
+  }
+
   initDynamicElements(modalElement);
+}
+
+function filterAtWorkModalRows(modalElement) {
+  const q = (modalElement.querySelector("#atWorkModalSearch")?.value || "")
+    .trim()
+    .toLowerCase();
+
+  modalElement.querySelectorAll(".brigade-group").forEach((group) => {
+    let visibleInGroup = 0;
+    group.querySelectorAll("tr.row-container1").forEach((row) => {
+      const blob = (
+        row.getAttribute("data-search") ||
+        row.textContent ||
+        ""
+      ).toLowerCase();
+      const show = !q || blob.includes(q);
+      row.style.display = show ? "" : "none";
+      // скрыть форму сервиса под строкой
+      const formRow = row.nextElementSibling;
+      if (formRow?.classList.contains("service-form-row") && !show) {
+        formRow.style.display = "none";
+      }
+      if (show) visibleInGroup += 1;
+    });
+
+    group.style.display = visibleInGroup === 0 && q ? "none" : "";
+    // при поиске раскрыть группу с совпадениями
+    if (q && visibleInGroup > 0) {
+      const collapse = group.querySelector(".collapse");
+      if (collapse && !collapse.classList.contains("show")) {
+        collapse.classList.add("show");
+      }
+    }
+  });
 }
 
 /**

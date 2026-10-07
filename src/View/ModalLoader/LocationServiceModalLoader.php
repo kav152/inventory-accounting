@@ -25,6 +25,10 @@ class LocationServiceModalLoader extends ModalLoader
 
         $cities = $locationController->getCities();
 
+        require_once __DIR__ . '/../../BusinessLogic/LegalEntityController.php';
+        $legalEntityController = new LegalEntityController();
+        $legalEntities = $legalEntityController->getLegalEntityNames(true);
+
         ob_start();
         include __DIR__ . '/../Modal/location_modal.php';
         return ob_get_clean();

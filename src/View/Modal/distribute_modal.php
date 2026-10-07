@@ -13,7 +13,9 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
 
 <style>
     #distributeModal .legal-transfer-panel {
-        display: none;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: stretch;
         gap: 12px;
         margin-bottom: 16px;
     }
@@ -144,6 +146,20 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Юр. лицо куда</label>
+                            <select name="legalEntity" id="distributeLegalSelect" class="form-select">
+                                <option value="">Не указано</option>
+                                <?php foreach (($legalEntities ?? []) as $legalName): ?>
+                                    <option value="<?= htmlspecialchars($legalName, ENT_QUOTES) ?>">
+                                        <?= htmlspecialchars($legalName) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text" style="font-size:12px;color:#64748b;">
+                                Можно выбрать вручную; при выборе объекта подставится юр. лицо объекта, если оно задано.
+                            </div>
                         </div>
                     </div>
                     <div class="row mb-3">

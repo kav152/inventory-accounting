@@ -13,6 +13,7 @@ class processCUDSendToService extends CUDHandler
     private $currentData = [];
     private $success = true;
     private $messages = [];
+    private $succeededIds = [];
 
     public function __construct()
     {
@@ -43,20 +44,23 @@ class processCUDSendToService extends CUDHandler
 
         $itemController = new ItemController();
         foreach ($items as $item) {
+            $tmcId = (int) ($item['id'] ?? 0);
             try {
                 $result = $itemController->sendToService(
-                    (int) $item['id'],
+                    $tmcId,
                     (int) $statusService,
                     (string) ($item['reason'] ?? ''),
                     trim((string) ($item['operationDate'] ?? ''))
                 );
                 if (!$result) {
                     $this->success = false;
-                    $this->messages[] = "Ошибка при отправке ТМЦ в сервис: {$item['id']}";
+                    $this->messages[] = "Ошибка при отправке ТМЦ в сервис: {$tmcId}";
+                } else {
+                    $this->succeededIds[] = $tmcId;
                 }
             } catch (Exception $e) {
                 $this->success = false;
-                $this->messages[] = "ТМЦ {$item['id']}: " . $e->getMessage();
+                $this->messages[] = "ТМЦ {$tmcId}: " . $e->getMessage();
             }
         }
     }
@@ -65,7 +69,8 @@ class processCUDSendToService extends CUDHandler
     {
         return [
             'success' => $this->success,
-            'messages' => $this->messages
+            'messages' => $this->messages,
+            'succeededIds' => $this->succeededIds,
         ];
     }
 }

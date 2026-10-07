@@ -27,6 +27,10 @@ return [
         'loader' => LocationModalLoader::class,
         'modalId' => 'locationModal'
     ],
+    'legalEntityModal' => [
+        'loader' => LegalEntityModalLoader::class,
+        'modalId' => 'legalEntityModal'
+    ],
     'locationServiceModal' => [
         'loader' => LocationServiceModalLoader::class,
         'modalId' => 'locationServiceModal'

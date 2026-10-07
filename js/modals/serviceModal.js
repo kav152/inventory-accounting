@@ -70,9 +70,13 @@ import { updateInventoryStatus } from "../updateFunctions.js";
 })();
 
 export function initSendToServiceModalHandlers(modalElement) {
-  document
-    .getElementById("btnSubmitService")
-    .addEventListener("click", async function () {
+  const btn = document.getElementById("btnSubmitService");
+  if (!btn) return;
+  // не вешаем обработчик повторно — иначе 2 успеха + 2 ошибки
+  if (btn.dataset.handlerBound === "1") return;
+  btn.dataset.handlerBound = "1";
+
+  btn.addEventListener("click", async function () {
       const inputs = document.querySelectorAll(
         "#selectedServiceItemsContainer .repair-reason-input",
       );
@@ -119,28 +123,37 @@ export function initSendToServiceModalHandlers(modalElement) {
       }
 
       try {
+        // successMessage пустой: одно итоговое уведомление ниже
         const result = await executeEntityAction({
           action: Action.UPDATE,
           formData: { items, statusService },
           url: "/src/BusinessLogic/Actions/processCUDSendToService.php",
-          successMessage: "ТМЦ успешно переданы",
+          successMessage: "",
         });
 
-        const ok =
-          !!result?.resultEntity &&
-          (result.resultEntity.success === undefined ||
-            result.resultEntity.success === true);
+        const entity = result?.resultEntity || {};
+        const messages = Array.isArray(entity.messages) ? entity.messages : [];
+        const succeededIds = Array.isArray(entity.succeededIds)
+          ? entity.succeededIds.map((id) => String(id))
+          : [];
+        const allOk = entity.success !== false && messages.length === 0;
 
-        if (!ok) {
-          const messages = result?.resultEntity?.messages;
+        if (!allOk) {
           showNotification(
             TypeMessage.error,
-            Array.isArray(messages)
-              ? messages.join("; ")
-              : messages || "Ошибка при отправке в сервис",
+            messages.join("; ") || "Ошибка при отправке в сервис",
           );
-          return;
+          if (succeededIds.length === 0) {
+            return;
+          }
+        } else {
+          showNotification(TypeMessage.success, "ТМЦ успешно переданы");
         }
+
+        const idsToUpdate =
+          succeededIds.length > 0
+            ? succeededIds
+            : (window.selectedTMCIds || items.map((i) => String(i.id)));
 
         const newStatus =
           ServiceStatus.sendService == statusService
@@ -149,13 +162,16 @@ export function initSendToServiceModalHandlers(modalElement) {
               ? StatusItem.Released
               : -1;
 
-        updateInventoryStatus(window.selectedTMCIds, newStatus);
-        hideRowsInAtWorkModal(items);
+        updateInventoryStatus(idsToUpdate, newStatus);
+        hideRowsInAtWorkModal(
+          items.filter((item) => idsToUpdate.includes(String(item.id))),
+        );
 
-        if (statusService == ServiceStatus.sendService) {
-          if (typeof window.updateCounters === "function") {
-            window.updateCounters({ confirmRepairCount: items.length });
-          }
+        if (
+          statusService == ServiceStatus.sendService &&
+          typeof window.updateCounters === "function"
+        ) {
+          window.updateCounters({ confirmRepairCount: idsToUpdate.length });
         }
 
         const modal = bootstrap.Modal.getInstance(modalElement);
@@ -170,7 +186,7 @@ export function initSendToServiceModalHandlers(modalElement) {
         modal?.hide();
       } catch (error) {
         console.error(error);
-        showNotification(TypeMessage.error, error.message || String(error));
+        // ошибка сети/HTTP уже показана в executeEntityAction
       }
     });
 }

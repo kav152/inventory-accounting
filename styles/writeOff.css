@@ -388,9 +388,10 @@ body.writeoff-page {
   color: #be123c !important;
 }
 
-#writeOffTable tbody tr.main-row.selected .status-badge.status-repair {
-  background: #ffedd5 !important;
-  color: #c2410c !important;
+#writeOffTable tbody tr.main-row.selected .status-badge.status-repair,
+#writeOffTable tbody tr.main-row.selected .status-badge.status-confirm-repair {
+  background: #f3e8ff !important;
+  color: #7e22ce !important;
 }
 
 #writeOffTable tbody tr.main-row.selected .id-chip {
@@ -596,6 +597,19 @@ button.btn-edit:hover {
   transform: translateY(-1px);
 }
 
+.btn-history,
+button.btn-history {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.btn-history:hover,
+button.btn-history:hover {
+  background: #dbeafe !important;
+  transform: translateY(-1px);
+}
+
 .btn-restore,
 button.btn-restore {
   background: #eff6ff !important;
@@ -642,7 +656,9 @@ button.btn-delete:hover {
 }
 
 .status-written-off { background: var(--red-soft); color: var(--red); }
-.status-repair { background: var(--amber-soft); color: var(--amber); }
+.status-repair,
+.status-confirm-repair { background: #f3e8ff; color: #7e22ce; }
+.status-propose-writeoff { background: #ffedd5; color: #c2410c; }
 .status-default { background: var(--green-soft); color: var(--green); }
 
 #writeOffTable thead th:last-child .filter-btn,
@@ -737,6 +753,13 @@ button.btn-delete:hover {
 
 .repair-table .action-buttons {
   white-space: nowrap;
+}
+
+.repair-table .repair-date-to-input,
+.repair-table .repair-date-return-input {
+  min-width: 7.5rem;
+  max-width: 8.5rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .repair-table .btn-action {

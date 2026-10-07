@@ -44,7 +44,9 @@ body.main-body {
   top: 0;
   align-self: start;
   transition: 300ms ease-in-out;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 #sidebar.close {
@@ -57,22 +59,45 @@ body.main-body {
   padding: 5px;
 }
 
-#sidebar>ul>li:first-child {
+#sidebar li.sidebar-divider {
+  list-style: none;
+  margin: 6px 10px;
+  padding: 0;
+  pointer-events: none;
+}
+
+#sidebar li.sidebar-divider hr {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--line-clr, #d0d0d0);
+  opacity: 1;
+}
+
+#sidebar.close li.sidebar-divider {
+  margin: 6px 8px;
+}
+
+#sidebar > ul > li:first-child {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+}
 
-  .logo {
-    font-weight: 600;
-  }
+#sidebar .logo {
+  font-weight: 600;
+  color: var(--text-clr);
+}
+
+#sidebar.close .logo {
+  display: none;
 }
 
 #sidebar ul li.active a {
   color: var(--accent-clr);
+}
 
-  svg {
-    fill: var(--accent-clr);
-  }
+#sidebar ul li.active a svg {
+  fill: var(--accent-clr);
 }
 
 #sidebar a,
@@ -101,12 +126,6 @@ body.main-body {
   fill: var(--text-clr);
 }
 
-/*Фиксация боковой панели*/
-#sidebar {
-  flex-shrink: 0;
-  fill: var(--text-clr);
-}
-
 #sidebar a span,
 #sidebar .dropdown-btn span {
   flex-grow: 1;
@@ -122,10 +141,10 @@ body.main-body {
   display: grid;
   grid-template-rows: 0fr;
   transition: 300ms ease-in-out;
+}
 
-  >div {
-    overflow: hidden;
-  }
+#sidebar .sub-menu > div {
+  overflow: hidden;
 }
 
 #sidebar .sub-menu.show {
@@ -151,14 +170,31 @@ body.main-body {
   border-radius: 0.5em;
   background: none;
   cursor: pointer;
+}
 
-  svg {
-    transition: rotate 150ms ease;
-  }
+#toggle-btn svg {
+  fill: var(--text-clr);
+  transition: rotate 150ms ease;
 }
 
 #toggle-btn:hover {
   background-color: var(--hover-clr);
+}
+
+#sidebar.close #toggle-btn {
+  margin: 0 auto;
+}
+
+#sidebar.close a {
+  justify-content: center;
+}
+
+#sidebar.close a span {
+  display: none;
+}
+
+#sidebar .sidebar-exit {
+  margin-top: 6px;
 }
 
 /* ======= ОСНОВНОЕ ОКНО (MAIN) ======= */
@@ -266,25 +302,27 @@ body.main-body {
 }
 
 #inventoryTable th {
-  padding: 8px 6px;
+  padding: 8px 10px;
   text-align: left;
   background-color: #f1f5f9;
   font-weight: 600;
   color: #334155;
   position: relative;
   font-size: 0.95em;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 2px;
+  justify-content: space-between;
+  gap: 6px;
+  box-sizing: border-box;
 }
 
 #inventoryTable td {
-  padding: 8px 6px;
+  padding: 8px 10px;
   text-align: left;
   /* без border-bottom: при grid + align-items:start короткие ячейки
      рисуют «обрывки» линий под ФИО/серийником посреди строки */
@@ -296,7 +334,19 @@ body.main-body {
   word-break: break-word;
   overflow-wrap: anywhere;
   line-height: 1.35;
-  align-self: start;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* Вертикальные разделители колонок */
+#inventoryTable .header-container > th:not(:last-child) {
+  border-right: 1px solid #cbd5e1;
+}
+
+#inventoryTable .row-container > td:not(:last-child) {
+  border-right: 1px solid rgba(15, 23, 42, 0.18);
 }
 
 #inventoryTable td:nth-child(2) {
@@ -329,14 +379,20 @@ body.main-body {
     minmax(90px, 1fr)
     minmax(94px, 1fr)
     minmax(94px, 1fr);
-  gap: 0.25em;
+  gap: 0;
   border: 1px solid var(--line-clr);
   cursor: pointer;
   user-select: none;
+  overflow: hidden;
+}
+
+.header-container {
+  background-color: #f1f5f9;
+  overflow: visible;
 }
 
 .row-container {
-  align-items: start;
+  align-items: stretch;
 }
 
 .rowGrid1.legal-cell {
@@ -355,45 +411,31 @@ body.main-body {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 #inventoryTable th .filter-btn {
   flex: 0 0 22px;
   width: 22px;
   min-width: 22px;
+  height: 22px;
   margin-left: 0;
+  padding: 0;
+  border-radius: 4px;
+  color: #64748b;
+  opacity: 0.85;
 }
 
-/* серийник и бренд — после юр. лица места мало, фильтр не должен уезжать */
-#inventoryTable th:nth-child(3),
-#inventoryTable th:nth-child(4) {
-  gap: 1px;
-  padding-right: 2px;
+#inventoryTable th .filter-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+  opacity: 1;
 }
 
-#inventoryTable th:nth-child(3) .th-label,
-#inventoryTable th:nth-child(4) .th-label {
-  flex: 1 1 0;
-  max-width: calc(100% - 24px);
-  font-size: 0.84em;
-}
-
-#inventoryTable th.th-filter-compact {
-  flex-wrap: wrap;
-  align-content: center;
-  row-gap: 1px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-
-#inventoryTable th.th-filter-compact .th-label {
-  flex: 1 1 100%;
-  max-width: 100%;
-  line-height: 1.15;
-}
-
-#inventoryTable th.th-filter-compact .filter-btn {
-  margin-left: auto;
+#inventoryTable th .filter-btn.active {
+  color: #2563eb;
+  background: #dbeafe;
+  opacity: 1;
 }
 
 .row-container:hover {
@@ -449,8 +491,8 @@ body.main-body {
 }
 
 .status-Repair {
-  background-color: #ffb74d;
-  /* Теплый оранжевый */
+  background-color: #9c27b0;
+  /* Фиолетовый — «Подтвердить ремонт» */
 }
 
 .status-WrittenOff {
@@ -473,14 +515,20 @@ body.main-body {
   /* Очень светлый бирюзовый */
 }
 
+/* «Подтвердить ремонт» — фиолетовый */
 .status-ConfirmRepairTMC {
   background-color: #9c27b0;
+}
+
+.status-ProposeWriteOff {
+  background-color: #d97706;
 }
 
 .status-Repair,
 .status-WrittenOff,
 .status-ConfirmItem,
-.status-ConfirmRepairTMC {
+.status-ConfirmRepairTMC,
+.status-ProposeWriteOff {
   color: white;
   /* Белый текст на темных фонах */
   font-weight: 500;
@@ -517,7 +565,7 @@ body.main-body {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  /* серый как статус «Подтвердить ТМЦ», не путать с оранжевым «В ремонте» */
+  /* серый как статус «Подтвердить ТМЦ» */
   background-color: #96918a;
   color: white;
   border-radius: 50%;

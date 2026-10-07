@@ -44,13 +44,24 @@ try {
     $controller = new ItemRepairController();
 
     if ($action === 'approve') {
-        $controller->approveRepair($repairId, $tmcId, [
+        $approveData = [
             'InvoiceNumber' => $input['invoiceNumber'] ?? '',
             'UPD' => $input['updNumber'] ?? $input['UPD'] ?? '',
             'RepairCost' => $input['repairCost'] ?? 0,
             'RepairDescription' => $input['repairDescription'] ?? '',
             'IDLocation' => (int) ($input['locationId'] ?? 0),
-        ]);
+        ];
+        $dateTo = trim((string) ($input['dateToService'] ?? $input['DateToService'] ?? ''));
+        $dateRet = trim((string) ($input['dateReturnService'] ?? $input['DateReturnService'] ?? ''));
+        // пустые даты не передаём — не затираем существующие и не ставим «сегодня»
+        if ($dateTo !== '') {
+            $approveData['DateToService'] = $dateTo;
+        }
+        if ($dateRet !== '') {
+            $approveData['DateReturnService'] = $dateRet;
+        }
+
+        $controller->approveRepair($repairId, $tmcId, $approveData);
         echo json_encode([
             'success' => true,
             'message' => 'Ремонт согласован, счёт сохранён',

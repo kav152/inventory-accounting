@@ -11,10 +11,12 @@ ini_set('error_log', __DIR__ . '/../storage/logs/analytics.log');
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../BusinessLogic/ItemController.php';
+require_once __DIR__ . '/../BusinessLogic/ItemRepairController.php';
 require_once __DIR__ . '/../Database/DatabaseFactory.php';
 DatabaseFactory::setConfig();
 
 $container = new ItemController();
+$repairContainer = new ItemRepairController();
 $statusUser = $_SESSION["Status"];
 
 // Получение данных для фильтров
@@ -22,37 +24,84 @@ $inventoryItems = $container->getInventoryItems($_SESSION["Status"], $_SESSION["
 $brands = [];
 $models = [];
 $locations = [];
+$suppliers = [];
 $names = [];
 
 if ($inventoryItems) {
     foreach ($inventoryItems as $item) {
-        // Собираем уникальные наименования
         if (!in_array($item->NameTMC, $names)) {
             $names[] = $item->NameTMC;
         }
-        
-        // Собираем уникальные бренды
         if ($item->BrandTMC && !in_array($item->BrandTMC->NameBrand, $brands)) {
             $brands[] = $item->BrandTMC->NameBrand;
         }
-        
-        // Собираем уникальные модели
         if ($item->ModelTMC && !in_array($item->ModelTMC->NameModel, $models)) {
             $models[] = $item->ModelTMC->NameModel;
         }
-        
-        // Собираем уникальные локации
-        if ($item->Location && !in_array($item->Location->NameLocation, $locations)) {
+        // только объекты (не сервис/поставщики)
+        if ($item->Location && empty($item->Location->IsRepair) && !in_array($item->Location->NameLocation, $locations)) {
             $locations[] = $item->Location->NameLocation;
         }
     }
 }
 
-// Сортировка данных для фильтров
 sort($names);
 sort($brands);
 sort($models);
 sort($locations);
+
+// Затраты на ремонт для финансового дашборда
+$repairSpendRows = [];
+try {
+    $repairSpendRows = $repairContainer->getRepairSpendForAnalytics();
+} catch (Throwable $e) {
+    error_log('analytics repair spend: ' . $e->getMessage());
+}
+
+// Дополняем фильтры значениями из ремонтов
+foreach ($repairSpendRows as $row) {
+    if (!empty($row['name']) && !in_array($row['name'], $names, true)) {
+        $names[] = $row['name'];
+    }
+    if (!empty($row['brand']) && !in_array($row['brand'], $brands, true)) {
+        $brands[] = $row['brand'];
+    }
+    if (!empty($row['model']) && !in_array($row['model'], $models, true)) {
+        $models[] = $row['model'];
+    }
+    // объекты — только в локации
+    if (!empty($row['location']) && !in_array($row['location'], $locations, true)) {
+        $locations[] = $row['location'];
+    }
+    // сервис (IsRepair=1) — только в поставщики
+    if (!empty($row['supplier']) && !in_array($row['supplier'], $suppliers, true)) {
+        $suppliers[] = $row['supplier'];
+    }
+}
+
+// поставщики из справочника (IsRepair=1)
+try {
+    $serviceLocations = $container->getLocations(true);
+    if ($serviceLocations) {
+        foreach ($serviceLocations as $loc) {
+            $name = trim((string) ($loc->NameLocation ?? ''));
+            if ($name !== '' && !in_array($name, $suppliers, true)) {
+                $suppliers[] = $name;
+            }
+        }
+    }
+} catch (Throwable $e) {
+    error_log('analytics suppliers: ' . $e->getMessage());
+}
+
+sort($names);
+sort($brands);
+sort($models);
+sort($locations);
+sort($suppliers);
+
+$defaultDateTo = date('Y-m-d');
+$defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
 ?>
 
 <!DOCTYPE html>
@@ -179,6 +228,98 @@ sort($locations);
             border-bottom: 1px solid #dee2e6;
             font-weight: 600;
         }
+        .analytics-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .analytics-tab {
+            border: 1px solid #dee2e6;
+            background: #fff;
+            color: #495057;
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .analytics-tab.active {
+            background: #0f766e;
+            border-color: #0f766e;
+            color: #fff;
+        }
+        .analytics-panel { display: none; }
+        .analytics-panel.active { display: block; }
+        .finance-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .finance-kpi {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 14px 16px;
+        }
+        .finance-kpi .label {
+            display: block;
+            font-size: 0.78rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+        .finance-kpi .value {
+            font-size: 1.35rem;
+            font-weight: 750;
+            color: #212529;
+        }
+        .finance-kpi.accent {
+            background: linear-gradient(135deg, #0f766e, #0d9488);
+            color: #fff;
+        }
+        .finance-kpi.accent .label { color: rgba(255,255,255,0.85); }
+        .finance-kpi.accent .value { color: #fff; }
+        .date-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .date-filters label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .date-filters .date-field { min-width: 160px; }
+        .spend-table-wrap {
+            max-height: 420px;
+            overflow: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        #spendTable th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 1;
+        }
+        @media (max-width: 992px) {
+            .finance-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 576px) {
+            .finance-kpis { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 
@@ -189,16 +330,36 @@ sort($locations);
     </a>
 
     <div class="container-fluid py-4">
-        <!-- Заголовок -->
-        <!--div class="header-section">
-            <h1 class="mb-0">Аналитика ТМЦ</h1>
-        </div-->
-        
+        <div class="analytics-tabs">
+            <button type="button" class="analytics-tab active" data-panel="park">Парк ТМЦ</button>
+            <button type="button" class="analytics-tab" data-panel="finance">Финансы / ремонт</button>
+        </div>
+
         <!-- Фильтры -->
         <div class="filter-section">
             <h4 class="mb-2">Фильтры</h4>
+            <div class="date-filters" id="financeDateFilters" style="display:none;">
+                <div class="date-field">
+                    <label for="spendDateFrom">Дата трат с</label>
+                    <input type="date" id="spendDateFrom" class="form-control form-control-sm"
+                        value="<?= htmlspecialchars($defaultDateFrom) ?>">
+                </div>
+                <div class="date-field">
+                    <label for="spendDateTo">Дата трат по</label>
+                    <input type="date" id="spendDateTo" class="form-control form-control-sm"
+                        value="<?= htmlspecialchars($defaultDateTo) ?>">
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="spendDateClear">
+                        Сбросить период
+                    </button>
+                </div>
+                <div class="ms-auto text-muted small align-self-center">
+                    Период по дате отправки в сервис (DateToService)
+                </div>
+            </div>
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg">
                     <div class="filter-group">
                         <div class="filter-header">
                             <h5>Наименование</h5>
@@ -225,7 +386,7 @@ sort($locations);
                     </div>
                 </div>
                 
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg">
                     <div class="filter-group">
                         <div class="filter-header">
                             <h5>Бренд</h5>
@@ -252,7 +413,7 @@ sort($locations);
                     </div>
                 </div>
                 
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg">
                     <div class="filter-group">
                         <div class="filter-header">
                             <h5>Модель</h5>
@@ -279,7 +440,7 @@ sort($locations);
                     </div>
                 </div>
                 
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg">
                     <div class="filter-group">
                         <div class="filter-header">
                             <h5>Локация</h5>
@@ -305,10 +466,38 @@ sort($locations);
                         </div>
                     </div>
                 </div>
+
+                <div class="col-md-4 col-lg" id="supplierFilterCol">
+                    <div class="filter-group">
+                        <div class="filter-header">
+                            <h5>Поставщик</h5>
+                            <button class="btn btn-sm btn-outline-secondary clear-filter" data-filter="supplier">
+                                <i class="bi bi-x-lg"></i> Очистить
+                            </button>
+                        </div>
+                        <div class="filter-search">
+                            <input type="text" class="form-control form-control-sm search-input" placeholder="Поиск..." data-filter="supplier">
+                            <span class="filter-search-clear" data-filter="supplier">
+                                <i class="bi bi-x"></i>
+                            </span>
+                        </div>
+                        <div class="filter-options" id="supplier-options">
+                            <?php foreach ($suppliers as $supplier): ?>
+                            <div class="form-check filter-option">
+                                <input class="form-check-input filter-checkbox" type="checkbox" value="<?= htmlspecialchars($supplier) ?>" id="supplier-<?= md5($supplier) ?>" data-filter="supplier">
+                                <label class="form-check-label" for="supplier-<?= md5($supplier) ?>">
+                                    <?= htmlspecialchars($supplier) ?>
+                                </label>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Диаграммы -->
+        <!-- Парк ТМЦ -->
+        <div class="analytics-panel active" id="panel-park">
         <div class="chart-section">
             <!-- Первый ряд: Бренды и модели -->
             <div class="row mb-4">
@@ -368,24 +557,119 @@ sort($locations);
                 </div>
             </div>
         </div>
+        </div>
+
+        <!-- Финансы / ремонт -->
+        <div class="analytics-panel" id="panel-finance">
+            <div class="finance-kpis">
+                <div class="finance-kpi accent">
+                    <span class="label">Сумма ремонта за период</span>
+                    <span class="value" id="kpiTotalSpend">0,00 ₽</span>
+                </div>
+                <div class="finance-kpi">
+                    <span class="label">Записей ремонта</span>
+                    <span class="value" id="kpiRepairCount">0</span>
+                </div>
+                <div class="finance-kpi">
+                    <span class="label">Средний чек</span>
+                    <span class="value" id="kpiAvgSpend">0,00 ₽</span>
+                </div>
+                <div class="finance-kpi">
+                    <span class="label">Со счётом</span>
+                    <span class="value" id="kpiWithInvoice">0</span>
+                </div>
+            </div>
+            <div class="chart-section">
+                <div class="row mb-4">
+                    <div class="col-md-7">
+                        <div class="card h-100">
+                            <div class="card-header">Траты на ремонт по месяцам</div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="spendByMonthChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card h-100">
+                            <div class="card-header">Траты по поставщикам</div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="spendBySupplierChart"></canvas>
+                                </div>
+                                <div class="chart-title">Детализация</div>
+                                <div class="scrollable-list" id="spendSupplierList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Даты и суммы трат</span>
+                        <span class="text-muted small" id="spendTableCount">0 записей</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="spend-table-wrap">
+                            <table class="table table-sm table-hover mb-0" id="spendTable">
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>ID</th>
+                                        <th>Наименование</th>
+                                        <th>Бренд</th>
+                                        <th>Локация</th>
+                                        <th>Поставщик</th>
+                                        <th>Счёт</th>
+                                        <th class="text-end">Сумма</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="spendTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         // Глобальные переменные для хранения данных и диаграмм
         let brandChart, modelChart, locationChart, writtenOffChart;
+        let spendByMonthChart, spendBySupplierChart;
         let brandColors = {}, modelColors = {}, locationColors = {}, writtenOffColors = {};
-        let allData = <?= json_encode($inventoryItems ? $inventoryItems->toArray() : []) ?>;
+        let allData = <?= json_encode($inventoryItems ? $inventoryItems->toArray() : [], JSON_UNESCAPED_UNICODE) ?>;
+        let allSpendData = <?= json_encode($repairSpendRows, JSON_UNESCAPED_UNICODE) ?>;
+        let activePanel = 'park';
 
-        // Функция применения фильтров
-        function applyFilters() {
-            const filters = {
+        function getCommonFilters() {
+            return {
                 name: Array.from(document.querySelectorAll('input[data-filter="name"]:checked')).map(cb => cb.value),
                 brand: Array.from(document.querySelectorAll('input[data-filter="brand"]:checked')).map(cb => cb.value),
                 model: Array.from(document.querySelectorAll('input[data-filter="model"]:checked')).map(cb => cb.value),
-                location: Array.from(document.querySelectorAll('input[data-filter="location"]:checked')).map(cb => cb.value)
+                location: Array.from(document.querySelectorAll('input[data-filter="location"]:checked')).map(cb => cb.value),
+                supplier: Array.from(document.querySelectorAll('input[data-filter="supplier"]:checked')).map(cb => cb.value)
             };
+        }
 
-            // Фильтрация данных
+        function formatMoney(value) {
+            return Number(value || 0).toLocaleString('ru-RU', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + ' ₽';
+        }
+
+        function formatDateRu(iso) {
+            if (!iso) return '—';
+            const parts = String(iso).split('-');
+            if (parts.length !== 3) return iso;
+            return parts[2] + '.' + parts[1] + '.' + parts[0];
+        }
+
+        // Функция применения фильтров
+        function applyFilters() {
+            const filters = getCommonFilters();
+
             let filteredData = allData.filter(item => {
                 if (filters.name.length > 0 && !filters.name.includes(item.NameTMC)) return false;
                 if (filters.brand.length > 0 && (!item.BrandTMC || !filters.brand.includes(item.BrandTMC.NameBrand))) return false;
@@ -394,8 +678,177 @@ sort($locations);
                 return true;
             });
 
-            // Обновление диаграмм
             updateCharts(filteredData);
+            updateFinanceDashboard();
+        }
+
+        function getFilteredSpendData() {
+            const filters = getCommonFilters();
+            const dateFrom = document.getElementById('spendDateFrom')?.value || '';
+            const dateTo = document.getElementById('spendDateTo')?.value || '';
+
+            return (allSpendData || []).filter(row => {
+                if (filters.name.length > 0 && !filters.name.includes(row.name)) return false;
+                if (filters.brand.length > 0 && !filters.brand.includes(row.brand)) return false;
+                if (filters.model.length > 0 && !filters.model.includes(row.model)) return false;
+                if (filters.location.length > 0 && !filters.location.includes(row.location)) return false;
+                if (filters.supplier.length > 0 && !filters.supplier.includes(row.supplier)) return false;
+                if (dateFrom && (!row.date || row.date < dateFrom)) return false;
+                if (dateTo && (!row.date || row.date > dateTo)) return false;
+                return true;
+            });
+        }
+
+        function updateFinanceDashboard() {
+            const rows = getFilteredSpendData();
+            const total = rows.reduce((sum, r) => sum + (Number(r.cost) || 0), 0);
+            const withInvoice = rows.filter(r => (r.invoice || '').trim() !== '').length;
+            const avg = rows.length ? total / rows.length : 0;
+
+            document.getElementById('kpiTotalSpend').textContent = formatMoney(total);
+            document.getElementById('kpiRepairCount').textContent = String(rows.length);
+            document.getElementById('kpiAvgSpend').textContent = formatMoney(avg);
+            document.getElementById('kpiWithInvoice').textContent = String(withInvoice);
+            document.getElementById('spendTableCount').textContent = rows.length + ' записей';
+
+            updateSpendByMonthChart(rows);
+            updateSpendBySupplierChart(rows);
+            updateSpendTable(rows);
+        }
+
+        function updateSpendByMonthChart(rows) {
+            const byMonth = {};
+            rows.forEach(row => {
+                if (!row.date) return;
+                const key = row.date.slice(0, 7); // YYYY-MM
+                byMonth[key] = (byMonth[key] || 0) + (Number(row.cost) || 0);
+            });
+            const labels = Object.keys(byMonth).sort();
+            const values = labels.map(k => byMonth[k]);
+            const labelRu = labels.map(k => {
+                const [y, m] = k.split('-');
+                return m + '.' + y;
+            });
+
+            if (spendByMonthChart) spendByMonthChart.destroy();
+            const canvas = document.getElementById('spendByMonthChart');
+            if (!canvas) return;
+            spendByMonthChart = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labelRu,
+                    datasets: [{
+                        label: 'Сумма ремонта, ₽',
+                        data: values,
+                        backgroundColor: 'rgba(15, 118, 110, 0.7)',
+                        borderColor: '#0f766e',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (v) => Number(v).toLocaleString('ru-RU')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSpendBySupplierChart(rows) {
+            const bySupplier = {};
+            rows.forEach(row => {
+                const name = row.supplier || 'не указан';
+                bySupplier[name] = (bySupplier[name] || 0) + (Number(row.cost) || 0);
+            });
+            const entries = Object.entries(bySupplier).sort((a, b) => b[1] - a[1]);
+            const labels = entries.map(e => e[0]);
+            const values = entries.map(e => e[1]);
+            const colors = generateColors(labels.length);
+            const total = values.reduce((s, v) => s + v, 0) || 1;
+
+            if (spendBySupplierChart) spendBySupplierChart.destroy();
+            const canvas = document.getElementById('spendBySupplierChart');
+            if (!canvas) return;
+            spendBySupplierChart = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{ data: values, backgroundColor: colors }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const list = document.getElementById('spendSupplierList');
+            list.innerHTML = '';
+            entries.forEach(([name, sum], i) => {
+                const pct = ((sum / total) * 100).toFixed(1);
+                list.innerHTML += `
+                    <div class="list-item">
+                        <div>
+                            <span class="color-badge" style="background-color: ${colors[i]}"></span>
+                            <span>${name}</span>
+                        </div>
+                        <div>${formatMoney(sum)} (${pct}%)</div>
+                    </div>`;
+            });
+        }
+
+        function updateSpendTable(rows) {
+            const tbody = document.getElementById('spendTableBody');
+            if (!tbody) return;
+            const sorted = [...rows].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Нет трат за выбранный период / фильтры</td></tr>';
+                return;
+            }
+            tbody.innerHTML = sorted.map(row => `
+                <tr>
+                    <td>${formatDateRu(row.date)}</td>
+                    <td>${row.idTmc || '—'}</td>
+                    <td>${escapeHtml(row.name || '—')}</td>
+                    <td>${escapeHtml(row.brand || '—')}</td>
+                    <td>${escapeHtml(row.location || '—')}</td>
+                    <td>${escapeHtml(row.supplier || '—')}</td>
+                    <td>${escapeHtml(row.invoice || '—')}</td>
+                    <td class="text-end fw-semibold">${formatMoney(row.cost)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function switchPanel(panel) {
+            activePanel = panel;
+            document.querySelectorAll('.analytics-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-panel') === panel);
+            });
+            document.querySelectorAll('.analytics-panel').forEach(el => {
+                el.classList.toggle('active', el.id === 'panel-' + panel);
+            });
+            const dateFilters = document.getElementById('financeDateFilters');
+            if (dateFilters) {
+                dateFilters.style.display = panel === 'finance' ? 'flex' : 'none';
+            }
+            if (panel === 'finance') {
+                updateFinanceDashboard();
+            }
         }
 
         // Функция обновления диаграмм
@@ -584,7 +1037,8 @@ sort($locations);
         function updateWrittenOffChart(data) {
             const writtenOffCounts = {};
             data.forEach(item => {
-                if (item.Location && item.Status === 5) { // Предположим, что статус 5 = "Списано"
+                // StatusItem::WrittenOff = 3
+                if (item.Location && Number(item.Status) === 3) {
                     const locationName = item.Location.NameLocation;
                     writtenOffCounts[locationName] = (writtenOffCounts[locationName] || 0) + 1;
                 }
@@ -627,7 +1081,7 @@ sort($locations);
             const writtenOffList = document.getElementById('writtenOffList');
             writtenOffList.innerHTML = '';
             locations.forEach((location, index) => {
-                const percent = ((counts[index] / data.length) * 100).toFixed(1);
+                const percent = data.length ? ((counts[index] / data.length) * 100).toFixed(1) : '0.0';
                 writtenOffList.innerHTML += `
                     <div class="list-item">
                         <div>
@@ -643,7 +1097,7 @@ sort($locations);
         function generateColors(count) {
             const colors = [];
             for (let i = 0; i < count; i++) {
-                const hue = (i * 360 / count) % 360;
+                const hue = (i * 360 / Math.max(count, 1)) % 360;
                 colors.push(`hsl(${hue}, 70%, 60%)`);
             }
             return colors;
@@ -699,10 +1153,27 @@ sort($locations);
         document.addEventListener('DOMContentLoaded', function() {
             // Инициализация диаграмм с полными данными
             updateCharts(allData);
+            updateFinanceDashboard();
             
             // Добавление обработчиков событий для фильтров
             document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', applyFilters);
+            });
+
+            document.getElementById('spendDateFrom')?.addEventListener('change', updateFinanceDashboard);
+            document.getElementById('spendDateTo')?.addEventListener('change', updateFinanceDashboard);
+            document.getElementById('spendDateClear')?.addEventListener('click', function() {
+                const from = document.getElementById('spendDateFrom');
+                const to = document.getElementById('spendDateTo');
+                if (from) from.value = '';
+                if (to) to.value = '';
+                updateFinanceDashboard();
+            });
+
+            document.querySelectorAll('.analytics-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchPanel(this.getAttribute('data-panel'));
+                });
             });
             
             // Настройка поиска в фильтрах

@@ -1,5 +1,10 @@
 <?php
 include_once __DIR__ . '/../Templates/expandable_section.php';
+$legalEntities = $legalEntities ?? [];
+$currentLocLegal = trim((string) ($location->FormsJointStockCompanies ?? ''));
+if ($currentLocLegal !== '' && !in_array($currentLocLegal, $legalEntities, true)) {
+    $legalEntities[] = $currentLocLegal;
+}
 ?>
 
 <div class="modal fade" id="locationModal" tabindex="-1" aria-hidden="true">
@@ -28,9 +33,15 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label for="FormsJointStockCompanies" class="form-label">Юр. лицо</label>
-                                    <input type="text" id="FormsJointStockCompanies" name="FormsJointStockCompanies"
-                                        class="form-control" placeholder="ООО / АО / ИП …"
-                                        value="<?= htmlspecialchars($location->FormsJointStockCompanies ?? '') ?>">
+                                    <select id="FormsJointStockCompanies" name="FormsJointStockCompanies" class="form-select">
+                                        <option value="">Не указано</option>
+                                        <?php foreach ($legalEntities as $legalName): ?>
+                                            <option value="<?= htmlspecialchars($legalName, ENT_QUOTES) ?>"
+                                                <?= $currentLocLegal === $legalName ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($legalName) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                                 <div class="col-md-8">
                                     <label for="NameLocation" class="form-label">Наименование *</label>
@@ -53,9 +64,16 @@ include_once __DIR__ . '/../Templates/expandable_section.php';
                             <div class="row g-3 mb-3">
                                 <div class="col-md-4">
                                     <label for="FormsJointStockCompanies" class="form-label">Юр. лицо</label>
-                                    <input type="text" id="FormsJointStockCompanies" name="FormsJointStockCompanies"
-                                        class="form-control" placeholder="ООО / АО / ИП …"
-                                        value="<?= htmlspecialchars($location->FormsJointStockCompanies ?? '') ?>">
+                                    <select id="FormsJointStockCompanies" name="FormsJointStockCompanies" class="form-select">
+                                        <option value="">Не указано</option>
+                                        <?php foreach ($legalEntities as $legalName): ?>
+                                            <option value="<?= htmlspecialchars($legalName, ENT_QUOTES) ?>"
+                                                <?= $currentLocLegal === $legalName ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($legalName) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="form-text">Справочник: Админка → Юр. лица</div>
                                 </div>
                                 <div class="col-md-8">
                                     <label for="NameLocation" class="form-label">Наименование локации *</label>

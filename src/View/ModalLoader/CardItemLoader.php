@@ -25,6 +25,24 @@ class CardItemLoader extends ModalLoader
         $typeTMCs = $propertyController->getTypeTMC();
         $locations = $controller->getLocations(false) ?? [];
 
+        require_once __DIR__ . '/../../BusinessLogic/LegalEntityController.php';
+        $legalEntities = [];
+        try {
+            $legalEntityController = new LegalEntityController();
+            foreach ($legalEntityController->getLegalEntityNames(true) as $name) {
+                $legalEntities[$name] = $name;
+            }
+        } catch (Throwable $e) {
+            error_log('CardItemLoader legal entities: ' . $e->getMessage());
+        }
+        foreach ($locations as $loc) {
+            $locLegal = trim((string) ($loc->FormsJointStockCompanies ?? ''));
+            if ($locLegal !== '') {
+                $legalEntities[$locLegal] = $locLegal;
+            }
+        }
+        ksort($legalEntities, SORT_NATURAL | SORT_FLAG_CASE);
+
         if ($inventoryItem && (int) ($inventoryItem->IDLocation ?? 0) > 0 && empty($inventoryItem->Location)) {
             foreach ($locations as $loc) {
                 if ((int) $loc->IDLocation === (int) $inventoryItem->IDLocation) {

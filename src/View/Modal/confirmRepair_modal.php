@@ -57,9 +57,9 @@ include __DIR__ . '/message_modal.php';
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <?php if ($confirmRepairCount > 0): ?>
                     <p class="archive-hint mb-2">
-                        Ожидают согласования администратором (статус «Подтвердить ремонт»).
-                        Уже принятые в ремонт («В ремонте») и счета — в
-                        <a href="/src/View/write_off.php">архиве ремонтов</a>.
+                        Очередь: статус «Подтвердить ремонт».
+                        Счета и архив — в
+                        <a href="/src/View/write_off.php?filter=confirm">списании затрат</a>.
                     </p>
                     <table class="table">
                         <thead>

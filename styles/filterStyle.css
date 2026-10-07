@@ -13,23 +13,33 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    margin-left: 8px;
+    margin-left: 4px;
     color: #64748b;
-    transition: all 0.3s;
+    transition: color 0.2s, background-color 0.2s, opacity 0.2s;
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border-radius: 4px;
 }
 
 .filter-btn:hover {
-    color: #334155;
+    color: #1e293b;
+    background: #e2e8f0;
 }
 
 .filter-btn.active {
-    color: #3b82f6;
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.filter-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
 }
 
 /* Бейдж для активного фильтра */

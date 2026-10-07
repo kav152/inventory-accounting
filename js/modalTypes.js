@@ -4,6 +4,7 @@ import { initDistributeModalHandlers } from "../js/modals/distributeModal.js";
 import { initWorkModalHandlers } from "../js/modals/workModal.js";
 import { initSendToServiceModalHandlers } from "../js/modals/serviceModal.js";
 import { initLocationModalHandlers } from "../js/modals/locationModal.js";
+import { initLegalEntityModalHandlers } from "../js/modals/legalEntityModal.js";
 import { EntityModalConfig, ModalConfigRegistry } from "../js/index.js";
 import { initRepairBasketModalHandlers } from "../js/modals/repairBasketModal.js";
 import { initCardWriteOffHandlers } from "../js/writeOffFunctions.js";
@@ -123,6 +124,18 @@ modalRegistry.register({
   rowClass: "row-location",
   entityName: "Локация",
   title: "Работа с локациями",
+  actions: ["create", "update", "delete"],
+});
+
+modalRegistry.register({
+  modalType: "legalEntityModal",
+  modalId: "legalEntityModal",
+  handler: initLegalEntityModalHandlers,
+  entityType: "legalEntity",
+  tableContainerId: "legalEntityTableContainer",
+  rowClass: "row-legal-entity",
+  entityName: "Юр. лицо",
+  title: "Справочник юр. лиц",
   actions: ["create", "update", "delete"],
 });
 

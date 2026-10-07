@@ -2,6 +2,8 @@
 require_once __DIR__ . '/CUDGenericService.php';
 require_once __DIR__ . '/../Exceptions/ValidationException.php';
 require_once __DIR__ . '/../../Logging/Logger.php';
+require_once __DIR__ . '/../../Repositories/LegalEntityRepository.php';
+require_once __DIR__ . '/../../Entity/LegalEntity.php';
 
 
 class CUDFactory
@@ -109,6 +111,13 @@ class CUDFactory
                 $this->container->get(RepairItemRepository::class),
                 RepairItem::class,
                 'RepairItem'
+            ),
+            'LegalEntity' => fn() => new CUDGenericService(
+                $this->db,
+                $this->logger,
+                $this->container->get(LegalEntityRepository::class),
+                LegalEntity::class,
+                'LegalEntity'
             ),
         ];
     }

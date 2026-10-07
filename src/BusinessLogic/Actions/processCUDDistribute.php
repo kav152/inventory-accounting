@@ -56,7 +56,8 @@ class processCUDDistribute extends CUDHandler
             $tmcIds,
             (int) $this->currentData['location'],
             (int) $this->currentData['user'],
-            (string) ($this->currentData['upd'] ?? '')
+            (string) ($this->currentData['upd'] ?? ''),
+            trim((string) ($this->currentData['legalEntity'] ?? ''))
         );
     }
 

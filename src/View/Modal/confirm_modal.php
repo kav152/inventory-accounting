@@ -90,6 +90,25 @@ include __DIR__ . '/message_modal.php';
         padding: 2rem 1rem;
         margin: 0;
     }
+    #confirmModal .confirm-search-wrap {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    #confirmModal .confirm-search-wrap .form-control {
+        border-radius: 8px;
+        border-color: #cbd5e1;
+    }
+    #confirmModal .confirm-search-wrap .form-control:focus {
+        border-color: #0d9488;
+        box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.15);
+    }
+    #confirmModal tr.confirm-row-hidden {
+        display: none !important;
+    }
 </style>
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -100,6 +119,11 @@ include __DIR__ . '/message_modal.php';
             </div>
             <div class="modal-body">
                 <?php if ($confirmCount > 0): ?>
+                    <div class="confirm-search-wrap">
+                        <input type="search" id="confirmModalSearch" class="form-control form-control-sm"
+                            placeholder="Поиск: наименование или серийный номер…"
+                            autocomplete="off">
+                    </div>
                     <table class="table confirm-table mb-0">
                         <colgroup>
                             <col class="col-id">
@@ -118,11 +142,16 @@ include __DIR__ . '/message_modal.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($confirmItems as $item): ?>
-                                <tr id="itemRow<?= $item->ID_TMC ?>">
+                            <?php foreach ($confirmItems as $item):
+                                $name = (string) ($item->NameTMC ?? '');
+                                $serial = (string) ($item->SerialNumber ?? '');
+                                $searchBlob = mb_strtolower(trim($name . ' ' . $serial . ' ' . (int) $item->ID_TMC));
+                            ?>
+                                <tr id="itemRow<?= $item->ID_TMC ?>" class="confirm-item-row"
+                                    data-search="<?= htmlspecialchars($searchBlob) ?>">
                                     <td><?= (int) $item->ID_TMC ?></td>
-                                    <td><?= htmlspecialchars($item->NameTMC ?? '') ?></td>
-                                    <td><?= htmlspecialchars($item->SerialNumber ?? '') ?></td>
+                                    <td><?= htmlspecialchars($name) ?></td>
+                                    <td><?= htmlspecialchars($serial) ?></td>
                                     <td><?= htmlspecialchars($item->Location?->NameLocation ?? $item->NameLocation ?? '') ?></td>
                                     <td>
                                         <div class="confirm-actions">
@@ -140,6 +169,7 @@ include __DIR__ . '/message_modal.php';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <p class="confirm-empty" id="confirmSearchEmpty" style="display:none;">Ничего не найдено по запросу.</p>
                 <?php else: ?>
                     <p class="confirm-empty">Нет ТМЦ, ожидающих приёмки на объект.</p>
                 <?php endif; ?>

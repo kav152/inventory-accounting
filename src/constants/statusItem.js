@@ -8,6 +8,7 @@ export class StatusItem {
     static AtWorkTMC = 5;
     static OutputTMC = 6;
     static ConfirmRepairTMC = 21;
+    static ProposeWriteOff = 22;
 
     static statusClasses = {
         [-1]: 'status-CreateItems',
@@ -18,19 +19,21 @@ export class StatusItem {
         [4]: 'status-ConfirmItem',
         [5]: 'status-AtWorkTMC',
         [6]: 'status-OutputTMC',
-        [21]: 'status-ConfirmRepairTMC'
+        [21]: 'status-ConfirmRepairTMC',
+        [22]: 'status-ProposeWriteOff'
     };
 
     static descriptions = {
         [StatusItem.CreateItems]: 'Создание объекта',
         [StatusItem.NotDistributed]: 'Не распределено',
         [StatusItem.Released]: 'Выдано на объект',
-        [StatusItem.Repair]: 'В ремонте',
+        [StatusItem.Repair]: 'Подтвердить ремонт',
         [StatusItem.WrittenOff]: 'Списано',
         [StatusItem.ConfirmItem]: 'Подтвердить ТМЦ',
         [StatusItem.AtWorkTMC]: 'В работе',
         [StatusItem.OutputTMC]: 'Вернуть с работы',
-        [StatusItem.ConfirmRepairTMC]: 'Подтвердить ремонт'
+        [StatusItem.ConfirmRepairTMC]: 'Подтвердить ремонт',
+        [StatusItem.ProposeWriteOff]: 'Предложение списания'
     };
 
     static getDescription(value) {
@@ -47,6 +50,14 @@ export class StatusItem {
             if (value === description) return parseInt(key);
         }
         return null;
+    }
+
+    static repairStatuses() {
+        return [StatusItem.Repair, StatusItem.ConfirmRepairTMC];
+    }
+
+    static isRepairRelated(value) {
+        return this.repairStatuses().includes(Number(value));
     }
 
     static isValid(value) {

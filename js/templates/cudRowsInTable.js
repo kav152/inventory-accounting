@@ -180,7 +180,7 @@ function updateRowsInTable(
       td.textContent = legalText || "не указано";
       td.title = legalText
         ? legalText
-        : "Заполните юр. лицо в Админка → Локации";
+        : "Заполните юр. лицо в Админка → Юр. лица";
       existingRow.setAttribute("data-legal", legalText);
       if (typeof window.refreshRowSearchBlob === "function") {
         window.refreshRowSearchBlob(existingRow);

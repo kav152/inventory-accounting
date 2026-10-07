@@ -5,6 +5,46 @@ import {
 import { Action } from "../../src/constants/actions.js";
 import { modalRegistry } from "../modalTypes.js";
 import { syncLocationTableRow } from "./locationTableRows.js";
+import { showNotification } from "./setting.js";
+import { TypeMessage } from "../../src/constants/typeMessage.js";
+
+/**
+ * Аннулировать выбранную локацию / сервисный центр
+ * @param {string|number} id
+ * @param {string} modalType locationModal | locationServiceModal
+ */
+export async function deleteLocationById(id, modalType = "locationModal") {
+  const numericId = Number(id);
+  if (!numericId) {
+    showNotification(TypeMessage.notification, "Не выбран элемент для аннулирования");
+    return false;
+  }
+
+  try {
+    const result = await executeEntityAction({
+      action: Action.DELETE,
+      formData: { id: numericId },
+      url: "/src/BusinessLogic/Actions/processCUDLocation.php",
+      successMessage: "Запись аннулирована",
+    });
+
+    const config = modalRegistry.getByModalType(modalType);
+    syncLocationTableRow(
+      Action.DELETE,
+      result.resultEntity || { id: numericId },
+      config?.tableContainerId || "locationTableContainer",
+      config?.rowClass || "row-location",
+      { showMainBadge: modalType === "locationModal" },
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Ошибка аннулирования локации:", error);
+    return false;
+  }
+}
+
+window.deleteLocationById = deleteLocationById;
 
 /**
  * Обработчик работы модального окна location

@@ -8,7 +8,7 @@ class StatusItem {
      */
     const Released = 1;
     /**
-     * В ремонте
+     * Подтвердить ремонт
      * @var int
      */
     const Repair = 2;
@@ -37,6 +37,11 @@ class StatusItem {
      * @var int
      */
     const ConfirmRepairTMC = 21;
+    /**
+     * Предложение списания (от кладовщика, ждёт админа)
+     * @var int
+     */
+    const ProposeWriteOff = 22;
 
     public static $statusClasses = [
         -1 => 'status-CreateItems',
@@ -48,18 +53,20 @@ class StatusItem {
         5 => 'status-AtWorkTMC',
         6 => 'status-OutputTMC',
         21 => 'status-ConfirmRepairTMC',
+        22 => 'status-ProposeWriteOff',
     ];
 
     private static $descriptions = [
         self::CreateItems => 'Создание объекта',
         self::NotDistributed => 'Не распределено',
         self::Released => 'Выдано на объект',
-        self::Repair => 'В ремонте',
+        self::Repair => 'Подтвердить ремонт',
         self::WrittenOff => 'Списано',
         self::ConfirmItem => 'Подтвердить ТМЦ',
         self::AtWorkTMC => 'В работе',
         self::OutputTMC => 'Вернуть с работы',
-        self::ConfirmRepairTMC => 'Подтвердить ремонт'
+        self::ConfirmRepairTMC => 'Подтвердить ремонт',
+        self::ProposeWriteOff => 'Предложение списания',
     ];
 
     /**
@@ -82,6 +89,15 @@ class StatusItem {
     public static function getByDescription(string $description): ?int {
         $flipped = array_flip(self::$descriptions);
         return $flipped[$description] ?? null;
+    }
+
+    /** Оба статуса ремонта (для фильтра / кнопки согласования) */
+    public static function repairStatuses(): array {
+        return [self::Repair, self::ConfirmRepairTMC];
+    }
+
+    public static function isRepairRelated($value): bool {
+        return in_array((int) $value, self::repairStatuses(), true);
     }
 
     /**

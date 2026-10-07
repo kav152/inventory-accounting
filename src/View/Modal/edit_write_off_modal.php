@@ -66,7 +66,7 @@ $singleRepairMode = !empty($singleRepairMode);
                             <?php foreach ($repairs as $index => $repair): ?>
                                 <div class="repair-item card mb-2" data-repair-id="<?= $repair->ID_Repair ?>">
                                     <input type="hidden" class="form-control id-tmc" value="<?= $inventoryItem->ID_TMC ?>">
-                                    <input type="hidden" class="form-control idLocation" value="<?= $repair->Location->IDLocation ?? 0 ?>">
+                                    <input type="hidden" class="form-control idLocation" value="<?= (int) ($repair->IDLocation ?? $repair->Location?->IDLocation ?? 0) ?>">
                                     <div class="card-body">
                                         <?php if (!$singleRepairMode): ?>
                                             <div class="mb-2 text-muted small">Запись №<?= (int) $repair->ID_Repair ?></div>
@@ -94,13 +94,19 @@ $singleRepairMode = !empty($singleRepairMode);
                                         <div class="row mb-2">
                                             <div class="col-md-6">
                                                 <label class="form-label">Дата отправки</label>
-                                                <input type="date" class="form-control date-to-service"
-                                                    value="<?= $repair->DateToService ? date('Y-m-d', strtotime($repair->DateToService)) : '' ?>">
+                                                <input type="text" class="form-control date-to-service"
+                                                    placeholder="дд.мм.гггг"
+                                                    inputmode="numeric"
+                                                    autocomplete="off"
+                                                    value="<?= $repair->DateToService ? date('d.m.Y', strtotime($repair->DateToService)) : '' ?>">
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label">Дата возвращения</label>
-                                                <input type="date" class="form-control date-return-service"
-                                                    value="<?= $repair->DateReturnService ? date('Y-m-d', strtotime($repair->DateReturnService)) : '' ?>">
+                                                <input type="text" class="form-control date-return-service"
+                                                    placeholder="дд.мм.гггг"
+                                                    inputmode="numeric"
+                                                    autocomplete="off"
+                                                    value="<?= $repair->DateReturnService ? date('d.m.Y', strtotime($repair->DateReturnService)) : '' ?>">
                                             </div>
                                         </div>
                                         <div class="row mb-2">

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require_once __DIR__ . "/../Entity/InventoryItem.php";
 require_once __DIR__ . '/GenericRepository.php';
+require_once __DIR__ . '/LocationRepository.php';
+require_once __DIR__ . '/BrandTMCRepository.php';
+require_once __DIR__ . '/ModelTMCRepository.php';
 
 class InventoryItemRepository extends GenericRepository
 {

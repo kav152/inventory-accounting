@@ -30,12 +30,18 @@
     background-color: #a8b7c2;
 }
 
-/*  Выдано на объект */
+/* Подтвердить ремонт */
 .status-Repair {
-    background-color: #cc8411;
+    background-color: #9c27b0;
+    color: white;
 }
 
-/* В ремонте*/
+/* Подтвердить ремонт — фиолетовый */
+.status-ConfirmRepairTMC {
+    background-color: #9c27b0;
+    color: white;
+}
+
 .status-WrittenOff {
     background-color: #e23111;
 }
@@ -55,9 +61,9 @@
     background-color: #e0f2f1;
 }
 
-/* Вернуть с работы */
+/* Подтвердить ремонт — фиолетовый */
 .status-ConfirmRepairTMC {
-    background-color: #cc8411;
+    background-color: #9c27b0;
 }
 
 /* Светло-бирюзовый */

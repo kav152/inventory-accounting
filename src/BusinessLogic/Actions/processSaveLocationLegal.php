@@ -36,12 +36,29 @@ try {
     $tmcId = (int) ($input['tmcId'] ?? 0);
     $locationId = (int) ($input['locationId'] ?? 0);
     $legalEntity = trim((string) ($input['legalEntity'] ?? ''));
+    $typeId = (int) ($input['typeId'] ?? 0);
+    $brandId = (int) ($input['brandId'] ?? 0);
+    $modelId = (int) ($input['modelId'] ?? 0);
+    $nameTmc = trim((string) ($input['nameTMC'] ?? ''));
+    $serialNumber = trim((string) ($input['serialNumber'] ?? ''));
+    if (mb_strtolower($serialNumber) === 'серийный номер отсутствует') {
+        $serialNumber = '';
+    }
 
     if ($tmcId <= 0) {
         throw new Exception('Не указан ТМЦ');
     }
     if ($locationId <= 0) {
         throw new Exception('Выберите локацию');
+    }
+    if ($typeId <= 0) {
+        throw new Exception('Выберите тип ТМЦ');
+    }
+    if ($brandId <= 0) {
+        throw new Exception('Выберите бренд');
+    }
+    if ($nameTmc === '') {
+        throw new Exception('Укажите наименование');
     }
 
     DatabaseFactory::setConfig();
@@ -58,6 +75,16 @@ try {
         throw new Exception('Локация не найдена');
     }
 
+    // поля карточки ТМЦ
+    $itemController->updateItemInventory([
+        'id' => $tmcId,
+        'IDTypesTMC' => $typeId,
+        'IDBrandTMC' => $brandId,
+        'IDModel' => $modelId,
+        'NameTMC' => $nameTmc,
+        'SerialNumber' => $serialNumber,
+    ]);
+
     // если в карточке сменили локацию — привязываем ТМЦ к ней
     if ((int) ($item->IDLocation ?? 0) !== $locationId) {
         $itemRepo = new InventoryItemRepository($db);
@@ -71,10 +98,14 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Юр. лицо сохранено',
+        'message' => 'Карточка сохранена',
         'legalEntity' => $legalEntity,
         'locationId' => $locationId,
         'locationName' => (string) ($location->NameLocation ?? ''),
+        'nameTMC' => $nameTmc,
+        'serialNumber' => $serialNumber,
+        'brandId' => $brandId,
+        'brandName' => (string) ($input['brandName'] ?? ''),
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     error_log('processSaveLocationLegal: ' . $e->getMessage());

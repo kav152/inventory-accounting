@@ -2,10 +2,10 @@
 date_default_timezone_set('Europe/Moscow');
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../../storage/logs/processRepairInBasket.log');
+ini_set('error_log', __DIR__ . '/../../storage/logs/processUpdateRepairs.log');
 require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../ItemRepairController.php';
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 $success = false;
 $response = [
@@ -13,25 +13,20 @@ $response = [
     'message' => '',
 ];
 
-
 try {
-    //$input = json_decode(file_get_contents('php://input'), true);
-    //$repairsData = $input['repairs'] ?? [];
     $repairsData = $_POST['repairs'] ?? [];
 
     if (empty($repairsData)) {
-        $response = [
-            'success' => $success,
+        echo json_encode([
+            'success' => false,
             'message' => 'Нет данных для обновления',
-        ];
-        echo json_encode($response);
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
     DatabaseFactory::setConfig();
     $controller = new ItemRepairController();
     $updatedCount = 0;
     foreach ($repairsData as $repairData) {
-        // Проверяем, есть ли изменения
         if (!empty($repairData['ID_Repair'])) {
             $result = $controller->updateRepair($repairData);
             if ($result) {
@@ -40,17 +35,14 @@ try {
             }
         }
     }
-    $response = [
+    echo json_encode([
         'success' => $success,
         'message' => "Успешно обновлено записей: $updatedCount из " . count($repairsData),
-    ];
-    echo json_encode($response);
-
-} catch (Exception $e) {
+    ], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $e) {
     error_log("Error updating repairs: " . $e->getMessage());
-    $response = [
-        'success' => $success,
+    echo json_encode([
+        'success' => false,
         'message' => 'Ошибка при обновлении данных: ' . $e->getMessage(),
-    ];
-    echo json_encode($response);
+    ], JSON_UNESCAPED_UNICODE);
 }
