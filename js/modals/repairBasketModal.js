@@ -1,92 +1,54 @@
 import {
   executeEntityAction,
-  getCollectFormData,
 } from "../templates/entityActionTemplate.js";
 import { Action } from "../../src/constants/actions.js";
-import { openEntityModal } from "../modals/modalLoader.js";
-import { executeActionForCUD } from "../templates/cudRowsInTable.js";
+import { showNotification } from "./setting.js";
+import { TypeMessage } from "../../src/constants/typeMessage.js";
 
-(function () {
-  /**
-   * Открыть модальное окно RepairBasket
-   * @param {Action} action - действие (CREATE, UPDATE, DELETE)
-   */
-  function openRepairBasketModal(action) {
-    openEntityModal(action, "repairBasketModal");
-  }
-
-  window.openRepairBasketModal = openRepairBasketModal;
-  window.returnFromBasket = returnFromBasket;
-  window.clearBasket = clearBasket;
-})();
-
-/**
- * Обработчик работы модального окна RepairBasket
- * @param {HTMLElement} modalElement
- */
 export function initRepairBasketModalHandlers(modalElement) {
-  // 1. Инициализация обработчиков формы
-  modalElement.addEventListener("submit", async function (e) {
-    e.preventDefault();
-    await handleRepairBasketFormSubmit(modalElement);
-  });
-
-  // 2. Инициализация динамических элементов (если нужны)
-  //initDynamicElements(modalElement);
+  // handlers attached via window.* below
+  void modalElement;
 }
 
-/**
- * Инициализация динамических элементов
- */
-function initDynamicElements(modalElement) {
-  // Пример: обновление заголовка модального окна
-  const modalTitle = modalElement.querySelector("#RepairBasketModalTitle");
-  const statusEntity = window.statusEntity;
+window.returnFromBasket = returnFromBasket;
+window.clearBasket = clearBasket;
 
-  if (statusEntity === Action.UPDATE) {
-    modalTitle.textContent = "Редактировать [entityName]";
-  } else {
-    modalTitle.textContent = "Добавить [entityName]";
+function refreshBasketHeader(resultEntity) {
+  const countElements = document.querySelectorAll(
+    "#repairBasketModal .report-header p",
+  );
+  const rows = document.querySelectorAll(
+    "#repairBasketModal tbody tr[id^='basket-item-']",
+  );
+  const count = rows.length;
+
+  if (count === 0) {
+    const tableWrap =
+      document.querySelector("#repairBasketModal .table-responsive") ||
+      document.querySelector("#repairBasketModal table")?.parentElement;
+    tableWrap?.remove();
+    document.querySelector("#repairBasketModal table")?.remove();
+    document.getElementById("clearBasketBtn")?.remove();
+    const header = document.querySelector("#repairBasketModal .report-header");
+    if (header && !header.textContent.includes("Корзина пуста")) {
+      header.innerHTML += "<p>Корзина пуста</p>";
+    }
+    return;
   }
-}
 
-/**
- * Обработчик отправки формы
- */
-async function handleRepairBasketFormSubmit(modalElement) {
-  const form = modalElement.querySelector("#RepairBasketForm");
-  const RepairBasketData = getCollectFormData(form, window.statusEntity);
-
-  try {
-    const result = await executeEntityAction({
-      action: window.statusEntity,
-      formData: RepairBasketData,
-      url: "/src/BusinessLogic/Actions/processCUDRepairBasket.php",
-      successMessage:
-        "[EntityName] успешно " +
-        (window.statusEntity === Action.CREATE ? "добавлен" : "обновлен"),
-    });
-
-    executeActionForCUD(
-      window.statusEntity,
-      result.resultEntity,
-      "RepairBasketTableContainer",
-      result.fields,
-      "row-RepairBasket",
-      "id"
-    );
-
-    // Закрываем модальное окно
-    const modalInstance = bootstrap.Modal.getInstance(modalElement);
-    modalInstance.hide();
-  } catch (error) {
-    console.error("Ошибка:", error);
+  if (countElements.length > 1 && resultEntity) {
+    countElements[1].textContent = `Количество позиций: ${resultEntity.totalCount ?? count}`;
+    if (countElements[2]) {
+      countElements[2].innerHTML = `Общая сумма ремонта: <strong>${resultEntity.formattedTotalCost ?? "0,00"} руб.</strong>`;
+    }
   }
 }
 
 /** Очистить всю корзину ремонта */
 async function clearBasket() {
-  const rows = document.querySelectorAll("#repairBasketModal tbody tr[id^='basket-item-']");
+  const rows = document.querySelectorAll(
+    "#repairBasketModal tbody tr[id^='basket-item-']",
+  );
   if (rows.length === 0) {
     showNotification(TypeMessage.notification, "Корзина уже пуста");
     return;
@@ -105,13 +67,11 @@ async function clearBasket() {
     });
 
     if (result.success) {
-      const tableWrap = document.querySelector("#repairBasketModal .table-responsive");
-      if (tableWrap) {
-        tableWrap.remove();
-      } else {
-        document.querySelector("#repairBasketModal table")?.remove();
-      }
-
+      document
+        .querySelector("#repairBasketModal .table-responsive")
+        ?.remove();
+      document.querySelector("#repairBasketModal table")?.remove();
+      document.getElementById("clearBasketBtn")?.remove();
       const header = document.querySelector("#repairBasketModal .report-header");
       if (header) {
         header.innerHTML = `
@@ -120,10 +80,11 @@ async function clearBasket() {
           <p>Общая сумма ремонта: <strong>0,00 руб.</strong></p>
           <p>Корзина пуста</p>`;
       }
-
-      document.getElementById("clearBasketBtn")?.remove();
     } else {
-      showNotification(TypeMessage.error, result.message || "Не удалось очистить корзину");
+      showNotification(
+        TypeMessage.error,
+        result.message || "Не удалось очистить корзину",
+      );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -131,107 +92,42 @@ async function clearBasket() {
   }
 }
 
-// Функция возврата элемента из корзины
-async function returnFromBasket(id) {
-  if (confirm("Вы уверены, что хотите вернуть этот элемент из корзины?")) {
-    //const formData = new FormData();
-    //formData.append("ID_TMC", id);
+/**
+ * Вернуть из корзины.
+ * @param {number|string} tmcId
+ * @param {number|string} [repairId]
+ */
+async function returnFromBasket(tmcId, repairId = 0) {
+  if (!confirm("Вернуть эту запись из корзины в архив?")) {
+    return;
+  }
 
-    const data = 
-    {
-      ID_TMC: id
-    };
+  const data = {
+    ID_TMC: Number(tmcId) || 0,
+    ID_Repair: Number(repairId) || 0,
+  };
 
-    try {
-      /*const response = await fetch(
-        "/src/BusinessLogic/ActionsTMC/processRepairInBasket.php",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const data = await response.json();*/
+  try {
+    const result = await executeEntityAction({
+      action: Action.UPDATE,
+      formData: data,
+      url: "/src/BusinessLogic/Actions/processCUDRepairInBasket.php",
+      successMessage: "Запись возвращена из корзины",
+    });
 
-      const result = await executeEntityAction({
-            action: Action.UPDATE,
-            formData: data,
-            url: "/src/BusinessLogic/Actions/processCUDRepairInBasket.php",
-            successMessage: "ТМЦ успешно сохранен",
-        });
-
-
-
-      if (result.resultEntity) {
-        // Удаляем строку из таблицы
-        document.getElementById(`basket-item-${id}`).remove();
-
-        const countElements = document.querySelectorAll(
-          "#repairBasketModal .report-header p"
-        );
-
-        // Обновляем информацию о количестве элементов
-        const rows = document.querySelectorAll("#repairBasketModal tbody tr");
-        const count = Array.from(rows).filter((row) =>
-          row.id.startsWith("basket-item-")
-        ).length;
-
-        if (count === 0) {
-          document.querySelector("#repairBasketModal table").remove();
-          document.querySelector(
-            "#repairBasketModal .report-header"
-          ).innerHTML += "<p>Корзина пуста</p>";
-        } else {
-          if (countElements.length > 1) {
-            // Первый параграф - количество позиций
-            countElements[1].textContent = `Количество позиций: ${result.resultEntity.totalCount}`;
-            // Второй параграф - общая сумма
-            countElements[2].innerHTML = `Общая сумма ремонта: <strong>${result.resultEntity.formattedTotalCost} руб.</strong>`;
-          }
-        }
-      } else {
-        showNotification(TypeMessage.error, result.message);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      showNotification(TypeMessage.error, error);
+    const rowId =
+      data.ID_Repair > 0
+        ? `basket-item-${data.ID_Repair}`
+        : `basket-item-${data.ID_TMC}`;
+    document.getElementById(rowId)?.remove();
+    // старый формат строки по ID_TMC
+    if (data.ID_Repair > 0) {
+      document.getElementById(`basket-item-${data.ID_TMC}`)?.remove();
     }
+
+    refreshBasketHeader(result.resultEntity);
+  } catch (error) {
+    console.error("Error:", error);
+    showNotification(TypeMessage.error, error?.message || String(error));
   }
 }
-
-/*
-function returnFromBasket(id) {
-  if (confirm("Вы уверены, что хотите вернуть этот элемент из корзины?")) {
-    const formData = new FormData();
-    formData.append("ID_TMC", id);
-
-    fetch("/src/BusinessLogic/ActionsTMC/processRepairInBasket.php", {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          // Удаляем строку из таблицы
-          document.getElementById(`basket-item-${id}`).remove();
-
-          // Обновляем информацию о количестве элементов
-          const rows = document.querySelectorAll("#basketContent tbody tr");
-          const count = Array.from(rows).filter((row) =>
-            row.id.startsWith("basket-item-")
-          ).length;
-
-          if (count === 0) {
-            document.querySelector("#basketContent table").remove();
-            document.querySelector("#basketContent .report-header").innerHTML +=
-              "<p>Корзина пуста</p>";
-          }
-        } else {
-          showNotification(TypeMessage.error, "Ошибка: " + data.message);
-        }
-      })
-      .catch((error) => {
-        console.error("Ошибка:", error);
-        showNotification(TypeMessage.error, "Ошибка возврата из корзины");
-      });
-  }
-}*/

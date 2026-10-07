@@ -269,13 +269,6 @@ class ItemRepairController
      */
     public function getItemsAwaitingRepairApproval(): array
     {
-        // Сначала чиним рассинхрон статус ↔ открытый ремонт
-        try {
-            $this->reconcileAllActiveRepairStatuses();
-        } catch (Throwable $e) {
-            error_log('reconcileAllActiveRepairStatuses: ' . $e->getMessage());
-        }
-
         $items = [];
         $seenTmc = [];
 
@@ -332,6 +325,20 @@ class ItemRepairController
         }
 
         return $items;
+    }
+
+    /**
+     * Лёгкий счётчик для бейджа на главной (без reconcile и полной выборки).
+     */
+    public function countItemsAwaitingRepairApproval(): int
+    {
+        $statusRepair = (int) StatusItem::Repair;
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $sql = "SELECT COUNT(*) FROM InventoryItem
+            WHERE Status IN ({$statusRepair}, {$statusConfirm})";
+        $stmt = $pdo->query($sql);
+        return $stmt ? (int) $stmt->fetchColumn() : 0;
     }
 
     /**
@@ -578,11 +585,10 @@ class ItemRepairController
 
     public function countProposeWriteOff(): int
     {
-        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
-        $items = $inventoryItemRepository->findBy(
-            'WHERE Status = ' . (int) StatusItem::ProposeWriteOff
-        );
-        return $items ? count($items) : 0;
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $status = (int) StatusItem::ProposeWriteOff;
+        $stmt = $pdo->query("SELECT COUNT(*) FROM InventoryItem WHERE Status = {$status}");
+        return $stmt ? (int) $stmt->fetchColumn() : 0;
     }
 
     /**
@@ -794,7 +800,12 @@ class ItemRepairController
                 continue;
             }
             // только явно переданные поля — иначе конструктор затирает даты «сегодня/null»
-            if (!array_key_exists($prop, $data)) {
+            // UPD: учитывать и нижний регистр ключа из FormData/драйвера
+            if ($prop === 'UPD') {
+                if (!array_key_exists('UPD', $data) && !array_key_exists('upd', $data)) {
+                    continue;
+                }
+            } elseif (!array_key_exists($prop, $data)) {
                 continue;
             }
 
@@ -803,8 +814,13 @@ class ItemRepairController
                 continue;
             }
 
-            $newValue = $repairData->$prop;
+            $newValue = $prop === 'UPD'
+                ? (string) ($data['UPD'] ?? $data['upd'] ?? $repairData->UPD ?? '')
+                : $repairData->$prop;
             $currentValue = $currentRepair->$prop;
+            if ($prop === 'UPD') {
+                $currentValue = (string) ($currentValue ?? '');
+            }
 
             // пустая дата отправки из формы — не затираем существующую
             if ($prop === 'DateToService' && ($newValue === '' || $newValue === null)) {
@@ -974,21 +990,22 @@ class ItemRepairController
         }
 
         $openRepair = $this->findOpenRepairForTmc($tmcId);
-        $itemController = new ItemController();
 
         if ($openRepair !== null) {
             $target = $this->repairRecordHasInvoice($openRepair)
                 ? StatusItem::Repair
                 : StatusItem::ConfirmRepairTMC;
             if ($status !== $target) {
-                $itemController->changeStatusTMC($tmcId, $target);
+                $item->Status = $target;
+                $inventoryItemRepository->save($item);
             }
             return;
         }
 
         // Нет открытого ремонта — нельзя оставаться «в ремонте» / «на согласовании»
         if (in_array($status, [StatusItem::Repair, StatusItem::ConfirmRepairTMC], true)) {
-            $itemController->changeStatusTMC($tmcId, StatusItem::Released);
+            $item->Status = StatusItem::Released;
+            $inventoryItemRepository->save($item);
         }
     }
 
@@ -1066,29 +1083,39 @@ class ItemRepairController
      */
     public function getRepairSpendForAnalytics(): array
     {
-        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
-        $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $locationRepository = $this->container->get(LocationRepository::class);
+        // Один SQL вместо ORM + вложенных связей (Location/Brand/Model на каждую строку)
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $sql = "SELECT
+                ri.ID_Repair,
+                ri.ID_TMC,
+                ri.RepairCost,
+                ri.InvoiceNumber,
+                ri.DateToService,
+                ri.DateReturnService,
+                ii.NameTMC,
+                ii.SerialNumber,
+                b.NameBrand,
+                m.NameModel,
+                objLoc.NameLocation AS ObjectLocationName,
+                repLoc.NameLocation AS RepairLocationName,
+                CAST(ISNULL(repLoc.IsRepair, 0) AS INT) AS RepairLocIsRepair
+            FROM RepairItem ri
+            LEFT JOIN InventoryItem ii ON ri.ID_TMC = ii.ID_TMC
+            LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+            LEFT JOIN ModelTMC m ON ii.IDModel = m.IDModel
+            LEFT JOIN Location objLoc ON ii.IDLocation = objLoc.IDLocation
+            LEFT JOIN Location repLoc ON ri.IDLocation = repLoc.IDLocation
+            WHERE ri.inBasket = 0
+            ORDER BY ri.DateToService DESC, ri.ID_Repair DESC";
 
-        $query = "SELECT RepairItem.*
-            FROM RepairItem
-            WHERE RepairItem.inBasket = 0
-            ORDER BY RepairItem.DateToService DESC, RepairItem.ID_Repair DESC";
-
-        $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
-        $repairItemRepository->addRelationship('InventoryItem', $inventoryItemRepository, 'ID_TMC', 'ID_TMC');
-
-        $repairs = $repairItemRepository->getAll($query);
+        $stmt = $pdo->query($sql);
         $rows = [];
-        if (!$repairs) {
+        if (!$stmt) {
             return $rows;
         }
 
-        foreach ($repairs as $repair) {
-            $inv = $repair->InventoryItem ?? null;
-            $repairLoc = $repair->Location ?? null;
-            $objectLoc = $inv->Location ?? null;
-            $dateRaw = $repair->DateToService ?? $repair->DateReturnService ?? '';
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $dateRaw = $row['DateToService'] ?? $row['DateReturnService'] ?? '';
             $dateIso = '';
             if ($dateRaw) {
                 try {
@@ -1099,31 +1126,28 @@ class ItemRepairController
                 }
             }
 
-            // Поставщик — только сервисные локации (IsRepair=1).
-            // Объекты вроде Пышма / Мирлеон в RepairItem.IDLocation в поставщики не кладём.
             $supplierName = '';
-            if ($repairLoc && !empty($repairLoc->IsRepair)) {
-                $supplierName = trim((string) ($repairLoc->NameLocation ?? ''));
+            if (!empty($row['RepairLocIsRepair'])) {
+                $supplierName = trim((string) ($row['RepairLocationName'] ?? ''));
             }
 
-            $locationName = trim((string) ($objectLoc?->NameLocation ?? ''));
-            // если у ТМЦ нет локации, но в ремонте указан обычный объект — это локация, не поставщик
-            if ($locationName === '' && $repairLoc && empty($repairLoc->IsRepair)) {
-                $locationName = trim((string) ($repairLoc->NameLocation ?? ''));
+            $locationName = trim((string) ($row['ObjectLocationName'] ?? ''));
+            if ($locationName === '' && empty($row['RepairLocIsRepair'])) {
+                $locationName = trim((string) ($row['RepairLocationName'] ?? ''));
             }
 
             $rows[] = [
-                'idRepair' => (int) ($repair->ID_Repair ?? 0),
-                'idTmc' => (int) ($repair->ID_TMC ?? 0),
-                'cost' => (float) ($repair->RepairCost ?? 0),
-                'invoice' => trim((string) ($repair->InvoiceNumber ?? '')),
+                'idRepair' => (int) ($row['ID_Repair'] ?? 0),
+                'idTmc' => (int) ($row['ID_TMC'] ?? 0),
+                'cost' => (float) ($row['RepairCost'] ?? 0),
+                'invoice' => trim((string) ($row['InvoiceNumber'] ?? '')),
                 'date' => $dateIso,
-                'name' => (string) ($inv->NameTMC ?? ''),
-                'brand' => (string) ($inv?->BrandTMC?->NameBrand ?? ''),
-                'model' => (string) ($inv?->ModelTMC?->NameModel ?? ''),
+                'name' => (string) ($row['NameTMC'] ?? ''),
+                'brand' => (string) ($row['NameBrand'] ?? ''),
+                'model' => (string) ($row['NameModel'] ?? ''),
                 'location' => $locationName,
                 'supplier' => $supplierName,
-                'serial' => (string) ($inv?->SerialNumber ?? ''),
+                'serial' => (string) ($row['SerialNumber'] ?? ''),
             ];
         }
 
@@ -1161,29 +1185,31 @@ class ItemRepairController
     }
 
     /**
-     * Summary of RepairInBasket
-     * @param mixed $ID_TMC
-     * @return bool
+     * Прямой UPDATE inBasket — без полного save (даты/поля не затираем и не валимся на PDO-датах).
+     */
+    private function setRepairBasketFlag(?int $repairId, ?int $tmcId, bool $inBasket): bool
+    {
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $flag = $inBasket ? 1 : 0;
+        if ($repairId !== null && $repairId > 0) {
+            $stmt = $pdo->prepare('UPDATE RepairItem SET inBasket = :flag WHERE ID_Repair = :id');
+            return $stmt->execute([':flag' => $flag, ':id' => $repairId]);
+        }
+        if ($tmcId !== null && $tmcId > 0) {
+            $stmt = $pdo->prepare(
+                'UPDATE RepairItem SET inBasket = :flag WHERE ID_TMC = :tmc AND inBasket <> :flag'
+            );
+            return $stmt->execute([':flag' => $flag, ':tmc' => $tmcId]);
+        }
+        return false;
+    }
+
+    /**
+     * Переместить все записи ремонта ТМЦ в корзину (без toggle).
      */
     public function RepairInBasket($ID_TMC): bool
     {
-        $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $repairItems = $repairItemRepository->findBy("WHERE ID_TMC = {$ID_TMC}");
-        if (!$repairItems) {
-            return false;
-        }
-
-        foreach ($repairItems as $item) {
-            //$this->logger->log("Найден ТМЦ", "", $item);
-            //error_log(print_r($item, true));
-            $inBasket = $item->inBasket ? false : true;
-            $item->inBasket = $inBasket;
-            $result = $repairItemRepository->save($item);
-            if ($result == null) {
-                return false;
-            }
-        }
-        return true;
+        return $this->setRepairBasketFlag(null, (int) $ID_TMC, true);
     }
 
     /**
@@ -1191,13 +1217,7 @@ class ItemRepairController
      */
     public function RepairRecordInBasket(int $ID_Repair): bool
     {
-        $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $item = $repairItemRepository->findById($ID_Repair, 'ID_Repair');
-        if (!$item) {
-            return false;
-        }
-        $item->inBasket = true;
-        return $repairItemRepository->save($item) !== null;
+        return $this->setRepairBasketFlag((int) $ID_Repair, null, true);
     }
 
     public function getBasketItems(): ?Collection
@@ -1206,9 +1226,11 @@ class ItemRepairController
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
 
-        $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
-          LEFT JOIN InventoryItem ON RegistrationInventoryItem.IDRegItem = InventoryItem.ID_TMC
-          WHERE RepairItem.inBasket = 1";
+        // Только RepairItem.* — JOIN через SELECT * затирал поля
+        $query = "SELECT RepairItem.*
+          FROM RepairItem
+          WHERE RepairItem.inBasket = 1
+          ORDER BY RepairItem.ID_TMC, RepairItem.ID_Repair";
 
         $repairItemRepository->addRelationship(
             'Location',
@@ -1224,21 +1246,23 @@ class ItemRepairController
             'ID_TMC'
         );
 
-        return $repairItemRepository->findBy($query);
+        return $repairItemRepository->getAll($query);
     }
 
+    /**
+     * Вернуть все записи ремонта ТМЦ из корзины (без toggle).
+     */
     public function returnFromBasket($ID_TMC): bool
     {
-        $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $repairItems = $repairItemRepository->findBy("WHERE ID_TMC = {$ID_TMC}");
+        return $this->setRepairBasketFlag(null, (int) $ID_TMC, false);
+    }
 
-        foreach ($repairItems as $item) {
-            $item->inBasket = false;
-            $result = $repairItemRepository->save($item);
-            if ($result == null)
-                return false;
-        }
-        return true;
+    /**
+     * Вернуть одну запись ремонта из корзины.
+     */
+    public function returnRepairRecordFromBasket(int $ID_Repair): bool
+    {
+        return $this->setRepairBasketFlag((int) $ID_Repair, null, false);
     }
 
     /**
@@ -1246,19 +1270,9 @@ class ItemRepairController
      */
     public function clearBasket(): bool
     {
-        $repairItemRepository = $this->container->get(RepairItemRepository::class);
-        $repairItems = $repairItemRepository->findBy("WHERE inBasket = 1");
-        if (!$repairItems || count($repairItems) === 0) {
-            return true;
-        }
-
-        foreach ($repairItems as $item) {
-            $item->inBasket = false;
-            if ($repairItemRepository->save($item) === null) {
-                return false;
-            }
-        }
-        return true;
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $stmt = $pdo->prepare('UPDATE RepairItem SET inBasket = 0 WHERE inBasket <> 0');
+        return $stmt->execute();
     }
 
     public function getItemWithRepairs($ID_TMC, ?int $ID_Repair = null): ?Collection
@@ -1270,18 +1284,19 @@ class ItemRepairController
 
         $repairFilter = $ID_Repair ? " AND RepairItem.ID_Repair = {$ID_Repair}" : "";
 
-        $query = "LEFT JOIN RegistrationInventoryItem ON RepairItem.ID_TMC = RegistrationInventoryItem.IDRegItem
-          LEFT JOIN InventoryItem ON RegistrationInventoryItem.IDRegItem = InventoryItem.ID_TMC
-          LEFT JOIN Location ON Location.IDLocation = RepairItem.IDLocation
+        // Только колонки RepairItem — SELECT * + JOIN затирает UPD/Status/IDLocation
+        $query = "SELECT RepairItem.*
+          FROM RepairItem
           WHERE RepairItem.ID_TMC = {$ID_TMC}
             AND RepairItem.inBasket = 0
-            {$repairFilter}";
+            {$repairFilter}
+          ORDER BY RepairItem.ID_Repair";
 
         $repairItemRepository->addRelationship(
-            'Location',                             // Свойство в Location для связи
-            $locationRepository,                    // Репозиторий связанной сущности
-            'IDLocation',                           // Внешний ключ в InventoryItem
-            'IDLocation'                            // Первичный ключ в Location
+            'Location',
+            $locationRepository,
+            'IDLocation',
+            'IDLocation'
         );
 
         $repairItemRepository->addRelationship(
@@ -1291,7 +1306,7 @@ class ItemRepairController
             'ID_TMC'
         );
 
-        return $repairItemRepository->findBy($query);
+        return $repairItemRepository->getAll($query);
     }
 
     /**

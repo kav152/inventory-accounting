@@ -21,10 +21,9 @@ class processCUDRepairInBasket extends CUDHandler
 
     protected function prepareData($postData)
     {
-        error_log("Данные RepairItem: " . print_r($postData, true));
-
         return [
-            'id' => $postData['ID_TMC'] ?? 0,
+            'id' => (int) ($postData['ID_TMC'] ?? $postData['id'] ?? 0),
+            'ID_Repair' => (int) ($postData['ID_Repair'] ?? 0),
         ];
     }
 
@@ -33,24 +32,43 @@ class processCUDRepairInBasket extends CUDHandler
         $repairItem = parent::create($data);
         return $repairItem;
     }
+
+    /** Вернуть из корзины (раньше ошибочно вызывался toggle RepairInBasket) */
     protected function update($id, $data, ?int $patofID = null)
     {
         $itemRepairController = new ItemRepairController();
-        $isResult = $itemRepairController->RepairInBasket($data['id']);
+        $repairId = (int) ($data['ID_Repair'] ?? 0);
+        $tmcId = (int) ($data['id'] ?? $id ?? 0);
 
-        if ($isResult) {
-            $basketItems = $itemRepairController->getBasketItems();
+        if ($repairId > 0) {
+            $isResult = $itemRepairController->returnRepairRecordFromBasket($repairId);
+        } elseif ($tmcId > 0) {
+            $isResult = $itemRepairController->returnFromBasket($tmcId);
+        } else {
+            throw new Exception('Не указан ID записи или ТМЦ для возврата из корзины');
+        }
+
+        if (!$isResult) {
+            throw new Exception('Не удалось вернуть запись из корзины');
+        }
+
+        $basketItems = $itemRepairController->getBasketItems();
+        $this->totalRepairCost_Basket = 0;
+        $this->totalCount = 0;
+        if ($basketItems) {
             foreach ($basketItems as $item) {
-                $this->totalRepairCost_Basket += $item->RepairCost;
+                $this->totalRepairCost_Basket += (float) ($item->RepairCost ?? 0);
                 $this->totalCount++;
             }
         }
 
-
-        //$result = parent::update($id, $data, $patofID);
-
-
-        return null;
+        return [
+            'id' => $tmcId,
+            'ID_Repair' => $repairId,
+            'totalCount' => $this->totalCount,
+            'totalCost' => $this->totalRepairCost_Basket,
+            'formattedTotalCost' => number_format($this->totalRepairCost_Basket, 2, ',', ' '),
+        ];
     }
 
     /** Очистить всю корзину (statusEntity = delete) */

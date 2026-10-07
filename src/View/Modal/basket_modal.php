@@ -57,25 +57,37 @@ foreach ($basketItems as $item) {
                         <thead class="table-light">
                             <tr>
                                 <th>Регистр</th>
+                                <th>Запись ремонта</th>
                                 <th>Наименование</th>
                                 <th>Бренд</th>
                                 <th>Серийный номер</th>
-                                <th>Ответственный</th>
-                                <th>Локация</th>                                
+                                <th>№ счёта / УПД</th>
+                                <th>Сумма</th>
+                                <th>Локация</th>
                                 <th>Действие</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($basketItems as $item): ?>
-                            <tr id="basket-item-<?= $item->ID_TMC ?>">
-                                <td><?= $item->ID_TMC ?></td>
-                                <td><?= htmlspecialchars($item->InventoryItem->NameTMC) ?></td>
+                            <?php foreach ($basketItems as $item):
+                                $tmcId = (int) ($item->ID_TMC ?? 0);
+                                $repairId = (int) ($item->ID_Repair ?? 0);
+                            ?>
+                            <tr id="basket-item-<?= $repairId > 0 ? $repairId : $tmcId ?>">
+                                <td><?= $tmcId ?></td>
+                                <td>№<?= $repairId ?></td>
+                                <td><?= htmlspecialchars($item->InventoryItem->NameTMC ?? '') ?></td>
                                 <td><?= htmlspecialchars($item->InventoryItem->BrandTMC->NameBrand ?? '') ?></td>
                                 <td><?= htmlspecialchars($item->InventoryItem->SerialNumber ?? '') ?></td>
-                                <td><?= htmlspecialchars($item->RegistrationInventoryItem->User->FIO ?? '') ?></td>
-                                <td><?= htmlspecialchars($item->InventoryItem->Location->NameLocation ?? '') ?></td>                                
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="returnFromBasket(<?= $item->ID_TMC ?>)">
+                                    <?= htmlspecialchars(trim((string) ($item->InvoiceNumber ?? '')) ?: '—') ?>
+                                    /
+                                    <?= htmlspecialchars(trim((string) ($item->UPD ?? '')) ?: '—') ?>
+                                </td>
+                                <td><?= number_format((float) ($item->RepairCost ?? 0), 2, ',', ' ') ?></td>
+                                <td><?= htmlspecialchars($item->InventoryItem->Location->NameLocation ?? '') ?></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-warning"
+                                        onclick="returnFromBasket(<?= $tmcId ?>, <?= $repairId ?>)">
                                         Вернуть
                                     </button>
                                 </td>
