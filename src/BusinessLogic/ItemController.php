@@ -67,11 +67,9 @@ class ItemController
                 // все несписанные
                 break;
             case 'Кладовщик':
-                // Склад видит весь реестр несписанных ТМЦ (не только «свои» CurrentUser).
-                // Иначе после создания админом список у кладовщика пустой.
-                break;
             case 'Менеджер':
             case 'Бригадир':
+                // только свои + переданные на текущего пользователя
                 $sql .= " AND r.CurrentUser = " . (int) $idUser;
                 break;
             default:
@@ -346,6 +344,21 @@ class ItemController
     {
         return $this->getItemsByStatus($statusUser, $idUser, StatusItem::ConfirmItem);
     }
+
+    /**
+     * Лёгкий COUNT по статусу (для бейджей на главной).
+     */
+    public function countItemsByStatus(int $statusUser, int $idUser, int $status): int
+    {
+        $userJoin = $statusUser != 0
+            ? "INNER JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem AND r.CurrentUser = " . (int) $idUser
+            : "";
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $sql = "SELECT COUNT(*) FROM InventoryItem ii {$userJoin} WHERE ii.Status = " . (int) $status;
+        $stmt = $pdo->query($sql);
+        return $stmt ? (int) $stmt->fetchColumn() : 0;
+    }
+
     /**
      * ТМЦ в ремонте и на согласовании («В ремонте» + «Подтвердить ремонт»).
      * Кнопка «Согласование ремонта» на главной.

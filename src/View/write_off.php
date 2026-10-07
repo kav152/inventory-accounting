@@ -36,13 +36,6 @@ $onlyPropose = ($pageFilter === 'propose');
 $archiveFilter = in_array($pageFilter, ['pending', 'verified', 'propose', 'confirm'], true) ? $pageFilter : '';
 require_once __DIR__ . '/../BusinessLogic/StatusItem.php';
 
-// Починить рассинхрон «главная / архив / объект» до отрисовки
-try {
-    $repairContainer->reconcileAllActiveRepairStatuses();
-} catch (Throwable $e) {
-    error_log('write_off reconcile: ' . $e->getMessage());
-}
-
 // счёт считаем заполненным, если не пустой и не прочерк/нули/плейсхолдер
 function repairHasInvoice($repair): bool
 {

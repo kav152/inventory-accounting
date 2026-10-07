@@ -853,24 +853,44 @@ export function initCardWriteOffHandlers(modalElement) {
         const data = await response.json();
 
         if (data.success) {
-          const modal = bootstrap.Modal.getInstance(modalElement);
-          modal.hide();
-          window.needFullReload = true;
-
-          showNotification(TypeMessage.success, data.message);
-
-          if (typeof handleSuccess === "undefined") {
-            console.warn(
-              "handleSuccess не найдена. Ожидание загрузки updateFunctions.js"
+          // Сразу синхронизируем строку истории — без полной перезагрузки страницы
+          repairs.forEach((repairEl) => {
+            const repairId = repairEl.dataset.repairId || "";
+            const row = document.querySelector(
+              `tr.repair-line[data-repair-id="${repairId}"]`,
             );
-          }
+            if (!row) return;
+            const invoice =
+              repairEl.querySelector(".invoice-number")?.value?.trim() || "";
+            const upd =
+              repairEl.querySelector(".upd-number")?.value?.trim() || "";
+            const cost =
+              repairEl.querySelector(".repair-cost")?.value?.trim() || "0";
+            const dateTo =
+              repairEl.querySelector(".date-to-service")?.value?.trim() || "";
+            const dateRet =
+              repairEl.querySelector(".date-return-service")?.value?.trim() ||
+              "";
+            const invoiceInput = row.querySelector(".repair-invoice-input");
+            const updInput = row.querySelector(".repair-upd-input");
+            const costInput = row.querySelector(".repair-cost-input");
+            const dateToInput = row.querySelector(".repair-date-to-input");
+            const dateRetInput = row.querySelector(".repair-date-return-input");
+            if (invoiceInput) invoiceInput.value = invoice;
+            if (updInput) updInput.value = upd;
+            if (costInput) costInput.value = cost;
+            if (dateToInput) dateToInput.value = dateTo;
+            if (dateRetInput) dateRetInput.value = dateRet;
+            row.dataset.savedInvoice = invoice;
+            row.dataset.savedUpd = upd;
+            row.dataset.savedCost = cost;
+            row.dataset.savedDateTo = dateTo;
+            row.dataset.savedDateReturn = dateRet;
+          });
 
-          if (typeof handleSuccess === "function") {
-            handleSuccess();
-          } else if (typeof window.handleSuccess === "function") {
-            console.error("Функция handleSuccess недоступна");
-            window.handleSuccess();
-          }
+          const modal = bootstrap.Modal.getInstance(modalElement);
+          modal?.hide();
+          showNotification(TypeMessage.success, data.message);
         } else {
           showNotification(TypeMessage.error, data.message);
         }

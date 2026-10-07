@@ -50,34 +50,22 @@ $loadTime = $endTime - $startTime;
 //error_log("Время прочета totalItems элементов: " . $loadTime . " секунд.");
 
 
-$startTime = microtime(true);
-$confirmItems = $container->getConfirmItems($_SESSION["Status"], $_SESSION["IDUser"]);
-if ($confirmItems != null) {
-    $confirmCount = count($confirmItems);
-}
-$endTime = microtime(true);
-$loadTime = $endTime - $startTime;
-//error_log("Время confirmItems элементов: " . $loadTime . " секунд.");
+$confirmCount = $container->countItemsByStatus(
+    (int) $_SESSION["Status"],
+    (int) $_SESSION["IDUser"],
+    StatusItem::ConfirmItem
+);
 
-$startTime = microtime(true);
-$confirmRepairItems = $container->getConfirmRepairItems($_SESSION["Status"], $_SESSION["IDUser"]);
-if ($confirmRepairItems != null) {
-    $confirmRepairCount = count($confirmRepairItems);
-    $locationRepairs = $container->getLocations(true);
+// Только COUNT — полный список + reconcile тормозили главную
+if ((int) $statusUser === 0) {
+    $confirmRepairCount = $repairContainer->countItemsAwaitingRepairApproval();
 }
-$endTime = microtime(true);
-$loadTime = $endTime - $startTime;
-//error_log("Время загрузки confirmRepairItems: " . $loadTime . " секунд.");
 
-$startTime = microtime(true);
-$brigadesToItems = $container->getBrigadesToItems($_SESSION["Status"], $_SESSION["IDUser"]);
-if ($brigadesToItems != null) {
-    $brigadesToItemsCount = count($brigadesToItems);
-    $atWorkGroups = $container->getAtWorkItemsGrouped($_SESSION["Status"], $_SESSION["IDUser"]);
-}
-$endTime = microtime(true);
-$loadTime = $endTime - $startTime;
-//error_log("Время brigadesToItems: " . $loadTime . " секунд.");
+$brigadesToItemsCount = $container->countItemsByStatus(
+    (int) $_SESSION["Status"],
+    (int) $_SESSION["IDUser"],
+    StatusItem::AtWorkTMC
+);
 
 if ((int) $statusUser === 0) {
     $proposeWriteOffCount = $repairContainer->countProposeWriteOff();
@@ -303,10 +291,6 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
     <?php
     $isAdmin = ((int) ($_SESSION["Status"] ?? 1) === 0);
     $showNotificationsPanel = $totalNotifications > 0 || $isAdmin;
-    if ($isAdmin && !isset($locationRepairs)) {
-        $locationRepairs = $container->getLocations(true) ?? [];
-        $confirmRepairItems = $confirmRepairItems ?? [];
-    }
     ?>
     <?php if ($showNotificationsPanel): ?>
         <div class="notifications-panel expanded" id="notificationsPanel">
@@ -322,12 +306,13 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                             </div>
                         <?php endif; ?>
                         <?php if ($isAdmin): ?>
-                            <?php // тот же архив, filter=pending ?>
-                            <a href="/src/View/write_off.php?filter=pending"
-                                class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
-                                style="<?= $confirmRepairCount > 0 ? '' : 'display:none'; ?> text-decoration:none;">
+                            <div class="notification-badge notification-repair-badge header-badge" id="confirmRepairBadge"
+                                role="button" tabindex="0"
+                                onclick="openConfirmRepairModal()"
+                                title="Согласование ремонта"
+                                style="<?= $confirmRepairCount > 0 ? '' : 'display:none' ?>">
                                 <?= $confirmRepairCount ?>
-                            </a>
+                            </div>
                         <?php endif; ?>
                         <?php if ($brigadesToItemsCount > 0): ?>
                             <div class="notification-badge notification-atwork-badge header-badge" id="atWorkBadge"
@@ -363,13 +348,14 @@ $totalNotifications = $confirmCount + $confirmRepairCount + $brigadesToItemsCoun
                 <?php endif; ?>
 
                 <?php if ($isAdmin && $confirmRepairCount > 0): ?>
-                    <a class="notification-alert notification-repair-alert"
+                    <div class="notification-alert notification-repair-alert"
                         id="confirmRepairNotification"
-                        href="/src/View/write_off.php?filter=confirm"
-                        style="text-decoration:none; color:#fff; display:block; text-align:center;"
-                        title="Открыть в архиве списания затрат">
+                        role="button" tabindex="0"
+                        onclick="openConfirmRepairModal()"
+                        style="color:#fff; display:block; text-align:center; cursor:pointer;"
+                        title="Открыть окно согласования ремонта">
                         Согласование ремонта <span id="confirmRepairCountText"><?= $confirmRepairCount ?></span> ТМЦ
-                    </a>
+                    </div>
                 <?php endif; ?>
 
                 <?php if ($isAdmin): ?>

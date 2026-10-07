@@ -25,11 +25,13 @@ class RepairItem extends BaseEntity
             $this->RepairCost = floatval($data['RepairCost'] ?? 0.0);
             $this->InvoiceNumber = $data['InvoiceNumber'] ?? '';
 
-            $upd = $data['UPD'] ?? null;
-            if (is_array($upd)) {
-                $this->UPD = implode($data['UPD']) ?? '';
-            } else
-                $this->UPD = $data['UPD'] ?? '';
+            // PDO/sqlsrv иногда отдаёт ключ в другом регистре
+            $updRaw = $data['UPD'] ?? $data['upd'] ?? null;
+            if (is_array($updRaw)) {
+                $this->UPD = implode('', $updRaw);
+            } else {
+                $this->UPD = $updRaw !== null ? (string) $updRaw : '';
+            }
 
             $this->RepairDescription = $data['RepairDescription'] ?? '';
             // дату отправки не подставляем «сегодня» молча — только если передали явно

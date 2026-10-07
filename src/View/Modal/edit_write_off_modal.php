@@ -81,9 +81,9 @@ $singleRepairMode = !empty($singleRepairMode);
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">№ УПД</label>
-                                                <input type="text" class="form-control upd-number"
+                                                <input type="text" name="UPD" class="form-control upd-number"
                                                     placeholder="Укажите номер УПД"
-                                                    value="<?= htmlspecialchars($repair->UPD ?? '') ?>">
+                                                    value="<?= htmlspecialchars((string) ($repair->UPD ?? '')) ?>">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Стоимость (руб.)</label>
