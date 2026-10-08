@@ -14,7 +14,9 @@ class EditWriteOffModalLoader extends ModalLoader
             return '<div class="alert alert-danger">Не указан ID ТМЦ</div>';
         }
         DatabaseFactory::setConfig();
+        require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
         $repairController = new ItemRepairController();
+        $itemController = new ItemController();
         $itemData = $repairController->getItemWithRepairs((int) $idTmc, $idRepair ?: null);
 
         if (!$itemData || count($itemData) === 0) {
@@ -22,6 +24,7 @@ class EditWriteOffModalLoader extends ModalLoader
         }
 
         $singleRepairMode = $idRepair > 0;
+        $locationRepairs = $itemController->getLocations(true) ?? [];
 
         ob_start();
         include __DIR__ . '/../Modal/edit_write_off_modal.php';

@@ -50,7 +50,8 @@ class processCUDSendToService extends CUDHandler
                     $tmcId,
                     (int) $statusService,
                     (string) ($item['reason'] ?? ''),
-                    trim((string) ($item['operationDate'] ?? ''))
+                    trim((string) ($item['operationDate'] ?? '')),
+                    trim((string) ($item['upd'] ?? $item['UPD'] ?? ''))
                 );
                 if (!$result) {
                     $this->success = false;
@@ -62,6 +63,10 @@ class processCUDSendToService extends CUDHandler
                 $this->success = false;
                 $this->messages[] = "ТМЦ {$tmcId}: " . $e->getMessage();
             }
+        }
+        // если ни один не ушёл — ошибка на верхнем уровне (не «успех» + красное уведомление)
+        if ($this->succeededIds === [] && $this->messages !== []) {
+            throw new Exception(implode('; ', $this->messages));
         }
     }
 

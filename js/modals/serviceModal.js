@@ -87,18 +87,23 @@ export function initSendToServiceModalHandlers(modalElement) {
         .getElementById("serviceModal")
         .getAttribute("data-status");
 
+      const dateRe = /^\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})$/;
       inputs.forEach((textarea) => {
         const id = textarea.dataset.id;
         const reason = textarea.value.trim();
         const dateInput = document.querySelector(
           `#selectedServiceItemsContainer .service-date-input[data-id="${id}"]`,
         );
+        const updInput = document.querySelector(
+          `#selectedServiceItemsContainer .service-upd-input[data-id="${id}"]`,
+        );
         const operationDate = (dateInput?.value || "").trim();
-        items.push({ id, reason, operationDate });
+        const upd = (updInput?.value || "").trim();
+        items.push({ id, reason, operationDate, upd });
         if (ServiceStatus.sendService == statusService && !reason) {
           allFilled = false;
         }
-        if (!operationDate) {
+        if (!operationDate || !dateRe.test(operationDate)) {
           datesOk = false;
           dateInput?.classList.add("error");
         } else {
@@ -109,7 +114,7 @@ export function initSendToServiceModalHandlers(modalElement) {
       if (!datesOk) {
         showNotification(
           TypeMessage.notification,
-          "Укажите дату для каждого выбранного ТМЦ",
+          "Укажите дату в формате дд.мм.гггг для каждого ТМЦ",
         );
         return;
       }
@@ -143,6 +148,7 @@ export function initSendToServiceModalHandlers(modalElement) {
             TypeMessage.error,
             messages.join("; ") || "Ошибка при отправке в сервис",
           );
+          // частичный успех — обновляем только удавшиеся; иначе не трогаем UI
           if (succeededIds.length === 0) {
             return;
           }

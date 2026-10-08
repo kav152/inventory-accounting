@@ -26,14 +26,31 @@ try {
     DatabaseFactory::setConfig();
     $controller = new ItemRepairController();
     $updatedCount = 0;
+    $force = !empty($_POST['force']);
+    $errors = [];
     foreach ($repairsData as $repairData) {
-        if (!empty($repairData['ID_Repair'])) {
-            $result = $controller->updateRepair($repairData);
+        if (empty($repairData['ID_Repair'])) {
+            continue;
+        }
+        try {
+            $result = $force
+                ? $controller->saveRepairFormData($repairData)
+                : $controller->updateRepair($repairData);
             if ($result) {
                 $success = true;
                 $updatedCount++;
             }
+        } catch (Throwable $e) {
+            $errors[] = '№' . ($repairData['ID_Repair'] ?? '?') . ': ' . $e->getMessage();
         }
+    }
+    if ($errors !== []) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Ошибка при обновлении данных: ' . implode('; ', $errors),
+            'updated' => $updatedCount,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
     }
     echo json_encode([
         'success' => $success,

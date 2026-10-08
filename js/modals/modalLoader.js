@@ -321,14 +321,25 @@ function fillInTable(type, cells = [], row = null) {
     }
     case "serviceModal":
       const id = cells[0].textContent.trim();
-      const today = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = now.getFullYear();
+      const todayRu = `${dd}.${mm}.${yyyy}`;
       html = `
             <tr>
                 <td>${id}</td>
                 <td>${cells[1].textContent}</td>
                 <td>
-                    <input type="date" class="service-date-input"
-                           data-id="${id}" value="${today}" required>
+                    <input type="text" class="service-date-input"
+                           data-id="${id}" value="${todayRu}"
+                           placeholder="дд.мм.гггг" inputmode="numeric"
+                           autocomplete="off" required>
+                </td>
+                <td>
+                    <input type="text" class="service-upd-input"
+                           data-id="${id}" placeholder="№ УПД"
+                           autocomplete="off">
                 </td>
                 <td>
                     <textarea class="repair-reason-input" 
