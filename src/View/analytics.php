@@ -129,7 +129,7 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Локальный Chart.js: CDN часто падает (QUIC/сеть) → Chart is not defined -->
-    <script src="/js/vendor/chart.umd.min.js"></script>
+    <script src="/js/lib/chart.umd.min.js"></script>
     <style>
         body {
             background-color: #f8f9fa;
@@ -663,10 +663,10 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
             if (typeof Chart !== 'undefined') return true;
             if (!chartLibWarned) {
                 chartLibWarned = true;
-                console.error('Chart.js не загружен (/js/vendor/chart.umd.min.js)');
+                console.error('Chart.js не загружен (/js/lib/chart.umd.min.js)');
                 const banner = document.createElement('div');
                 banner.className = 'alert alert-danger mx-3';
-                banner.textContent = 'Не удалось загрузить библиотеку графиков. Обновите страницу или проверьте файл /js/vendor/chart.umd.min.js';
+                banner.textContent = 'Не удалось загрузить библиотеку графиков. Обновите страницу или проверьте файл /js/lib/chart.umd.min.js';
                 document.querySelector('.container-fluid')?.prepend(banner);
             }
             return false;
