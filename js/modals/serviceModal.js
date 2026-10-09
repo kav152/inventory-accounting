@@ -163,7 +163,7 @@ export function initSendToServiceModalHandlers(modalElement) {
 
         const newStatus =
           ServiceStatus.sendService == statusService
-            ? StatusItem.ConfirmRepairTMC
+            ? StatusItem.Repair
             : ServiceStatus.returnService == statusService
               ? StatusItem.Released
               : -1;

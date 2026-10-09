@@ -217,7 +217,7 @@ body.main-body {
   border: 1px solid var(--line-clr);
   border-radius: 1em;
   margin-bottom: 10px;
-  padding: 2%;
+  padding: 0.5%;
 }
 
 #cont1 {
