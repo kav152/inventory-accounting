@@ -95,8 +95,8 @@ if (isset($_GET['logout'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система учёта ТМЦ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="/css/lib/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/lib/bootstrap-icons.min.css">
     <script type="module" src="/js/modals/setting.js"></script>
     <script type="module" src="/src/constants/typeMessage.js"></script>
 
@@ -238,7 +238,7 @@ if (isset($_GET['logout'])) {
     </div-->
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/lib/bootstrap.bundle.min.js"></script>
     <script>
         // Закрытие модального окна при клике вне его области
         document.addEventListener('click', function (event) {
