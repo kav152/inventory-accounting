@@ -33,7 +33,8 @@ try {
                 (int) $item['id'],
                 (int) $statusService,
                 (string) ($item['reason'] ?? ''),
-                trim((string) ($item['operationDate'] ?? $item['date'] ?? ''))
+                trim((string) ($item['operationDate'] ?? $item['date'] ?? '')),
+                trim((string) ($item['upd'] ?? $item['UPD'] ?? ''))
             );
             if (!$result) {
                 $success = false;

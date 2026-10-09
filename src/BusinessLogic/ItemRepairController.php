@@ -66,8 +66,12 @@ class ItemRepairController
     /**
      * Кладовщик кидает в сервис — статус «Согласование» (ConfirmRepairTMC), счёт потом в архиве.
      */
-    public function registerPendingServiceSend(int $tmcId, string $note, string $operationDate = ''): ?RepairItem
-    {
+    public function registerPendingServiceSend(
+        int $tmcId,
+        string $note,
+        string $operationDate = '',
+        string $upd = ''
+    ): ?RepairItem {
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $item = $inventoryItemRepository->findById($tmcId, 'ID_TMC');
         if ($item === null) {
@@ -80,6 +84,7 @@ class ItemRepairController
         }
 
         $dateToService = $this->normalizeRepairDate($operationDate);
+        $upd = trim($upd);
 
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
         $openRepairs = $repairItemRepository->findBy(
@@ -89,11 +94,19 @@ class ItemRepairController
         $itemController = new ItemController();
         if ($openRepairs !== null && $openRepairs->count() > 0) {
             $open = $openRepairs->last();
+            $patch = [];
             if ($dateToService !== '' && (string) ($open->DateToService ?? '') !== $dateToService) {
-                $open->DateToService = $dateToService;
-                $repairItemRepository->save($open);
+                $patch['DateToService'] = $dateToService;
             }
-            $itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC);
+            if ($upd !== '') {
+                $patch['UPD'] = $upd;
+            }
+            if ($patch !== []) {
+                $this->patchRepairRow((int) $open->ID_Repair, $patch);
+            }
+            if (!$itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC)) {
+                throw new Exception("Запись ремонта есть, но статус ТМЦ {$tmcId} не обновлён");
+            }
             $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $note);
             return $open;
         }
@@ -102,32 +115,7 @@ class ItemRepairController
             throw new Exception("ТМЦ {$tmcId} уже в сервисе — сначала верните из сервиса");
         }
 
-        // Устаревшие записи «Подтвердить ремонт» — переводим в нормальный поток
-        if ($status === StatusItem::ConfirmRepairTMC) {
-            $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
-            $locationId = (int) ($item->IDLocation ?? 0);
-            if ($locationId <= 0) {
-                $main = $itemController->getMainWarehouse();
-                $locationId = (int) ($main->IDLocation ?? 0);
-            }
-            $repairItem = new RepairItem([
-                'ID_TMC' => $tmcId,
-                'IDLocation' => $locationId,
-                'InvoiceNumber' => '',
-                'RepairCost' => 0,
-                'RepairDescription' => $description,
-                'UPD' => '',
-                'DateToService' => $dateToService,
-            ]);
-            $saved = $repairItemRepository->save($repairItem, Action::CREATE);
-            if (!$saved) {
-                throw new Exception("Не удалось создать запись ремонта для ТМЦ {$tmcId}");
-            }
-            $itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC);
-            $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $description);
-            return $saved;
-        }
-
+        $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
         $locationId = (int) ($item->IDLocation ?? 0);
         if ($locationId <= 0) {
             $main = $itemController->getMainWarehouse();
@@ -137,27 +125,171 @@ class ItemRepairController
             throw new Exception("Не указана локация для ТМЦ {$tmcId}");
         }
 
-        $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
         $repairItem = new RepairItem([
             'ID_TMC' => $tmcId,
             'IDLocation' => $locationId,
             'InvoiceNumber' => '',
             'RepairCost' => 0,
             'RepairDescription' => $description,
-            'UPD' => '',
+            'UPD' => $upd,
             'DateToService' => $dateToService,
         ]);
 
         $saved = $repairItemRepository->save($repairItem, Action::CREATE);
         if (!$saved) {
-            throw new Exception("Не удалось создать запись ремонта для ТМЦ {$tmcId}");
+            $err = $repairItemRepository->getLastError() ?: 'ошибка БД';
+            // fallback: прямой INSERT без ORM (даты через CONVERT литералом)
+            $saved = $this->insertRepairRowDirect([
+                'ID_TMC' => $tmcId,
+                'IDLocation' => $locationId,
+                'InvoiceNumber' => '',
+                'RepairCost' => 0,
+                'RepairDescription' => $description,
+                'UPD' => $upd,
+                'DateToService' => $dateToService,
+            ]);
+            if (!$saved) {
+                throw new Exception("Не удалось создать запись ремонта для ТМЦ {$tmcId}: {$err}");
+            }
+        }
+        // страховка: UPD через ORM иногда не пишется (колонка UPD)
+        if ($upd !== '' && (int) ($saved->ID_Repair ?? 0) > 0) {
+            $this->patchRepairRow((int) $saved->ID_Repair, ['UPD' => $upd]);
         }
 
         // Кладовщик кидает в сервис — статус «Согласование» (ConfirmRepairTMC), счёт приложит админ.
-        $itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC);
+        if (!$itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC)) {
+            throw new Exception("Ремонт создан, но статус ТМЦ {$tmcId} не стал «Подтвердить ремонт»");
+        }
         $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $description);
 
         return $saved;
+    }
+
+    /**
+     * Прямой INSERT RepairItem (обход ORM при падении nvarchar→datetime).
+     * @param array<string, mixed> $data
+     */
+    private function insertRepairRowDirect(array $data): ?RepairItem
+    {
+        $dateTo = RepairItem::formatDateForSQL($data['DateToService'] ?? date('Y-m-d H:i:s'));
+        if ($dateTo === null || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $dateTo)) {
+            $dateTo = date('Y-m-d H:i:s');
+        }
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $sql = "INSERT INTO RepairItem
+            ([ID_TMC], [IDLocation], [InvoiceNumber], [RepairCost], [UPD], [RepairDescription], [DateToService], [DateReturnService], [inBasket])
+            VALUES
+            (:tmc, :loc, :inv, :cost, :upd, :descr, CONVERT(datetime, '{$dateTo}', 120), NULL, 0);
+            SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;";
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':tmc' => (int) ($data['ID_TMC'] ?? 0),
+                ':loc' => (int) ($data['IDLocation'] ?? 0),
+                ':inv' => (string) ($data['InvoiceNumber'] ?? ''),
+                ':cost' => (float) ($data['RepairCost'] ?? 0),
+                ':upd' => (string) ($data['UPD'] ?? ''),
+                ':descr' => (string) ($data['RepairDescription'] ?? ''),
+            ]);
+            $newId = 0;
+            do {
+                if ($stmt->columnCount() > 0) {
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($row && isset($row['NewId'])) {
+                        $newId = (int) $row['NewId'];
+                    }
+                }
+            } while ($stmt->nextRowset());
+            if ($newId <= 0) {
+                $newId = (int) $pdo->lastInsertId();
+            }
+            if ($newId <= 0) {
+                return null;
+            }
+            $repo = $this->container->get(RepairItemRepository::class);
+            $found = $repo->findById($newId, 'ID_Repair');
+            return $found instanceof RepairItem ? $found : new RepairItem(array_merge($data, [
+                'ID_Repair' => $newId,
+                'DateToService' => $dateTo,
+            ]));
+        } catch (Throwable $e) {
+            error_log('insertRepairRowDirect: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Точечный UPDATE RepairItem. [UPD] в скобках — иначе SQL Server капризничает.
+     * @param array<string, mixed> $fields
+     */
+    public function patchRepairRow(int $repairId, array $fields): bool
+    {
+        if ($repairId <= 0 || $fields === []) {
+            return false;
+        }
+        $allowed = [
+            'UPD',
+            'InvoiceNumber',
+            'RepairCost',
+            'RepairDescription',
+            'DateToService',
+            'DateReturnService',
+            'IDLocation',
+            'inBasket',
+        ];
+        $sets = [];
+        $params = [':id' => $repairId];
+        foreach ($fields as $key => $value) {
+            if (!in_array($key, $allowed, true)) {
+                continue;
+            }
+            if (in_array($key, ['DateToService', 'DateReturnService'], true)) {
+                if ($value === null || $value === '') {
+                    if ($key === 'DateToService') {
+                        continue;
+                    }
+                    $sets[] = "[{$key}] = NULL";
+                    continue;
+                }
+                $normalized = RepairItem::formatDateForSQL($value);
+                if ($normalized === null) {
+                    throw new Exception("Некорректная дата «{$value}». Формат: дд.мм.гггг");
+                }
+                // литерал Y-m-d H:i:s + CONVERT style 120 — PDO-bind nvarchar→datetime на ODBC падает
+                if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $normalized)) {
+                    throw new Exception("Некорректная дата «{$value}». Формат: дд.мм.гггг");
+                }
+                $sets[] = "[{$key}] = CONVERT(datetime, '{$normalized}', 120)";
+                continue;
+            }
+            if ($key === 'RepairCost') {
+                $value = (float) $value;
+            }
+            if ($key === 'IDLocation' || $key === 'inBasket') {
+                $value = (int) $value;
+            }
+            if (in_array($key, ['UPD', 'InvoiceNumber', 'RepairDescription'], true)) {
+                $value = (string) $value;
+            }
+            $param = ':p_' . $key;
+            $sets[] = "[{$key}] = {$param}";
+            $params[$param] = $value;
+        }
+        if ($sets === []) {
+            return true;
+        }
+        $sql = 'UPDATE RepairItem SET ' . implode(', ', $sets) . ' WHERE ID_Repair = :id';
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $pdo->prepare($sql);
+            return $stmt->execute($params);
+        } catch (PDOException $e) {
+            error_log('patchRepairRow #' . $repairId . ' SQL=' . $sql . ' params=' . json_encode($params, JSON_UNESCAPED_UNICODE) . ' err=' . $e->getMessage());
+            throw $e;
+        }
     }
 
     private function normalizeRepairDate(string $operationDate): string
@@ -166,11 +298,9 @@ class ItemRepairController
         if ($operationDate === '') {
             return date('Y-m-d H:i:s');
         }
-        try {
-            return (new DateTime($operationDate))->format('Y-m-d H:i:s');
-        } catch (Exception $e) {
-            return date('Y-m-d H:i:s');
-        }
+        // строго дд.мм.гггг / Y-m-d — без DateTime (путает месяц и день)
+        $normalized = RepairItem::formatDateForSQL($operationDate);
+        return $normalized ?? date('Y-m-d H:i:s');
     }
 
     /**
@@ -198,24 +328,44 @@ class ItemRepairController
             if (!$current) {
                 throw new Exception('Запись ремонта не найдена');
             }
-            $this->updateRepair([
-                'ID_Repair' => $repairId,
-                'ID_TMC' => $tmcId,
-                'IDLocation' => (int) ($data['IDLocation'] ?? $current->IDLocation ?? 0),
+            // только счёт/УПД/сумма — даты при согласовании НЕ трогаем
+            // (иначе SQL Server падает на nvarchar→datetime)
+            $locationId = (int) ($data['IDLocation'] ?? $current->IDLocation ?? 0);
+            $patch = [
                 'InvoiceNumber' => $invoice,
                 'RepairCost' => (float) ($data['RepairCost'] ?? $current->RepairCost ?? 0),
                 'RepairDescription' => (string) ($data['RepairDescription'] ?? $current->RepairDescription ?? ''),
-                'UPD' => $upd !== '' ? $upd : (string) ($current->UPD ?? ''),
+                'UPD' => $upd !== '' ? $upd : rtrim((string) ($current->UPD ?? '')),
                 'inBasket' => 0,
-                // даты только если передали — иначе не трогаем (не ставим «сегодня»)
-                ...(array_key_exists('DateToService', $data) ? ['DateToService' => $data['DateToService']] : []),
-                ...(array_key_exists('DateReturnService', $data) ? ['DateReturnService' => $data['DateReturnService']] : []),
-            ], false);
+            ];
+            if ($locationId > 0) {
+                $patch['IDLocation'] = $locationId;
+            }
+            if (array_key_exists('DateToService', $data) && trim((string) $data['DateToService']) !== '') {
+                $patch['DateToService'] = $data['DateToService'];
+            }
+            if (array_key_exists('DateReturnService', $data) && trim((string) $data['DateReturnService']) !== '') {
+                $patch['DateReturnService'] = $data['DateReturnService'];
+            }
+            try {
+                if (!$this->patchRepairRow($repairId, $patch)) {
+                    throw new Exception("Не удалось сохранить ремонт №{$repairId}");
+                }
+            } catch (PDOException $e) {
+                throw new Exception(
+                    "Не удалось сохранить ремонт №{$repairId}: " . $e->getMessage(),
+                    0,
+                    $e
+                );
+            }
         } else {
             $locationId = (int) ($data['IDLocation'] ?? $item->IDLocation ?? 0);
             if ($locationId <= 0) {
                 throw new Exception('Не указана организация сервиса');
             }
+            $dateTo = RepairItem::formatDateForSQL(
+                $data['DateToService'] ?? date('Y-m-d H:i:s')
+            ) ?? date('Y-m-d H:i:s');
             $repairItem = new RepairItem([
                 'ID_TMC' => $tmcId,
                 'IDLocation' => $locationId,
@@ -223,12 +373,13 @@ class ItemRepairController
                 'RepairCost' => (float) ($data['RepairCost'] ?? 0),
                 'RepairDescription' => (string) ($data['RepairDescription'] ?? 'Согласовано'),
                 'UPD' => $upd,
-                'DateToService' => $data['DateToService'] ?? date('Y-m-d H:i:s'),
-                'DateReturnService' => $data['DateReturnService'] ?? null,
+                'DateToService' => $dateTo,
+                'DateReturnService' => null,
             ]);
             $saved = $repairItemRepository->save($repairItem, Action::CREATE);
             if (!$saved) {
-                throw new Exception('Не удалось создать запись ремонта');
+                $err = $repairItemRepository->getLastError() ?: 'ошибка БД';
+                throw new Exception("Не удалось создать запись ремонта: {$err}");
             }
         }
 
@@ -335,10 +486,119 @@ class ItemRepairController
         $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
         $pdo = $this->container->get(Database::class)->getConnection();
-        $sql = "SELECT COUNT(*) FROM InventoryItem
-            WHERE Status IN ({$statusRepair}, {$statusConfirm})";
+        // только реально открытые ремонты или legacy без записи RepairItem
+        $sql = "SELECT COUNT(DISTINCT ii.ID_TMC)
+            FROM InventoryItem ii
+            WHERE ii.Status IN ({$statusRepair}, {$statusConfirm})
+              AND (
+                EXISTS (
+                    SELECT 1 FROM RepairItem r
+                    WHERE r.ID_TMC = ii.ID_TMC
+                      AND r.inBasket = 0
+                      AND r.DateReturnService IS NULL
+                )
+                OR NOT EXISTS (
+                    SELECT 1 FROM RepairItem r2
+                    WHERE r2.ID_TMC = ii.ID_TMC AND r2.inBasket = 0
+                )
+              )";
         $stmt = $pdo->query($sql);
         return $stmt ? (int) $stmt->fetchColumn() : 0;
+    }
+
+    /**
+     * Починить рассинхрон: в истории «возвращено», а RepairItem/статус ещё «в ремонте».
+     * Лёгкий batch при загрузке главной — без полного reconcileAll.
+     * @return int сколько строк поправили
+     */
+    public function healStuckRepairStatuses(): int
+    {
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $fixed = 0;
+
+        // 1) Закрыть открытый ремонт по последней записи «возвращено из сервиса» в истории
+        $sqlClose = "
+            UPDATE r SET r.[DateReturnService] = CONVERT(datetime, CONVERT(varchar(23), ret.HistoryData, 121), 121)
+            FROM RepairItem r
+            INNER JOIN (
+                SELECT h.ID_TMC, MAX(h.HistoryData) AS HistoryData
+                FROM HistoryOperations h
+                INNER JOIN CommentsHistory ch ON h.IDComment = ch.IDComment
+                WHERE (
+                    ch.ValueComment LIKE N'%возвращено из сервис%'
+                    OR ch.ValueComment LIKE N'%вернуто из сервис%'
+                    OR ch.ValueComment LIKE N'%вернули из сервис%'
+                )
+                GROUP BY h.ID_TMC
+            ) ret ON ret.ID_TMC = r.ID_TMC
+            WHERE r.inBasket = 0
+              AND r.DateReturnService IS NULL
+              AND ret.HistoryData >= r.DateToService
+              AND r.ID_Repair = (
+                  SELECT TOP 1 r2.ID_Repair FROM RepairItem r2
+                  WHERE r2.ID_TMC = r.ID_TMC
+                    AND r2.inBasket = 0
+                    AND r2.DateReturnService IS NULL
+                  ORDER BY r2.ID_Repair DESC
+              )";
+        try {
+            $n = $pdo->exec($sqlClose);
+            if ($n !== false) {
+                $fixed += (int) $n;
+            }
+        } catch (Throwable $e) {
+            error_log('healStuckRepairStatuses close: ' . $e->getMessage());
+        }
+
+        // 2) Нет открытого ремонта — статус не может оставаться 2/21
+        $statusRepair = (int) StatusItem::Repair;
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+        $released = (int) StatusItem::Released;
+        $sqlStatus = "
+            UPDATE ii SET ii.Status = {$released}
+            FROM InventoryItem ii
+            WHERE ii.Status IN ({$statusRepair}, {$statusConfirm})
+              AND NOT EXISTS (
+                  SELECT 1 FROM RepairItem r
+                  WHERE r.ID_TMC = ii.ID_TMC
+                    AND r.inBasket = 0
+                    AND r.DateReturnService IS NULL
+              )";
+        try {
+            $n = $pdo->exec($sqlStatus);
+            if ($n !== false) {
+                $fixed += (int) $n;
+            }
+        } catch (Throwable $e) {
+            error_log('healStuckRepairStatuses status: ' . $e->getMessage());
+        }
+
+        // 3) Есть открытый ремонт, а статус ещё «Выдано»/«В работе» —
+        // типичный баг: в истории «отправлено в сервис», Status не обновился
+        $sqlOpenToConfirm = "
+            UPDATE ii SET ii.Status = {$statusConfirm}
+            FROM InventoryItem ii
+            WHERE ii.Status NOT IN (
+                {$statusRepair}, {$statusConfirm},
+                " . (int) StatusItem::ProposeWriteOff . ",
+                " . (int) StatusItem::WrittenOff . "
+              )
+              AND EXISTS (
+                  SELECT 1 FROM RepairItem r
+                  WHERE r.ID_TMC = ii.ID_TMC
+                    AND r.inBasket = 0
+                    AND r.DateReturnService IS NULL
+              )";
+        try {
+            $n = $pdo->exec($sqlOpenToConfirm);
+            if ($n !== false) {
+                $fixed += (int) $n;
+            }
+        } catch (Throwable $e) {
+            error_log('healStuckRepairStatuses open→confirm: ' . $e->getMessage());
+        }
+
+        return $fixed;
     }
 
     /**
@@ -704,11 +964,25 @@ class ItemRepairController
                     }
                 }
                 $existing->inBasket = false;
-                $repairItem = $repairItemRepository->save($existing);
-                if (!$repairItem) {
-                    $err = $repairItemRepository->getLastError() ?: 'неизвестная ошибка БД';
-                    throw new Exception("Ошибка обновления repair при списании: {$err}");
+                // точечный UPDATE — иначе ORM падает на nvarchar→datetime
+                $patch = [
+                    'IDLocation' => (int) $existing->IDLocation,
+                    'InvoiceNumber' => (string) $existing->InvoiceNumber,
+                    'RepairCost' => (float) $existing->RepairCost,
+                    'RepairDescription' => (string) $existing->RepairDescription,
+                    'UPD' => (string) ($existing->UPD ?? ''),
+                    'inBasket' => 0,
+                ];
+                if (!empty($existing->DateToService)) {
+                    $patch['DateToService'] = $existing->DateToService;
                 }
+                if (array_key_exists('DateReturnService', $data)) {
+                    $patch['DateReturnService'] = $existing->DateReturnService;
+                }
+                if (!$this->patchRepairRow((int) $existing->ID_Repair, $patch)) {
+                    throw new Exception("Ошибка обновления repair при списании №{$ID_Repair}");
+                }
+                $repairItem = $existing;
             }
         }
 
@@ -779,6 +1053,68 @@ class ItemRepairController
         return $repairItem;
     }
 
+    /**
+     * Сохранение из модалки редактирования — пишет все переданные поля без «тихих» пропусков.
+     */
+    public function saveRepairFormData(array $data): bool
+    {
+        $repairId = (int) ($data['ID_Repair'] ?? 0);
+        if ($repairId <= 0) {
+            throw new Exception('Не указан ID записи ремонта');
+        }
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $current = $repairItemRepository->findById($repairId, 'ID_Repair');
+        if (!$current) {
+            throw new Exception("Запись о ремонте с ID {$repairId} не найдена");
+        }
+
+        $patch = [];
+        if (array_key_exists('InvoiceNumber', $data)) {
+            $patch['InvoiceNumber'] = trim((string) $data['InvoiceNumber']);
+        }
+        if (array_key_exists('UPD', $data) || array_key_exists('upd', $data)) {
+            $patch['UPD'] = trim((string) ($data['UPD'] ?? $data['upd'] ?? ''));
+        }
+        if (array_key_exists('RepairCost', $data)) {
+            $patch['RepairCost'] = (float) $data['RepairCost'];
+        }
+        if (array_key_exists('RepairDescription', $data)) {
+            $patch['RepairDescription'] = trim((string) $data['RepairDescription']);
+        }
+        $locId = (int) ($data['IDLocation'] ?? 0);
+        if ($locId <= 0) {
+            throw new Exception('Укажите сервис (организацию)');
+        }
+        $patch['IDLocation'] = $locId;
+        if (array_key_exists('inBasket', $data)) {
+            $patch['inBasket'] = (int) ((bool) $data['inBasket']);
+        }
+        if (array_key_exists('DateToService', $data) && trim((string) $data['DateToService']) !== '') {
+            $patch['DateToService'] = $data['DateToService'];
+        }
+        if (array_key_exists('DateReturnService', $data)) {
+            $patch['DateReturnService'] = $data['DateReturnService'];
+        }
+
+        try {
+            if (!$this->patchRepairRow($repairId, $patch)) {
+                throw new Exception("Не удалось сохранить ремонт №{$repairId}");
+            }
+        } catch (PDOException $e) {
+            throw new Exception(
+                "Не удалось сохранить ремонт №{$repairId}: " . $e->getMessage(),
+                0,
+                $e
+            );
+        }
+
+        $tmcId = (int) ($data['ID_TMC'] ?? $current->ID_TMC ?? 0);
+        if ($tmcId > 0) {
+            $this->reconcileInventoryStatusWithRepairs($tmcId);
+        }
+        return true;
+    }
+
     public function updateRepair($data, bool $reconcileStatus = true): bool
     {
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
@@ -791,7 +1127,7 @@ class ItemRepairController
         $tmcId = (int) ($data['ID_TMC'] ?? $currentRepair->ID_TMC ?? 0);
 
         $repairData = new RepairItem($data);
-        $changed = false;
+        $patch = [];
         $persistableProps = $currentRepair->getPersistableProperties();
         $readOnlyFields = $currentRepair->getReadOnlyFields();
 
@@ -818,8 +1154,10 @@ class ItemRepairController
                 ? (string) ($data['UPD'] ?? $data['upd'] ?? $repairData->UPD ?? '')
                 : $repairData->$prop;
             $currentValue = $currentRepair->$prop;
-            if ($prop === 'UPD') {
-                $currentValue = (string) ($currentValue ?? '');
+            // char/nchar в SQL Server часто с пробелами справа
+            if (in_array($prop, ['UPD', 'InvoiceNumber', 'RepairDescription'], true)) {
+                $currentValue = rtrim((string) ($currentValue ?? ''));
+                $newValue = rtrim((string) ($newValue ?? ''));
             }
 
             // пустая дата отправки из формы — не затираем существующую
@@ -862,40 +1200,28 @@ class ItemRepairController
                 if ($curNorm === $newNorm) {
                     continue;
                 }
-                $changed = true;
+                $patch[$prop] = $newValue;
                 $currentRepair->$prop = $newValue;
                 continue;
             }
 
             if ($currentValue !== $newValue) {
-                $changed = true;
+                $patch[$prop] = $newValue;
                 $currentRepair->$prop = $newValue;
             }
         }
 
-        if ($changed) {
-            // перед UPDATE в SQL Server даты только в Y-m-d H:i:s
-            // (иначе дд.мм.гггг / локаль PDO даёт nvarchar→datetime out of range)
-            foreach (['DateToService', 'DateReturnService'] as $dateProp) {
-                if (!isset($currentRepair->$dateProp) || $currentRepair->$dateProp === null || $currentRepair->$dateProp === '') {
-                    if ($dateProp === 'DateReturnService') {
-                        $currentRepair->DateReturnService = null;
-                    }
-                    continue;
+        if ($patch !== []) {
+            try {
+                if (!$this->patchRepairRow($repairId, $patch)) {
+                    throw new Exception("Не удалось сохранить ремонт №{$repairId}");
                 }
-                $normalized = RepairItem::formatDateForSQL($currentRepair->$dateProp);
-                if ($normalized === null) {
-                    throw new Exception(
-                        "Некорректная дата в поле {$dateProp}. Укажите в формате дд.мм.гггг"
-                    );
-                }
-                $currentRepair->$dateProp = $normalized;
-            }
-
-            $result = $repairItemRepository->save($currentRepair);
-            if ($result === null) {
-                $err = $repairItemRepository->getLastError() ?: 'неизвестная ошибка БД';
-                throw new Exception("Не удалось сохранить ремонт №{$repairId}: {$err}");
+            } catch (PDOException $e) {
+                throw new Exception(
+                    "Не удалось сохранить ремонт №{$repairId}: " . $e->getMessage(),
+                    (int) $e->getCode(),
+                    $e
+                );
             }
         }
 
@@ -911,15 +1237,11 @@ class ItemRepairController
         if ($value === null || $value === '') {
             return '';
         }
-        $raw = trim((string) $value);
-        if ($raw === '') {
+        $normalized = RepairItem::formatDateForSQL($value);
+        if ($normalized === null) {
             return '';
         }
-        try {
-            return (new DateTime($raw))->format('Y-m-d');
-        } catch (Exception $e) {
-            return $raw;
-        }
+        return substr($normalized, 0, 10);
     }
 
     /**

@@ -771,10 +771,16 @@ class ItemController
      * Отправить/вернуть ТМЦ в сервис.
      * Отправка: статус «Согласование» + запись в архив (счёт приложит администратор).
      * Возврат: не зависит от наличия счёта у администратора.
-     * @param string $operationDate дата отправки/возврата (Y-m-d), пусто = сегодня
+     * @param string $operationDate дата отправки/возврата (дд.мм.гггг или Y-m-d), пусто = сегодня
+     * @param string $upd номер УПД (опционально)
      */
-    public function sendToService(int $tmcId, int $statusService, string $note, string $operationDate = ''): bool
-    {
+    public function sendToService(
+        int $tmcId,
+        int $statusService,
+        string $note,
+        string $operationDate = '',
+        string $upd = ''
+    ): bool {
         try {
             $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
             $inventoryItem = $inventoryItemRepository->findById((int) $tmcId, 'ID_TMC');
@@ -785,6 +791,7 @@ class ItemController
             $linkBrigadesToItemRepository = $this->container->get(LinkBrigadesToItemRepository::class);
             $brigadesToItemRepository = $this->container->get(BrigadesRepository::class);
             $opDate = $this->normalizeOperationDate($operationDate);
+            $upd = trim($upd);
 
             if ($statusService == 0) {
                 $lbi = $linkBrigadesToItemRepository->findById($tmcId, 'ID_TMC');
@@ -798,7 +805,7 @@ class ItemController
 
                 require_once __DIR__ . '/ItemRepairController.php';
                 $repairController = new ItemRepairController();
-                $repairController->registerPendingServiceSend($tmcId, $note, $opDate);
+                $repairController->registerPendingServiceSend($tmcId, $note, $opDate, $upd);
                 return true;
             }
 
@@ -809,11 +816,8 @@ class ItemController
                     return false;
                 }
 
-                try {
-                    $this->changeDateReturnService($tmcId, $opDate);
-                } catch (Exception $e) {
-                    error_log('sendToService return (no repair row): ' . $e->getMessage());
-                }
+                // дата возврата обязательна — иначе reconcile снова поставит «в ремонте»
+                $this->changeDateReturnService($tmcId, $opDate, $upd);
 
                 $this->changeStatusTMC(
                     $tmcId,
@@ -837,11 +841,12 @@ class ItemController
         if ($operationDate === '') {
             return date('Y-m-d');
         }
-        try {
-            return (new DateTime($operationDate))->format('Y-m-d');
-        } catch (Exception $e) {
+        // без DateTime() — путает день и месяц для дд.мм.гггг
+        $normalized = RepairItem::formatDateForSQL($operationDate);
+        if ($normalized === null) {
             return date('Y-m-d');
         }
+        return substr($normalized, 0, 10);
     }
 
 
@@ -854,13 +859,35 @@ class ItemController
      */
     public function changeStatusTMC(int $idTMC, int $statusItem): bool
     {
-        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
-        $inventoryItem = $inventoryItemRepository->findById((int) $idTMC, "ID_TMC");
-
-        if ($inventoryItem === null) {
+        $idTMC = (int) $idTMC;
+        $statusItem = (int) $statusItem;
+        if ($idTMC <= 0) {
             return false;
         }
 
+        // прямой UPDATE — полный save() иногда не пишет Status (и история уже могла записаться)
+        try {
+            $pdo = $this->container->get(Database::class)->getConnection();
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $stmt = $pdo->prepare('UPDATE InventoryItem SET [Status] = :st WHERE ID_TMC = :id');
+            $ok = $stmt->execute([':st' => $statusItem, ':id' => $idTMC]);
+            if ($ok && $stmt->rowCount() >= 0) {
+                // rowCount может быть 0 если статус уже такой — это успех
+                $check = $pdo->prepare('SELECT Status FROM InventoryItem WHERE ID_TMC = :id');
+                $check->execute([':id' => $idTMC]);
+                $cur = (int) $check->fetchColumn();
+                return $cur === $statusItem;
+            }
+        } catch (Throwable $e) {
+            error_log('changeStatusTMC direct: ' . $e->getMessage());
+        }
+
+        // fallback через ORM
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $inventoryItem = $inventoryItemRepository->findById($idTMC, "ID_TMC");
+        if ($inventoryItem === null) {
+            return false;
+        }
         $inventoryItem->Status = $statusItem;
         $result = $inventoryItemRepository->save($inventoryItem);
         return $result !== null;
@@ -944,13 +971,14 @@ class ItemController
     }
 
     /**
-     * Установить дату возвращения ТМЦ из сервиса
+     * Установить дату возвращения ТМЦ из сервиса (и опционально УПД)
      * @param int $id
-     * @param string $operationDate Y-m-d, пусто = сегодня
+     * @param string $operationDate дд.мм.гггг / Y-m-d, пусто = сегодня
+     * @param string $upd номер УПД
      * @throws \Exception
      * @return void
      */
-    public function changeDateReturnService(int $id, string $operationDate = '')
+    public function changeDateReturnService(int $id, string $operationDate = '', string $upd = '')
     {
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
 
@@ -974,15 +1002,20 @@ class ItemController
         }
 
         $date = $this->normalizeOperationDate($operationDate);
-        $repairItem->DateReturnService = (new DateTime($date))->format('Y-m-d H:i:s');
-        $saved = $repairItemRepository->save($repairItem);
-        if ($saved === null) {
+        $dateSql = RepairItem::formatDateForSQL($date) ?? (date('Y-m-d') . ' 00:00:00');
+        $upd = trim($upd);
+
+        require_once __DIR__ . '/ItemRepairController.php';
+        $repairController = new ItemRepairController();
+        $patch = ['DateReturnService' => $dateSql];
+        if ($upd !== '') {
+            $patch['UPD'] = $upd;
+        }
+        if (!$repairController->patchRepairRow((int) $repairItem->ID_Repair, $patch)) {
             throw new Exception("Ошибка указания даты возвращения из сервиса для ТМЦ id:{$id}");
         }
 
         // Статус на объекте должен совпасть с закрытием ремонта
-        require_once __DIR__ . '/ItemRepairController.php';
-        $repairController = new ItemRepairController();
         $repairController->reconcileInventoryStatusWithRepairs($id);
     }
 }

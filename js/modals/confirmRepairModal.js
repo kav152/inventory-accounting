@@ -142,12 +142,18 @@ function removeRepairArchiveRows(idTMC) {
       return;
     }
 
-    // Архив: счёт к уже отправленному в сервис ремонту
-    if (repairId > 0 || parseInt(idTMC, 10) > 0) {
+    // Архив: счёт к уже отправленному в сервис ремонту (только при ID_Repair)
+    if (repairId > 0) {
       const invoice = (form.elements.InvoiceNumber?.value || "").trim();
       if (!invoice) {
         showNotification(TypeMessage.error, 'Укажите № счета');
         form.elements.InvoiceNumber?.focus();
+        return;
+      }
+      const locId = parseInt(form.elements.IDLocation?.value || "0", 10);
+      if (!locId) {
+        showNotification(TypeMessage.error, "Укажите организацию (сервис)");
+        form.elements.IDLocation?.focus();
         return;
       }
 
@@ -162,10 +168,10 @@ function removeRepairArchiveRows(idTMC) {
               tmcId: parseInt(idTMC, 10),
               repairId: repairId,
               invoiceNumber: invoice,
-              updNumber: form.elements.UPD?.value || "",
+              updNumber: (form.elements.UPD?.value || "").trim(),
               repairCost: form.elements.RepairCost?.value || "0",
-              repairDescription: form.elements.RepairDescription?.value || "",
-              locationId: parseInt(form.elements.IDLocation?.value || "0", 10),
+              repairDescription: (form.elements.RepairDescription?.value || "").trim(),
+              locationId: locId,
             }),
           },
         );

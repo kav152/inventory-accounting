@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../Repositories/UserRepository.php';
 $repairs = $itemData;
 $inventoryItem = $repairs->first()->InventoryItem;
 $singleRepairMode = !empty($singleRepairMode);
+$locationRepairs = $locationRepairs ?? [];
 ?>
 
 <div class="modal fade" id="edit_write_off" tabindex="-1" aria-labelledby="editWriteOffModalLabel" aria-hidden="true">
@@ -63,21 +64,50 @@ $singleRepairMode = !empty($singleRepairMode);
                     <div class="repairs-details">
                         <h6><?= $singleRepairMode ? 'Выбранная запись' : 'Ремонты' ?></h6>
                         <div id="repairsContainer">
-                            <?php foreach ($repairs as $index => $repair): ?>
+                            <?php foreach ($repairs as $index => $repair):
+                                $locId = (int) ($repair->IDLocation ?? $repair->Location?->IDLocation ?? 0);
+                            ?>
                                 <div class="repair-item card mb-2" data-repair-id="<?= $repair->ID_Repair ?>">
                                     <input type="hidden" class="form-control id-tmc" value="<?= $inventoryItem->ID_TMC ?>">
-                                    <input type="hidden" class="form-control idLocation" value="<?= (int) ($repair->IDLocation ?? $repair->Location?->IDLocation ?? 0) ?>">
                                     <div class="card-body">
                                         <?php if (!$singleRepairMode): ?>
                                             <div class="mb-2 text-muted small">Запись №<?= (int) $repair->ID_Repair ?></div>
                                         <?php endif; ?>
                                         <?php // после сохранения счёта строка в реестре станет «проверено» ?>
                                         <div class="row mb-2">
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
+                                                <label class="form-label">Сервис</label>
+                                                <select class="form-select idLocation" required>
+                                                    <option value="">Выберите сервис</option>
+                                                    <?php foreach ($locationRepairs as $loc): ?>
+                                                        <option value="<?= (int) $loc->IDLocation ?>"
+                                                            <?= $locId === (int) $loc->IDLocation ? 'selected' : '' ?>>
+                                                            <?= htmlspecialchars((string) ($loc->NameLocation ?? '')) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                    <?php if ($locId > 0):
+                                                        $known = false;
+                                                        foreach ($locationRepairs as $loc) {
+                                                            if ((int) $loc->IDLocation === $locId) {
+                                                                $known = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (!$known):
+                                                    ?>
+                                                        <option value="<?= $locId ?>" selected>
+                                                            <?= htmlspecialchars((string) ($repair->Location->NameLocation ?? ('ID ' . $locId))) ?>
+                                                        </option>
+                                                    <?php endif; endif; ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-md-4">
                                                 <label class="form-label">№ счета</label>
                                                 <input type="text" class="form-control invoice-number"
                                                     placeholder="Укажите номер счёта"
-                                                    value="<?= htmlspecialchars($repair->InvoiceNumber ?? '') ?>">
+                                                    value="<?= htmlspecialchars(rtrim((string) ($repair->InvoiceNumber ?? ''))) ?>">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">№ УПД</label>
@@ -114,14 +144,6 @@ $singleRepairMode = !empty($singleRepairMode);
                                                 <label class="form-label">Примечания</label>
                                                 <textarea
                                                     class="form-control repair-description"><?= htmlspecialchars($repair->RepairDescription ?? '') ?></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <label class="form-label">Сервис</label>
-                                                <input type="text" class="form-control service-location"
-                                                    value="<?= htmlspecialchars($repair->Location->NameLocation ?? '') ?>"
-                                                    disabled>
                                             </div>
                                         </div>
                                     </div>

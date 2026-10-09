@@ -349,15 +349,30 @@ class GenericRepository implements RepositoryInterface
         $params = [];
 
         foreach ($persistableProps as $prop) {
-            $columns[] = $prop;
+            $columns[] = '[' . $prop . ']';
             if (in_array($prop, $autoDateFields)) {
                 $placeholders[] = 'GETDATE()';
             } else {
-                $placeholders[] = ":$prop";
                 $value = $entity->$prop;
                 if (is_bool($value)) {
                     $value = $value ? 1 : 0;
                 }
+                if (in_array($prop, ['DateToService', 'DateReturnService'], true)) {
+                    if ($value === null || $value === '') {
+                        $placeholders[] = 'NULL';
+                    } else {
+                        $normalized = $this->normalizeSqlDateTime($value);
+                        if ($normalized === null || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $normalized)) {
+                            throw new PDOException(
+                                "Некорректная дата в поле {$prop}. Формат: дд.мм.гггг"
+                            );
+                        }
+                        // литерал — PDO bind nvarchar→datetime на ODBC падает
+                        $placeholders[] = "CONVERT(datetime, '{$normalized}', 120)";
+                    }
+                    continue;
+                }
+                $placeholders[] = ":$prop";
                 $params[":$prop"] = $value;
             }
         }
@@ -420,14 +435,30 @@ class GenericRepository implements RepositoryInterface
             if ($this->isReadOnlyField($readOnlyFields, $prop) === true)
                 continue;
 
+            // UPD и др. — в квадратных скобках (SQL Server)
+            $col = '[' . $prop . ']';
             if (in_array($prop, $autoDateFields)) {
-                $setParts[] = "$prop = GETDATE()"; //для mysql - NOW()
+                $setParts[] = "$col = GETDATE()"; //для mysql - NOW()
             } else {
-                $setParts[] = "$prop = :$prop";
                 $value = $entity->$prop;
                 if (is_bool($value)) {
                     $value = $value ? 1 : 0;
                 }
+                if (in_array($prop, ['DateToService', 'DateReturnService'], true)) {
+                    if ($value === null || $value === '') {
+                        $setParts[] = "$col = NULL";
+                    } else {
+                        $normalized = $this->normalizeSqlDateTime($value);
+                        if ($normalized === null || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $normalized)) {
+                            throw new PDOException(
+                                "Некорректная дата в поле {$prop}. Формат: дд.мм.гггг"
+                            );
+                        }
+                        $setParts[] = "$col = CONVERT(datetime, '{$normalized}', 120)";
+                    }
+                    continue;
+                }
+                $setParts[] = "$col = :$prop";
                 $params[":$prop"] = $value;
             }
         }
@@ -579,5 +610,40 @@ class GenericRepository implements RepositoryInterface
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Нормализация даты для SQL Server datetime (CONVERT style 120).
+     * Убирает миллисекунды и dd.mm.yyyy → Y-m-d H:i:s без DateTime() путаницы.
+     */
+    private function normalizeSqlDateTime(mixed $value): ?string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return null;
+        }
+        // уже ISO / SQL с миллисекундами — обрезать до секунд
+        if (preg_match('#^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})#', $raw, $m)) {
+            return $m[1] . ' ' . $m[2];
+        }
+        if (preg_match('#^(\d{4}-\d{2}-\d{2})$#', $raw)) {
+            return $raw . ' 00:00:00';
+        }
+        if (!class_exists('RepairItem', false)) {
+            $repairEntity = __DIR__ . '/../Entity/RepairItem.php';
+            if (is_file($repairEntity)) {
+                require_once $repairEntity;
+            }
+        }
+        if (class_exists('RepairItem', false)) {
+            return RepairItem::formatDateForSQL($raw);
+        }
+        return null;
     }
 }

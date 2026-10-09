@@ -331,8 +331,10 @@ export async function rejectRepairLine(button) {
 window.approveRepairLine = approveRepairLine;
 window.rejectRepairLine = rejectRepairLine;
 
+const REPAIR_DATE_RE = /^\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})$/;
+
 /** Сохранить даты строки истории ремонта (дд.мм.гггг) */
-export async function saveRepairLineDates(row) {
+export async function saveRepairLineDates(row, opts = {}) {
   if (!row || row.dataset.savingDates === "1") return;
   const repairId = parseInt(row.dataset.repairId || "0", 10);
   const tmcId = parseInt(row.dataset.tmcId || "0", 10);
@@ -346,17 +348,30 @@ export async function saveRepairLineDates(row) {
   const next = `${dateTo}|${dateRet}`;
   if (prev === next) return;
 
-  // неполная дата при вводе — ждём окончательный ввод
-  const dateRe = /^\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})$/;
-  if (dateTo !== "" && !dateRe.test(dateTo)) return;
-  if (dateRet !== "" && !dateRe.test(dateRet)) return;
+  // неполная дата при вводе — на blur предупреждаем, на change ждём
+  if (dateTo !== "" && !REPAIR_DATE_RE.test(dateTo)) {
+    if (opts.requireComplete) {
+      showNotification(TypeMessage.notification, "Дата отправки: дд.мм.гггг");
+      dateToInput?.focus();
+    }
+    return;
+  }
+  if (dateRet !== "" && !REPAIR_DATE_RE.test(dateRet)) {
+    if (opts.requireComplete) {
+      showNotification(TypeMessage.notification, "Дата возврата: дд.мм.гггг");
+      dateRetInput?.focus();
+    }
+    return;
+  }
 
   const locationId = parseInt(row.dataset.locationId || "0", 10);
 
   const formData = new FormData();
   formData.append("repairs[0][ID_Repair]", String(repairId));
   formData.append("repairs[0][ID_TMC]", String(tmcId));
-  formData.append("repairs[0][IDLocation]", String(locationId));
+  if (locationId > 0) {
+    formData.append("repairs[0][IDLocation]", String(locationId));
+  }
   if (dateTo !== "") {
     formData.append("repairs[0][DateToService]", dateTo);
   }
@@ -383,6 +398,51 @@ export async function saveRepairLineDates(row) {
 }
 
 window.saveRepairLineDates = saveRepairLineDates;
+
+/** Делегирование: даты сохраняются даже если inline-обработчики не повесились */
+function bindRepairDateAutosave() {
+  if (document.body.dataset.repairDateAutosave === "1") return;
+  document.body.dataset.repairDateAutosave = "1";
+
+  const handler = (e, requireComplete) => {
+    const input = e.target;
+    if (
+      !(input instanceof HTMLInputElement) ||
+      (!input.classList.contains("repair-date-to-input") &&
+        !input.classList.contains("repair-date-return-input"))
+    ) {
+      return;
+    }
+    const row = input.closest(".repair-line");
+    if (row) saveRepairLineDates(row, { requireComplete });
+  };
+
+  document.addEventListener("change", (e) => handler(e, true), true);
+  document.addEventListener("blur", (e) => handler(e, true), true);
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Enter") return;
+      const input = e.target;
+      if (
+        !(input instanceof HTMLInputElement) ||
+        (!input.classList.contains("repair-date-to-input") &&
+          !input.classList.contains("repair-date-return-input"))
+      ) {
+        return;
+      }
+      e.preventDefault();
+      input.blur();
+    },
+    true,
+  );
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bindRepairDateAutosave);
+} else {
+  bindRepairDateAutosave();
+}
 
 /** Сохранить счёт / УПД / стоимость строки истории (после blur) */
 export async function saveRepairLineFields(row) {
@@ -798,105 +858,133 @@ export async function openRepairHistory(tmcId) {
 window.openRepairHistory = openRepairHistory;
 
 export function initCardWriteOffHandlers(modalElement) {
-    const form =
-      modalElement?.querySelector?.("#editWriteOffModal") ||
-      document.getElementById("editWriteOffModal") ||
-      document.getElementById("edit_write_off");
-    if (!form) return;
-
-    form.onsubmit = async function (e) {
-      e.preventDefault();
-
-      const repairs = (modalElement || document).querySelectorAll(".repair-item");
-      const formData = new FormData();
-      repairs.forEach((repair, index) => {
-        const repairId = repair.dataset.repairId || "0";
-        const dateTo = (repair.querySelector(".date-to-service")?.value || "").trim();
-        const dateRet = (repair.querySelector(".date-return-service")?.value || "").trim();
-        formData.append(`repairs[${index}][ID_Repair]`, repairId);
-        formData.append(
-          `repairs[${index}][ID_TMC]`,
-          repair.querySelector(".id-tmc")?.value || "0"
-        );
-        formData.append(
-          `repairs[${index}][InvoiceNumber]`,
-          repair.querySelector(".invoice-number")?.value || ""
-        );
-        // UPD убрали — только счёт
-        formData.append(
-          `repairs[${index}][RepairCost]`,
-          repair.querySelector(".repair-cost")?.value || "0"
-        );
-        if (dateTo !== "") {
-          formData.append(`repairs[${index}][DateToService]`, dateTo);
-        }
-        formData.append(`repairs[${index}][DateReturnService]`, dateRet);
-        formData.append(
-          `repairs[${index}][RepairDescription]`,
-          repair.querySelector(".repair-description")?.value || ""
-        );
-        const locId = parseInt(repair.querySelector(".idLocation")?.value || "0", 10);
-        if (locId > 0) {
-          formData.append(`repairs[${index}][IDLocation]`, String(locId));
-        }
-        formData.append(`repairs[${index}][inBasket]`, "0");
-      });
-
-      try {
-        const response = await fetch(
-          "/src/BusinessLogic/ActionsTMC/processUpdateRepairs.php",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await response.json();
-
-        if (data.success) {
-          // Сразу синхронизируем строку истории — без полной перезагрузки страницы
-          repairs.forEach((repairEl) => {
-            const repairId = repairEl.dataset.repairId || "";
-            const row = document.querySelector(
-              `tr.repair-line[data-repair-id="${repairId}"]`,
-            );
-            if (!row) return;
-            const invoice =
-              repairEl.querySelector(".invoice-number")?.value?.trim() || "";
-            const upd =
-              repairEl.querySelector(".upd-number")?.value?.trim() || "";
-            const cost =
-              repairEl.querySelector(".repair-cost")?.value?.trim() || "0";
-            const dateTo =
-              repairEl.querySelector(".date-to-service")?.value?.trim() || "";
-            const dateRet =
-              repairEl.querySelector(".date-return-service")?.value?.trim() ||
-              "";
-            const invoiceInput = row.querySelector(".repair-invoice-input");
-            const updInput = row.querySelector(".repair-upd-input");
-            const costInput = row.querySelector(".repair-cost-input");
-            const dateToInput = row.querySelector(".repair-date-to-input");
-            const dateRetInput = row.querySelector(".repair-date-return-input");
-            if (invoiceInput) invoiceInput.value = invoice;
-            if (updInput) updInput.value = upd;
-            if (costInput) costInput.value = cost;
-            if (dateToInput) dateToInput.value = dateTo;
-            if (dateRetInput) dateRetInput.value = dateRet;
-            row.dataset.savedInvoice = invoice;
-            row.dataset.savedUpd = upd;
-            row.dataset.savedCost = cost;
-            row.dataset.savedDateTo = dateTo;
-            row.dataset.savedDateReturn = dateRet;
-          });
-
-          const modal = bootstrap.Modal.getInstance(modalElement);
-          modal?.hide();
-          showNotification(TypeMessage.success, data.message);
-        } else {
-          showNotification(TypeMessage.error, data.message);
-        }
-      } catch (error) {
-        console.error("Ошибка отправки:", error);
-        showNotification(TypeMessage.error, "Ошибка сети");
-      }
-    };
+  const root =
+    modalElement ||
+    document.getElementById("edit_write_off") ||
+    document;
+  const form =
+    root.querySelector?.("#editWriteOffModal") ||
+    document.getElementById("editWriteOffModal");
+  if (!form || form.tagName !== "FORM") {
+    console.error("editWriteOffModal form not found", root);
+    return;
   }
+  // не вешаем дважды на одну и ту же форму
+  if (form.dataset.saveBound === "1") return;
+  form.dataset.saveBound = "1";
+
+  const saveEditForm = async (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+
+    const repairs = root.querySelectorAll(".repair-item");
+    if (!repairs.length) {
+      showNotification(TypeMessage.error, "Нет записей ремонта для сохранения");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("force", "1");
+    for (let index = 0; index < repairs.length; index++) {
+      const repair = repairs[index];
+      const repairId = repair.dataset.repairId || "0";
+      const locSelect = repair.querySelector(".idLocation");
+      const locId = parseInt(locSelect?.value || "0", 10);
+      if (!locId) {
+        showNotification(
+          TypeMessage.notification,
+          "Выберите сервис для записи ремонта",
+        );
+        locSelect?.focus();
+        return;
+      }
+      const dateTo = (repair.querySelector(".date-to-service")?.value || "").trim();
+      const dateRet = (
+        repair.querySelector(".date-return-service")?.value || ""
+      ).trim();
+      if (dateTo !== "" && !REPAIR_DATE_RE.test(dateTo)) {
+        showNotification(
+          TypeMessage.notification,
+          "Дата отправки: укажите дд.мм.гггг",
+        );
+        repair.querySelector(".date-to-service")?.focus();
+        return;
+      }
+      if (dateRet !== "" && !REPAIR_DATE_RE.test(dateRet)) {
+        showNotification(
+          TypeMessage.notification,
+          "Дата возврата: укажите дд.мм.гггг",
+        );
+        repair.querySelector(".date-return-service")?.focus();
+        return;
+      }
+      formData.append(`repairs[${index}][ID_Repair]`, repairId);
+      formData.append(
+        `repairs[${index}][ID_TMC]`,
+        repair.querySelector(".id-tmc")?.value || "0",
+      );
+      formData.append(`repairs[${index}][IDLocation]`, String(locId));
+      formData.append(
+        `repairs[${index}][InvoiceNumber]`,
+        (repair.querySelector(".invoice-number")?.value || "").trim(),
+      );
+      formData.append(
+        `repairs[${index}][UPD]`,
+        (repair.querySelector(".upd-number")?.value || "").trim(),
+      );
+      formData.append(
+        `repairs[${index}][RepairCost]`,
+        repair.querySelector(".repair-cost")?.value || "0",
+      );
+      if (dateTo !== "") {
+        formData.append(`repairs[${index}][DateToService]`, dateTo);
+      }
+      formData.append(`repairs[${index}][DateReturnService]`, dateRet);
+      formData.append(
+        `repairs[${index}][RepairDescription]`,
+        (repair.querySelector(".repair-description")?.value || "").trim(),
+      );
+      formData.append(`repairs[${index}][inBasket]`, "0");
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      const response = await fetch(
+        "/src/BusinessLogic/ActionsTMC/processUpdateRepairs.php",
+        { method: "POST", body: formData },
+      );
+      const data = await response.json();
+      if (!data.success) {
+        showNotification(
+          TypeMessage.error,
+          data.message || "Не удалось сохранить",
+        );
+        return;
+      }
+      showNotification(
+        TypeMessage.success,
+        data.message || "Изменения сохранены",
+      );
+      const modal = bootstrap.Modal.getInstance(
+        root.id === "edit_write_off" ? root : document.getElementById("edit_write_off"),
+      );
+      modal?.hide();
+      // полная перезагрузка — чтобы даты/счёт точно подтянулись из БД
+      setTimeout(() => window.location.reload(), 350);
+    } catch (error) {
+      console.error("Ошибка отправки:", error);
+      showNotification(
+        TypeMessage.error,
+        error.message || "Ошибка сети при сохранении",
+      );
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  };
+
+  form.addEventListener("submit", saveEditForm);
+  form
+    .querySelector('button[type="submit"]')
+    ?.addEventListener("click", saveEditForm);
+}

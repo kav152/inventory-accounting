@@ -115,6 +115,7 @@
                             <th>Ид.</th>
                             <th>Наименование</th>
                             <th id="colServiceDate">Дата отправки в ремонт</th>
+                            <th id="colServiceUpd">№ УПД</th>
                             <th id="colReason">Причина ремонта</th>
                         </tr>
                     </thead>

@@ -682,7 +682,7 @@ error_log("Время группировки данных по ID_TMC для о�
     </div>
 
 
-    <script type="module" src="/js/writeOffFunctions.js"></script>
+    <script type="module" src="/js/writeOffFunctions.js?v=<?= @filemtime(__DIR__ . '/../../js/writeOffFunctions.js') ?: time() ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -1025,19 +1025,17 @@ error_log("Время группировки данных по ID_TMC для о�
                 });
             });
 
-            // даты / счёт / УПД / стоимость — сохранение по blur
+            // даты — не давать клику по строке перехватывать фокус; сохранение в writeOffFunctions.js
             document.querySelectorAll('.repair-date-to-input, .repair-date-return-input').forEach(input => {
+                input.addEventListener('mousedown', (e) => e.stopPropagation());
                 input.addEventListener('click', (e) => e.stopPropagation());
-                input.addEventListener('blur', function() {
-                    const row = this.closest('.repair-line');
-                    if (row && typeof window.saveRepairLineDates === 'function') {
-                        window.saveRepairLineDates(row);
-                    }
-                });
+                input.addEventListener('focus', (e) => e.stopPropagation());
             });
 
             document.querySelectorAll('.repair-invoice-input, .repair-upd-input, .repair-cost-input').forEach(input => {
+                input.addEventListener('mousedown', (e) => e.stopPropagation());
                 input.addEventListener('click', (e) => e.stopPropagation());
+                input.addEventListener('focus', (e) => e.stopPropagation());
                 input.addEventListener('blur', function() {
                     const row = this.closest('.repair-line');
                     if (row && typeof window.saveRepairLineFields === 'function') {

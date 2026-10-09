@@ -27,6 +27,12 @@ $statusUser = $_SESSION["Status"];
 $container = new ItemController();
 require_once __DIR__ . '/../BusinessLogic/ItemRepairController.php';
 $repairContainer = new ItemRepairController();
+// Починить «вернули, но статус остался в ремонте» (DateReturnService не сохранялся)
+try {
+    $repairContainer->healStuckRepairStatuses();
+} catch (Throwable $e) {
+    error_log('home healStuckRepairStatuses: ' . $e->getMessage());
+}
 
 $startTime = microtime(true);
 $inventoryItems = $container->getInventoryItems($_SESSION["Status"], $_SESSION["IDUser"]);
