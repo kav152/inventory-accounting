@@ -55,10 +55,25 @@
         border-bottom-right-radius: 6px;
     }
 
+    /* № УПД */
     .service-items-table td:nth-child(4) {
+        min-width: 120px;
+        width: 14%;
+    }
+
+    /* Причина ремонта — textarea, не select */
+    .service-items-table td:nth-child(5) {
         min-width: 280px;
-        width: 45%;
+        width: 40%;
         max-width: 560px;
+    }
+
+    .service-items-table .repair-reason-input {
+        display: block;
+        width: 100%;
+        min-height: 64px;
+        appearance: none;
+        -webkit-appearance: none;
     }
 
     .service-date-input {

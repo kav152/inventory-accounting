@@ -8,6 +8,7 @@ if (!isset($_SESSION['IDUser'])) {
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../storage/logs/analytics.log');
+@set_time_limit(120);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../BusinessLogic/ItemController.php';
@@ -100,6 +101,20 @@ sort($models);
 sort($locations);
 sort($suppliers);
 
+// Лёгкий JSON для графиков (без полного toArray сущностей)
+$parkRows = [];
+if ($inventoryItems) {
+    foreach ($inventoryItems as $item) {
+        $parkRows[] = [
+            'name' => (string) ($item->NameTMC ?? ''),
+            'brand' => (string) ($item->BrandTMC?->NameBrand ?? ''),
+            'model' => (string) ($item->ModelTMC?->NameModel ?? ''),
+            'location' => (string) ($item->Location?->NameLocation ?? ''),
+            'status' => (int) ($item->Status ?? 0),
+        ];
+    }
+}
+
 $defaultDateTo = date('Y-m-d');
 $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
 ?>
@@ -111,9 +126,10 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аналитика ТМЦ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="/css/lib/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/lib/bootstrap-icons.min.css">
+    <!-- Локальный Chart.js: CDN часто падает (QUIC/сеть) → Chart is not defined -->
+    <script src="/js/lib/chart.umd.min.js"></script>
     <style>
         body {
             background-color: #f8f9fa;
@@ -638,9 +654,23 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         let brandChart, modelChart, locationChart, writtenOffChart;
         let spendByMonthChart, spendBySupplierChart;
         let brandColors = {}, modelColors = {}, locationColors = {}, writtenOffColors = {};
-        let allData = <?= json_encode($inventoryItems ? $inventoryItems->toArray() : [], JSON_UNESCAPED_UNICODE) ?>;
+        let allData = <?= json_encode($parkRows, JSON_UNESCAPED_UNICODE) ?>;
         let allSpendData = <?= json_encode($repairSpendRows, JSON_UNESCAPED_UNICODE) ?>;
         let activePanel = 'park';
+        let chartLibWarned = false;
+
+        function ensureChartLib() {
+            if (typeof Chart !== 'undefined') return true;
+            if (!chartLibWarned) {
+                chartLibWarned = true;
+                console.error('Chart.js не загружен (/js/lib/chart.umd.min.js)');
+                const banner = document.createElement('div');
+                banner.className = 'alert alert-danger mx-3';
+                banner.textContent = 'Не удалось загрузить библиотеку графиков. Обновите страницу или проверьте файл /js/lib/chart.umd.min.js';
+                document.querySelector('.container-fluid')?.prepend(banner);
+            }
+            return false;
+        }
 
         function getCommonFilters() {
             return {
@@ -671,10 +701,10 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
             const filters = getCommonFilters();
 
             let filteredData = allData.filter(item => {
-                if (filters.name.length > 0 && !filters.name.includes(item.NameTMC)) return false;
-                if (filters.brand.length > 0 && (!item.BrandTMC || !filters.brand.includes(item.BrandTMC.NameBrand))) return false;
-                if (filters.model.length > 0 && (!item.ModelTMC || !filters.model.includes(item.ModelTMC.NameModel))) return false;
-                if (filters.location.length > 0 && (!item.Location || !filters.location.includes(item.Location.NameLocation))) return false;
+                if (filters.name.length > 0 && !filters.name.includes(item.name)) return false;
+                if (filters.brand.length > 0 && !filters.brand.includes(item.brand)) return false;
+                if (filters.model.length > 0 && !filters.model.includes(item.model)) return false;
+                if (filters.location.length > 0 && !filters.location.includes(item.location)) return false;
                 return true;
             });
 
@@ -717,6 +747,7 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         }
 
         function updateSpendByMonthChart(rows) {
+            if (!ensureChartLib()) return;
             const byMonth = {};
             rows.forEach(row => {
                 if (!row.date) return;
@@ -762,6 +793,7 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         }
 
         function updateSpendBySupplierChart(rows) {
+            if (!ensureChartLib()) return;
             const bySupplier = {};
             rows.forEach(row => {
                 const name = row.supplier || 'не указан';
@@ -853,6 +885,7 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
 
         // Функция обновления диаграмм
         function updateCharts(data) {
+            if (!ensureChartLib()) return;
             updateBrandChart(data);
             updateModelChart(data);
             updateLocationChart(data);
@@ -861,11 +894,11 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
 
         // Функции обновления конкретных диаграмм
         function updateBrandChart(data) {
+            if (!ensureChartLib()) return;
             const brandCounts = {};
             data.forEach(item => {
-                if (item.BrandTMC) {
-                    const brandName = item.BrandTMC.NameBrand;
-                    brandCounts[brandName] = (brandCounts[brandName] || 0) + 1;
+                if (item.brand) {
+                    brandCounts[item.brand] = (brandCounts[item.brand] || 0) + 1;
                 }
             });
 
@@ -919,11 +952,11 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         }
 
         function updateModelChart(data) {
+            if (!ensureChartLib()) return;
             const modelCounts = {};
             data.forEach(item => {
-                if (item.ModelTMC) {
-                    const modelName = item.ModelTMC.NameModel;
-                    modelCounts[modelName] = (modelCounts[modelName] || 0) + 1;
+                if (item.model) {
+                    modelCounts[item.model] = (modelCounts[item.model] || 0) + 1;
                 }
             });
 
@@ -977,11 +1010,11 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         }
 
         function updateLocationChart(data) {
+            if (!ensureChartLib()) return;
             const locationCounts = {};
             data.forEach(item => {
-                if (item.Location) {
-                    const locationName = item.Location.NameLocation;
-                    locationCounts[locationName] = (locationCounts[locationName] || 0) + 1;
+                if (item.location) {
+                    locationCounts[item.location] = (locationCounts[item.location] || 0) + 1;
                 }
             });
 
@@ -1035,12 +1068,12 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         }
 
         function updateWrittenOffChart(data) {
+            if (!ensureChartLib()) return;
             const writtenOffCounts = {};
             data.forEach(item => {
                 // StatusItem::WrittenOff = 3
-                if (item.Location && Number(item.Status) === 3) {
-                    const locationName = item.Location.NameLocation;
-                    writtenOffCounts[locationName] = (writtenOffCounts[locationName] || 0) + 1;
+                if (item.location && Number(item.status) === 3) {
+                    writtenOffCounts[item.location] = (writtenOffCounts[item.location] || 0) + 1;
                 }
             });
 
