@@ -232,11 +232,15 @@ error_log("Время группировки данных по ID_TMC для о�
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="/css/lib/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/lib/bootstrap-icons.min.css">
     <?php
-      $writeOffCssVer = @filemtime(__DIR__ . '/../../styles/writeOff.css') ?: time();
+      $assetVer = static function (string $rel): string {
+          $full = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+          return (string) (@filemtime($full) ?: time());
+      };
+      $writeOffCssVer = $assetVer('styles/writeOff.css');
     ?>
+    <link href="/css/lib/bootstrap.min.css?v=<?= $assetVer('css/lib/bootstrap.min.css') ?>" rel="stylesheet">
+    <link rel="stylesheet" href="/css/lib/bootstrap-icons.min.css?v=<?= $assetVer('css/lib/bootstrap-icons.min.css') ?>">
     <link href="/styles/writeOff.css?v=<?= $writeOffCssVer ?>" rel="stylesheet">
     <style>
       /* Safety net: selected row must stay light even if main CSS is stale */
@@ -683,7 +687,7 @@ error_log("Время группировки данных по ID_TMC для о�
 
 
     <script type="module" src="/js/writeOffFunctions.js?v=<?= @filemtime(__DIR__ . '/../../js/writeOffFunctions.js') ?: time() ?>"></script>
-    <script src="/js/lib/bootstrap.bundle.min.js"></script>
+    <script src="/js/lib/bootstrap.bundle.min.js?v=<?= $assetVer('js/lib/bootstrap.bundle.min.js') ?>"></script>
 
     <script>
         // Глобальные переменные

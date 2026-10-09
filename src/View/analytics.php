@@ -126,10 +126,16 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аналитика ТМЦ</title>
-    <link href="/css/lib/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/lib/bootstrap-icons.min.css">
+    <?php
+      $assetVer = static function (string $rel): string {
+          $full = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+          return (string) (@filemtime($full) ?: time());
+      };
+    ?>
+    <link href="/css/lib/bootstrap.min.css?v=<?= $assetVer('css/lib/bootstrap.min.css') ?>" rel="stylesheet">
+    <link rel="stylesheet" href="/css/lib/bootstrap-icons.min.css?v=<?= $assetVer('css/lib/bootstrap-icons.min.css') ?>">
     <!-- Локальный Chart.js: CDN часто падает (QUIC/сеть) → Chart is not defined -->
-    <script src="/js/lib/chart.umd.min.js"></script>
+    <script src="/js/lib/chart.umd.min.js?v=<?= $assetVer('js/lib/chart.umd.min.js') ?>"></script>
     <style>
         body {
             background-color: #f8f9fa;
