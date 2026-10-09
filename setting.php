@@ -1,5 +1,20 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
+
+$envPath = __DIR__ . '/.env';
+if (!is_file($envPath)) {
+    throw new RuntimeException(
+        'Файл .env не найден по пути ' . $envPath
+        . '. Создайте его на сервере: cp .env.example .env && заполните DB_* / DB_*_SQL. '
+        . 'Файл .env не хранится в git (секреты).'
+    );
+}
+if (!is_readable($envPath)) {
+    throw new RuntimeException(
+        'Файл .env есть, но не читается (права доступа). Выполните: chmod 640 .env && chown www-data:www-data .env'
+    );
+}
+
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
