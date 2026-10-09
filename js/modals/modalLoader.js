@@ -250,6 +250,7 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
   //console.log(`selectedRows -`);
   //console.log(selectedRows);
 
+  const rowsHtml = [];
   selectedRows.forEach((row) => {
     const cells = row.cells;
     const status = parseInt(row.getAttribute("data-status"), 10);
@@ -261,9 +262,11 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
 
     if (validStatuses.length === 0 || validStatuses.includes(status)) {
       window.selectedTMCIds.push(String(id).trim());
-      table.innerHTML += fillInTable(type, cells, row);
+      const rowHtml = fillInTable(type, cells, row);
+      if (rowHtml) rowsHtml.push(rowHtml);
     }
   });
+  table.innerHTML = rowsHtml.join("");
 
   if (window.selectedTMCIds.length === 0 && selectedRows.length > 0) {
     showNotification(
@@ -272,6 +275,14 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
     );
   }
 }
+function escModalHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 /**
  * Заполнить таблицу в зависимости от типа модального окна
  * @param {*} type
@@ -281,12 +292,12 @@ function fillSelectedItemsTable(type, selectedRows, validStatuses = []) {
 function fillInTable(type, cells = [], row = null) {
   //console.log('Мы в fillInTable');
   let html = null;
-  const id =
-    row?.getAttribute("data-id") ||
-    (cells[0]?.textContent || "").trim();
-  const name = (cells[1]?.textContent || "").trim();
-  const serial = (cells[2]?.textContent || "").trim();
-  const location = (cells[6]?.textContent || "").trim();
+  const id = escModalHtml(
+    row?.getAttribute("data-id") || (cells[0]?.textContent || "").trim(),
+  );
+  const name = escModalHtml((cells[1]?.textContent || "").trim());
+  const serial = escModalHtml((cells[2]?.textContent || "").trim());
+  const location = escModalHtml((cells[6]?.textContent || "").trim());
 
   switch (type) {
     case "workModal":
@@ -305,22 +316,22 @@ function fillInTable(type, cells = [], row = null) {
     case "distributeModal": {
       const legal = (cells[7]?.textContent || "").trim();
       const legalText = legal && legal !== "—" ? legal : "—";
-      const legalAttr = legalText !== "—" ? legalText.replace(/"/g, "&quot;") : "";
+      const legalAttr = legalText !== "—" ? escModalHtml(legalText) : "";
       const fromChipClass = legalText !== "—" ? "legal-chip" : "legal-chip empty";
       html = `
             <tr data-legal="${legalAttr}">
-                <td>${cells[0].textContent}</td>
-                <td>${cells[1].textContent}</td>
-                <td>${cells[2].textContent}</td>
-                <td>${cells[6].textContent}</td>
-                <td class="col-legal-from"><span class="${fromChipClass}">${legalText}</span></td>
+                <td>${escModalHtml(cells[0]?.textContent)}</td>
+                <td>${escModalHtml(cells[1]?.textContent)}</td>
+                <td>${escModalHtml(cells[2]?.textContent)}</td>
+                <td>${escModalHtml(cells[6]?.textContent)}</td>
+                <td class="col-legal-from"><span class="${fromChipClass}">${escModalHtml(legalText)}</span></td>
                 <td class="col-legal-to"><span class="legal-chip empty legal-to-chip">—</span></td>
             </tr>
         `;
       break;
     }
-    case "serviceModal":
-      const id = cells[0].textContent.trim();
+    case "serviceModal": {
+      // отдельный блок {} — иначе const внутри case ломает TDZ для id в других case
       const now = new Date();
       const dd = String(now.getDate()).padStart(2, "0");
       const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -329,7 +340,7 @@ function fillInTable(type, cells = [], row = null) {
       html = `
             <tr>
                 <td>${id}</td>
-                <td>${cells[1].textContent}</td>
+                <td>${name}</td>
                 <td>
                     <input type="text" class="service-date-input"
                            data-id="${id}" value="${todayRu}"
@@ -342,13 +353,16 @@ function fillInTable(type, cells = [], row = null) {
                            autocomplete="off">
                 </td>
                 <td>
-                    <textarea class="repair-reason-input" 
-                              data-id="${id}" 
+                    <textarea class="repair-reason-input form-control"
+                              data-id="${id}"
+                              rows="2"
+                              placeholder="Опишите причину ремонта"
                               required></textarea>
                 </td>
             </tr>
         `;
       break;
+    }
   }
   //console.log('html - ');
   //console.log(html);
@@ -359,9 +373,11 @@ function getModalParams(type, validStatuses) {
   switch (type) {
     case "serviceModal":
       getServiceModalParams(validStatuses);
+      break;
     default:
-      return {};
+      break;
   }
+  return {};
 }
 
 function getActionDisplayText(action) {
