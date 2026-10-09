@@ -17,7 +17,7 @@ fi
 
 cp .env.example .env
 echo "Создан $ROOT/.env из .env.example"
-echo "Откройте файл и укажите DB_PASSWORD_SQL (и остальные поля при необходимости):"
+echo "Откройте файл и укажите DB_PASSWORD_SQL:"
 echo "  nano $ROOT/.env"
 echo "Права:"
 echo "  chmod 640 .env"

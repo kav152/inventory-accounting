@@ -5,7 +5,7 @@ $envPath = __DIR__ . '/.env';
 if (!is_file($envPath)) {
     throw new RuntimeException(
         'Файл .env не найден по пути ' . $envPath
-        . '. Создайте его на сервере: cp .env.example .env && заполните DB_* / DB_*_SQL. '
+        . '. Создайте его на сервере: cp .env.example .env && заполните DB_*_SQL. '
         . 'Файл .env не хранится в git (секреты).'
     );
 }
@@ -18,23 +18,25 @@ if (!is_readable($envPath)) {
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
+$host = trim((string) ($_ENV['DB_HOST_SQL'] ?? ''));
+$dbname = trim((string) ($_ENV['DB_NAME_SQL'] ?? ''));
+$user = trim((string) ($_ENV['DB_USER_SQL'] ?? ''));
+$password = (string) ($_ENV['DB_PASSWORD_SQL'] ?? '');
+
+if ($host === '' || $dbname === '' || $user === '') {
+    throw new RuntimeException(
+        'В .env заполните DB_HOST_SQL, DB_NAME_SQL, DB_USER_SQL, DB_PASSWORD_SQL (MySQL DB_HOST/DB_NAME не используются).'
+    );
+}
 
 return [
     'connections' => [
-        'databaseMySQl' => [
-            'driver'   => 'mysql',
-            'host'     => $_ENV['DB_HOST'],
-            'dbname'   => $_ENV['DB_NAME'],
-            'username' => $_ENV['DB_USER'],
-            'password' => $_ENV['DB_PASSWORD'],
-            'charset'  => 'utf8mb4'
-        ],
         'databaseSRV' => [
             'driver'   => 'sqlsrv',
-            'host'     => $_ENV['DB_HOST_SQL'],
-            'dbname'   => $_ENV['DB_NAME_SQL'],
-            'username' => $_ENV['DB_USER_SQL'],
-            'password' => $_ENV['DB_PASSWORD_SQL'],
+            'host'     => $host,
+            'dbname'   => $dbname,
+            'username' => $user,
+            'password' => $password,
             'charset'  => 'UTF-8'
         ],
     ]
