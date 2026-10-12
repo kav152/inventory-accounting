@@ -108,6 +108,9 @@ class ItemRepairController
                 throw new Exception("Запись ремонта есть, но статус ТМЦ {$tmcId} не обновлён");
             }
             $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $note);
+            if (!$itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC)) {
+                throw new Exception("История записана, но статус ТМЦ {$tmcId} не обновлён");
+            }
             return $open;
         }
 
@@ -162,6 +165,11 @@ class ItemRepairController
             throw new Exception("Ремонт создан, но статус ТМЦ {$tmcId} не стал «Подтвердить ремонт»");
         }
         $itemController->logHistoryOperation(OperationType::ACCEPT_FOR_REPAIR, $tmcId, null, $description);
+
+        // страховка: после истории статус мог перетереться/не записаться
+        if (!$itemController->changeStatusTMC($tmcId, StatusItem::ConfirmRepairTMC)) {
+            throw new Exception("История записана, но статус ТМЦ {$tmcId} не «Подтвердить ремонт»");
+        }
 
         return $saved;
     }
@@ -516,7 +524,8 @@ class ItemRepairController
         $pdo = $this->container->get(Database::class)->getConnection();
         $fixed = 0;
 
-        // 1) Закрыть открытый ремонт по последней записи «возвращено из сервиса» в истории
+        // 1) Закрыть открытый ремонт ТОЛЬКО если последнее событие по сервису — возврат
+        // (иначе повторная отправка с датой ≤ прошлого возврата снова ставит «Выдано на объект»)
         $sqlClose = "
             UPDATE r SET r.[DateReturnService] = CONVERT(datetime, CONVERT(varchar(23), ret.HistoryData, 121), 121)
             FROM RepairItem r
@@ -533,13 +542,21 @@ class ItemRepairController
             ) ret ON ret.ID_TMC = r.ID_TMC
             WHERE r.inBasket = 0
               AND r.DateReturnService IS NULL
-              AND ret.HistoryData >= r.DateToService
+              AND ret.HistoryData >= ISNULL(r.DateToService, '19000101')
               AND r.ID_Repair = (
                   SELECT TOP 1 r2.ID_Repair FROM RepairItem r2
                   WHERE r2.ID_TMC = r.ID_TMC
                     AND r2.inBasket = 0
                     AND r2.DateReturnService IS NULL
                   ORDER BY r2.ID_Repair DESC
+              )
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM HistoryOperations hSend
+                  INNER JOIN CommentsHistory chSend ON hSend.IDComment = chSend.IDComment
+                  WHERE hSend.ID_TMC = r.ID_TMC
+                    AND chSend.ValueComment LIKE N'%отправлено в сервис%'
+                    AND hSend.HistoryData > ret.HistoryData
               )";
         try {
             $n = $pdo->exec($sqlClose);
@@ -554,6 +571,7 @@ class ItemRepairController
         $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
         $released = (int) StatusItem::Released;
+        $atWork = (int) StatusItem::AtWorkTMC;
         $sqlStatus = "
             UPDATE ii SET ii.Status = {$released}
             FROM InventoryItem ii
@@ -596,6 +614,36 @@ class ItemRepairController
             }
         } catch (Throwable $e) {
             error_log('healStuckRepairStatuses open→confirm: ' . $e->getMessage());
+        }
+
+        // 4) Последняя запись в истории — «отправлено в сервис», а статус всё ещё на объекте
+        // (RepairItem могли ошибочно закрыть шагом 1 со старой логикой)
+        $sqlHistorySend = "
+            UPDATE ii SET ii.Status = {$statusConfirm}
+            FROM InventoryItem ii
+            INNER JOIN (
+                SELECT h.ID_TMC, MAX(h.HistoryData) AS HistoryData
+                FROM HistoryOperations h
+                INNER JOIN CommentsHistory ch ON h.IDComment = ch.IDComment
+                WHERE ch.ValueComment LIKE N'%отправлено в сервис%'
+                   OR ch.ValueComment LIKE N'%возвращено из сервис%'
+                   OR ch.ValueComment LIKE N'%вернуто из сервис%'
+                   OR ch.ValueComment LIKE N'%вернули из сервис%'
+                GROUP BY h.ID_TMC
+            ) lastSvc ON lastSvc.ID_TMC = ii.ID_TMC
+            INNER JOIN HistoryOperations hLast
+                ON hLast.ID_TMC = lastSvc.ID_TMC
+               AND hLast.HistoryData = lastSvc.HistoryData
+            INNER JOIN CommentsHistory chLast ON hLast.IDComment = chLast.IDComment
+            WHERE ii.Status IN ({$released}, {$atWork})
+              AND chLast.ValueComment LIKE N'%отправлено в сервис%'";
+        try {
+            $n = $pdo->exec($sqlHistorySend);
+            if ($n !== false) {
+                $fixed += (int) $n;
+            }
+        } catch (Throwable $e) {
+            error_log('healStuckRepairStatuses history→confirm: ' . $e->getMessage());
         }
 
         return $fixed;

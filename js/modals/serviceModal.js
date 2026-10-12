@@ -161,9 +161,10 @@ export function initSendToServiceModalHandlers(modalElement) {
             ? succeededIds
             : (window.selectedTMCIds || items.map((i) => String(i.id)));
 
+        // бэкенд ставит ConfirmRepairTMC (21), не Repair (2)
         const newStatus =
           ServiceStatus.sendService == statusService
-            ? StatusItem.Repair
+            ? StatusItem.ConfirmRepairTMC
             : ServiceStatus.returnService == statusService
               ? StatusItem.Released
               : -1;
