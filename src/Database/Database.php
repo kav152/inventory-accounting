@@ -26,7 +26,12 @@ class Database
             case 'sqlsrv':
                 $host = $this->config['host'];
                 $dbname = $this->config['dbname'];
-                $dsn = "sqlsrv:Server=tcp:{$host},1433;Database={$dbname};LoginTimeout=5;TrustServerCertificate=yes";
+                $isLocalDb = stripos($host, '(localdb)') !== false || stripos($host, 'np:') === 0;
+                if ($isLocalDb) {
+                    $dsn = "sqlsrv:Server={$host};Database={$dbname};LoginTimeout=15;TrustServerCertificate=yes";
+                } else {
+                    $dsn = "sqlsrv:Server=tcp:{$host},1433;Database={$dbname};LoginTimeout=15;TrustServerCertificate=yes";
+                }
                 $options = [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
@@ -36,7 +41,13 @@ class Database
                 throw new InvalidArgumentException("Неподдерживаемый драйвер: $driver");
         }
         
-        return new PDO($dsn, $this->config['username'], $this->config['password'], $options);
+        $username = $this->config['username'] ?? '';
+        $password = $this->config['password'] ?? '';
+        // LocalDB / Windows auth: empty login → integrated security
+        if ($username === '') {
+            return new PDO($dsn, null, null, $options);
+        }
+        return new PDO($dsn, $username, $password, $options);
     }
 
     /**

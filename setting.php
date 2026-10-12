@@ -23,7 +23,8 @@ $dbname = trim((string) ($_ENV['DB_NAME_SQL'] ?? ''));
 $user = trim((string) ($_ENV['DB_USER_SQL'] ?? ''));
 $password = (string) ($_ENV['DB_PASSWORD_SQL'] ?? '');
 
-if ($host === '' || $dbname === '' || $user === '') {
+$isLocalDb = stripos($host, '(localdb)') !== false || stripos($host, 'np:') === 0;
+if ($host === '' || $dbname === '' || (!$isLocalDb && $user === '')) {
     throw new RuntimeException(
         'В .env заполните DB_HOST_SQL, DB_NAME_SQL, DB_USER_SQL, DB_PASSWORD_SQL (MySQL DB_HOST/DB_NAME не используются).'
     );
