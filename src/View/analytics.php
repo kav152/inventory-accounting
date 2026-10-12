@@ -292,7 +292,7 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         .analytics-panel.active { display: block; }
         .finance-kpis {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 20px;
         }
