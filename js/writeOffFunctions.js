@@ -812,9 +812,26 @@ export async function openRepairHistory(tmcId) {
         </div>
       </div>
 
-      <div class="alert alert-light border d-flex justify-content-between align-items-center py-2">
-        <span>Записей ремонта: <strong>${repairs.length}</strong></span>
-        <span>Всего потрачено: <strong>${formatMoneyRu(total)} ₽</strong></span>
+      <div class="alert alert-light border py-2">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <span>Ремонтов: <strong>${repairs.length}</strong></span>
+          <span>Сумма: <strong>${formatMoneyRu(total)} ₽</strong></span>
+        </div>
+        ${(() => {
+          const writeOffOp = operations.find((o) =>
+            String(o.comment || "").toLowerCase().includes("списан"),
+          );
+          let reason = "";
+          if (writeOffOp?.comment) {
+            const m = String(writeOffOp.comment).match(/Причина:\\s*(.+)$/i);
+            reason = (m && m[1] ? m[1] : writeOffOp.comment).trim();
+          } else if (repairs[0]?.note) {
+            reason = String(repairs[0].note).trim();
+          }
+          return reason
+            ? `<div class="mt-1 small"><span class="text-muted">Основание списания:</span> <strong>${escHtml(reason)}</strong></div>`
+            : "";
+        })()}
       </div>
 
       <h6 class="mt-3">Сдача / приём (ремонты)</h6>

@@ -118,40 +118,40 @@ class ItemRepairController
             throw new Exception("ТМЦ {$tmcId} уже в сервисе — сначала верните из сервиса");
         }
 
-        $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
-        $locationId = (int) ($item->IDLocation ?? 0);
-        if ($locationId <= 0) {
-            $main = $itemController->getMainWarehouse();
-            $locationId = (int) ($main->IDLocation ?? 0);
-        }
+            $description = trim($note) !== '' ? trim($note) : 'Отправлено в сервис';
+            $locationId = (int) ($item->IDLocation ?? 0);
+            if ($locationId <= 0) {
+                $main = $itemController->getMainWarehouse();
+                $locationId = (int) ($main->IDLocation ?? 0);
+            }
         if ($locationId <= 0) {
             throw new Exception("Не указана локация для ТМЦ {$tmcId}");
         }
 
-        $repairItem = new RepairItem([
-            'ID_TMC' => $tmcId,
-            'IDLocation' => $locationId,
-            'InvoiceNumber' => '',
-            'RepairCost' => 0,
-            'RepairDescription' => $description,
-            'UPD' => $upd,
-            'DateToService' => $dateToService,
-        ]);
-
-        $saved = $repairItemRepository->save($repairItem, Action::CREATE);
-        if (!$saved) {
-            $err = $repairItemRepository->getLastError() ?: 'ошибка БД';
-            // fallback: прямой INSERT без ORM (даты через CONVERT литералом)
-            $saved = $this->insertRepairRowDirect([
+            $repairItem = new RepairItem([
                 'ID_TMC' => $tmcId,
                 'IDLocation' => $locationId,
                 'InvoiceNumber' => '',
                 'RepairCost' => 0,
                 'RepairDescription' => $description,
-                'UPD' => $upd,
+            'UPD' => $upd,
                 'DateToService' => $dateToService,
             ]);
+
+            $saved = $repairItemRepository->save($repairItem, Action::CREATE);
             if (!$saved) {
+            $err = $repairItemRepository->getLastError() ?: 'ошибка БД';
+            // fallback: прямой INSERT без ORM (даты через CONVERT литералом)
+            $saved = $this->insertRepairRowDirect([
+            'ID_TMC' => $tmcId,
+            'IDLocation' => $locationId,
+            'InvoiceNumber' => '',
+            'RepairCost' => 0,
+            'RepairDescription' => $description,
+                'UPD' => $upd,
+            'DateToService' => $dateToService,
+        ]);
+        if (!$saved) {
                 throw new Exception("Не удалось создать запись ремонта для ТМЦ {$tmcId}: {$err}");
             }
         }
@@ -400,12 +400,12 @@ class ItemRepairController
             $prevStatus === StatusItem::ConfirmRepairTMC
             && $newStatus === StatusItem::Repair
         ) {
-            $itemController->logHistoryOperation(
-                OperationType::SEND_REPAIR,
-                $tmcId,
-                null,
-                $invoice
-            );
+        $itemController->logHistoryOperation(
+            OperationType::SEND_REPAIR,
+            $tmcId,
+            null,
+            $invoice
+        );
         }
 
         return true;
@@ -1057,7 +1057,7 @@ class ItemRepairController
 
             $repairItem = new RepairItem($payload);
             if ($operationType === OperationType::SEND_REPAIR) {
-                $repairItem->DateReturnService = null;
+            $repairItem->DateReturnService = null;
             }
             if ($repairItem->DateToService === '') {
                 $repairItem->DateToService = $now;
@@ -1066,8 +1066,8 @@ class ItemRepairController
                 $repairItem->UPD = '';
             }
 
-            $repair = $repairItemRepository->save($repairItem, Action::CREATE);
-            if (!$repair) {
+        $repair = $repairItemRepository->save($repairItem, Action::CREATE);
+        if (!$repair) {
                 $err = $repairItemRepository->getLastError() ?: 'неизвестная ошибка БД';
                 throw new Exception(
                     "Ошибка создания repair в repairManager (RepairCost={$repairItem->RepairCost}): {$err}"
@@ -1299,7 +1299,7 @@ class ItemRepairController
     {
         $invoice = trim((string) ($repair->InvoiceNumber ?? ''));
         if ($invoice === '' || $invoice === '-') {
-            return false;
+        return false;
         }
         if (preg_match('/^0+$/', $invoice)) {
             return false;
@@ -1571,8 +1571,8 @@ class ItemRepairController
             );
             return $stmt->execute([':flag' => $flag, ':tmc' => $tmcId]);
         }
-        return false;
-    }
+            return false;
+        }
 
     /**
      * Переместить все записи ремонта ТМЦ в корзину (без toggle).
@@ -1817,10 +1817,81 @@ class ItemRepairController
                 $repairs = [$main];
             }
 
+            $realRepairs = array_values(array_filter(
+                $repairs,
+                static fn($r) => (int) ($r->ID_Repair ?? 0) > 0
+            ));
+            $repairCount = count($realRepairs);
+            $totalCost = 0.0;
+            foreach ($realRepairs as $repair) {
+                $totalCost += (float) ($repair->RepairCost ?? 0);
+            }
+
             $grouped[$tmcId] = [
                 'main' => $main,
                 'repairs' => $repairs,
+                'repairCount' => $repairCount,
+                'totalCost' => $totalCost,
+                'writeOffReason' => '',
             ];
+        }
+
+        // Основание списания — последняя операция «списан…» из истории
+        if ($grouped !== []) {
+            $idsList = implode(',', array_keys($grouped));
+            $pdo = $this->container->get(Database::class)->getConnection();
+            $reasonSql = "
+                SELECT h.ID_TMC, ch.ValueComment, h.HistoryData
+                FROM HistoryOperations h
+                INNER JOIN CommentsHistory ch ON h.IDComment = ch.IDComment
+                WHERE h.ID_TMC IN ({$idsList})
+                  AND (
+                    ch.ValueComment LIKE N'%списан%'
+                    OR ch.ValueComment LIKE N'%Списан%'
+                  )
+                ORDER BY h.HistoryData DESC, h.IDHistoryItem DESC
+            ";
+            try {
+                $reasonRows = $pdo->query($reasonSql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                foreach ($reasonRows as $row) {
+                    $tid = (int) ($row['ID_TMC'] ?? 0);
+                    if ($tid <= 0 || !isset($grouped[$tid]) || $grouped[$tid]['writeOffReason'] !== '') {
+                        continue;
+                    }
+                    $comment = trim((string) ($row['ValueComment'] ?? ''));
+                    $reason = $comment;
+                    if (preg_match('/Причина:\s*(.+)$/u', $comment, $m)) {
+                        $reason = trim($m[1]);
+                    }
+                    $grouped[$tid]['writeOffReason'] = $reason !== '' ? $reason : $comment;
+                }
+            } catch (Throwable $e) {
+                error_log('getWrittenOffGroupedItems reasons: ' . $e->getMessage());
+            }
+
+            // fallback: примечание ремонта со словом «списан»
+            foreach ($grouped as $tid => &$group) {
+                if ($group['writeOffReason'] !== '') {
+                    continue;
+                }
+                foreach ($group['repairs'] as $repair) {
+                    $note = trim((string) ($repair->RepairDescription ?? ''));
+                    if ($note !== '' && mb_stripos($note, 'списан') !== false) {
+                        $group['writeOffReason'] = $note;
+                        break;
+                    }
+                }
+                if ($group['writeOffReason'] === '') {
+                    foreach ($group['repairs'] as $repair) {
+                        $note = trim((string) ($repair->RepairDescription ?? ''));
+                        if ($note !== '' && (int) ($repair->ID_Repair ?? 0) > 0) {
+                            $group['writeOffReason'] = $note;
+                            break;
+                        }
+                    }
+                }
+            }
+            unset($group);
         }
 
         return $grouped;

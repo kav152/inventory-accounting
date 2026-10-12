@@ -138,7 +138,7 @@ foreach ($repairItems as $item) {
     if (!in_array($item->InventoryItem->NameTMC, $uniqueNames)) {
         $uniqueNames[] = $item->InventoryItem->NameTMC;
     }
-    $locName = $item->InventoryItem->Location->NameLocation ?? '';
+    $locName = (string) ($item->InventoryItem->Location?->NameLocation ?? '');
     if ($locName !== '' && !in_array($locName, $uniqueLocations)) {
         $uniqueLocations[] = $locName;
     }
@@ -279,31 +279,33 @@ error_log("Время группировки данных по ID_TMC для о�
                 <span>Архив ремонтов</span>
             </div>
         </div>
-        <div class="sidebar-label">Разделы</div>
-        <ul class="sidebar-menu">
-            <li>
-                <a href="write_off.php"
-                   class="<?= !$onlyWrittenOff ? 'is-active' : '' ?>">
-                    <i class="bi bi-journal-text"></i><span>Архив ремонтов</span>
-                </a>
-            </li>
-            <li>
-                <a href="write_off.php?filter=written-off"
-                   class="<?= $onlyWrittenOff ? 'is-active' : '' ?>"
-                   title="Только ТМЦ со статусом «Списано» — как «Все списанные» на главной">
-                    <i class="bi bi-trash3"></i><span>Списанные<?= $writtenOffCount > 0 ? ' (' . (int) $writtenOffCount . ')' : '' ?></span>
-                </a>
-            </li>
-        </ul>
-        <div class="sidebar-label">Действия</div>
-        <ul class="sidebar-menu">
-            <?php if (!$onlyWrittenOff): ?>
-            <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil-square"></i><span>Редактировать</span></a></li>
-            <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-bar-graph"></i><span>Сформировать отчет</span></a></li>
-            <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart3"></i><span>Корзина</span></a></li>
-            <?php endif; ?>
-            <li><a href="#" onclick="event.preventDefault(); returnToWorkTMC();"><i class="bi bi-arrow-counterclockwise"></i><span>Вернуть в работу</span></a></li>
-        </ul>
+        <div class="sidebar-body">
+            <div class="sidebar-label">Разделы</div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="write_off.php"
+                       class="<?= !$onlyWrittenOff ? 'is-active' : '' ?>">
+                        <i class="bi bi-journal-text"></i><span>Архив ремонтов</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="write_off.php?filter=written-off"
+                       class="<?= $onlyWrittenOff ? 'is-active' : '' ?>"
+                       title="Только ТМЦ со статусом «Списано» — как «Все списанные» на главной">
+                        <i class="bi bi-trash3"></i><span>Списанные<?= $writtenOffCount > 0 ? ' (' . (int) $writtenOffCount . ')' : '' ?></span>
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-label">Действия</div>
+            <ul class="sidebar-menu sidebar-menu-actions">
+                <?php if (!$onlyWrittenOff): ?>
+                <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil-square"></i><span>Редактировать</span></a></li>
+                <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-bar-graph"></i><span>Сформировать отчет</span></a></li>
+                <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart3"></i><span>Корзина</span></a></li>
+                <?php endif; ?>
+                <li><a href="#" onclick="event.preventDefault(); returnToWorkTMC();"><i class="bi bi-arrow-counterclockwise"></i><span>Вернуть в работу</span></a></li>
+            </ul>
+        </div>
         <div class="sidebar-footer">
             <a href="/home" class="sidebar-home"><i class="bi bi-house-door"></i><span>На главную</span></a>
         </div>
@@ -394,6 +396,9 @@ error_log("Время группировки данных по ID_TMC для о�
                             <th>Бренд</th>
                             <th>Локация</th>
                             <th>Юр. лицо</th>
+                            <th title="Количество записей ремонта">Ремонтов</th>
+                            <th title="Основание / причина списания">Основание списания</th>
+                            <th title="Сумма затрат на ремонт">Сумма</th>
                             <th>Действия</th>
                         </tr>
                         <?php else: ?>
@@ -457,6 +462,23 @@ error_log("Время группировки данных по ID_TMC для о�
                             ));
                             $fio = (string) ($mainItem->RegistrationInventoryItem?->User?->FIO ?? '');
                             $tmcId = (int) ($mainItem->InventoryItem->ID_TMC ?? $mainItem->ID_TMC ?? $id);
+                            $repairCount = (int) ($itemData['repairCount'] ?? count(array_filter(
+                                $repairs,
+                                static fn($r) => (int) ($r->ID_Repair ?? 0) > 0
+                            )));
+                            $writeOffReason = trim((string) ($itemData['writeOffReason'] ?? ''));
+                            if ($writeOffReason === '') {
+                                foreach ($repairs as $repair) {
+                                    $note = trim((string) ($repair->RepairDescription ?? ''));
+                                    if ($note !== '') {
+                                        $writeOffReason = $note;
+                                        break;
+                                    }
+                                }
+                            }
+                            $writtenOffSum = isset($itemData['totalCost'])
+                                ? (float) $itemData['totalCost']
+                                : (float) $totalCost;
                             $searchBlob = mb_strtolower(trim(implode(' ', [
                                 (string) $tmcId,
                                 (string) ($mainItem->InventoryItem->NameTMC ?? ''),
@@ -468,9 +490,11 @@ error_log("Время группировки данных по ID_TMC для о�
                                 (string) $verificationText,
                                 implode(' ', $invoices),
                                 implode(' ', $updList),
+                                $writeOffReason,
+                                (string) $repairCount,
                             ])));
 
-                            // Вкладка «Списанные» — тот же набор полей, что «Все списанные» на главной
+                            // Вкладка «Списанные» — расширенный реестр с ремонтами / основанием / суммой
                             if ($onlyWrittenOff):
                         ?>
                             <tr class="main-row" data-id="<?= $tmcId ?>"
@@ -478,7 +502,7 @@ error_log("Время группировки данных по ID_TMC для о�
                                 data-verified="1"
                                 data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?>"
                                 data-location="<?= htmlspecialchars($locName) ?>"
-                                data-total-cost="<?= $totalCost ?>"
+                                data-total-cost="<?= $writtenOffSum ?>"
                                 data-search="<?= htmlspecialchars($searchBlob) ?>">
                                 <td><span class="id-chip"><?= $tmcId ?></span></td>
                                 <td class="col-name"><?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?></td>
@@ -492,6 +516,13 @@ error_log("Время группировки данных по ID_TMC для о�
                                 </td>
                                 <td><?= htmlspecialchars($locName) ?: '—' ?></td>
                                 <td><?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'не указано' ?></td>
+                                <td class="text-center">
+                                    <span class="id-chip" title="Записей ремонта"><?= $repairCount ?></span>
+                                </td>
+                                <td class="col-reason" title="<?= htmlspecialchars($writeOffReason) ?>">
+                                    <?= $writeOffReason !== '' ? htmlspecialchars($writeOffReason) : '<span class="empty-cell">—</span>' ?>
+                                </td>
+                                <td class="cost-cell"><?= number_format($writtenOffSum, 2, ',', ' ') ?> ₽</td>
                                 <td class="action-buttons" onclick="event.stopPropagation()">
                                     <button type="button" class="btn btn-sm btn-outline-success restore-btn"
                                         title="Вернуть из списания" data-id="<?= $tmcId ?>"

@@ -87,8 +87,15 @@ body.writeoff-page {
   font-weight: 600;
 }
 
+.sidebar-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
 .sidebar-label {
-  margin: 18px 18px 8px;
+  margin: 14px 18px 8px;
   color: #94a3b8 !important;
   font-size: 0.7rem;
   font-weight: 800;
@@ -100,7 +107,11 @@ body.writeoff-page {
   list-style: none;
   margin: 0;
   padding: 0 12px;
-  flex: 1;
+  flex: none;
+}
+
+.sidebar-menu-actions {
+  margin-top: 4px;
 }
 
 .sidebar-menu li { margin-bottom: 6px; }
@@ -142,6 +153,8 @@ body.writeoff-page {
 }
 
 .sidebar-footer {
+  flex: 0 0 auto;
+  margin-top: auto;
   padding: 14px 12px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
@@ -372,6 +385,14 @@ body.writeoff-page {
 
 #writeOffTable tbody tr.main-row {
   cursor: pointer;
+}
+
+#writeOffTable td.col-reason {
+  max-width: 280px;
+  white-space: normal;
+  line-height: 1.35;
+  font-size: 0.86rem;
+  color: #334155;
 }
 
 #writeOffTable tbody tr.main-row:nth-child(4n + 3) td {

@@ -1,5 +1,6 @@
 <?php
-//session_start();
+// Не перетирать $groupedItems / $repairItems страницы write_off.php —
+// иначе таблица «Списанные» становится пустой после include.
 if (!isset($_SESSION['IDUser'])) {
     exit('Unauthorized');
 }
@@ -11,28 +12,25 @@ require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
 require_once __DIR__ . '/../../Database/DatabaseFactory.php';
 DatabaseFactory::setConfig();
 
-$container = new ItemController();
-$repairContainer = new ItemRepairController();
-$repairItems = $repairContainer->writeOffItems();
+$reportRepairContainer = new ItemRepairController();
+$reportRepairItems = $reportRepairContainer->writeOffItems() ?? [];
 
-// Группируем данные по ID_TMC
-$groupedItems = [];
-foreach ($repairItems as $item) {
+$reportGroupedItems = [];
+foreach ($reportRepairItems as $item) {
     $id = $item->ID_TMC;
-    if (!isset($groupedItems[$id])) {
-        $groupedItems[$id] = [
+    if (!isset($reportGroupedItems[$id])) {
+        $reportGroupedItems[$id] = [
             'main' => $item,
             'repairs' => []
         ];
     }
-    $groupedItems[$id]['repairs'][] = $item;
+    $reportGroupedItems[$id]['repairs'][] = $item;
 }
 
-// Вычисляем общую сумму ремонта
-$totalRepairCost = 0;
-foreach ($groupedItems as $item) {
+$reportTotalRepairCost = 0;
+foreach ($reportGroupedItems as $item) {
     foreach ($item['repairs'] as $repair) {
-        $totalRepairCost += $repair->RepairCost;
+        $reportTotalRepairCost += (float) ($repair->RepairCost ?? 0);
     }
 }
 ?>
@@ -41,10 +39,10 @@ foreach ($groupedItems as $item) {
     <div class="report-content" id="reportContent">
         <span class="close">&times;</span>
         <h4>Отчет по списанию/ремонтам ТМЦ</h4>
-        <div class="report-header mb-4">                    
+        <div class="report-header mb-4">
             <p>Дата формирования: <?= date('d.m.Y') ?></p>
-            <p>Общее количество позиций: <?= count($groupedItems) ?></p>
-            <p>Общая сумма ремонта: <?= number_format($totalRepairCost, 2, ',', ' ') ?> руб.</p>
+            <p>Общее количество позиций: <?= count($reportGroupedItems) ?></p>
+            <p>Общая сумма ремонта: <?= number_format($reportTotalRepairCost, 2, ',', ' ') ?> руб.</p>
         </div>
         <table class="table table-bordered">
             <thead class="table-light">
@@ -59,17 +57,17 @@ foreach ($groupedItems as $item) {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($groupedItems as $item): 
+                <?php foreach ($reportGroupedItems as $item):
                     $mainItem = $item['main'];
                     $repairs = $item['repairs'];
                     $totalCost = 0;
                     foreach ($repairs as $repair) {
-                        $totalCost += $repair->RepairCost;
+                        $totalCost += (float) ($repair->RepairCost ?? 0);
                     }
                 ?>
                     <tr>
-                        <td><?= $mainItem->ID_TMC ?></td>
-                        <td><?= htmlspecialchars($mainItem->InventoryItem->NameTMC) ?></td>
+                        <td><?= (int) $mainItem->ID_TMC ?></td>
+                        <td><?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?></td>
                         <td><?= htmlspecialchars($mainItem->InventoryItem->BrandTMC->NameBrand ?? '') ?></td>
                         <td><?= htmlspecialchars($mainItem->InventoryItem->SerialNumber ?? '') ?></td>
                         <td><?= htmlspecialchars($mainItem->RegistrationInventoryItem->User->FIO ?? '') ?></td>
@@ -81,7 +79,7 @@ foreach ($groupedItems as $item) {
             <tfoot>
                 <tr class="table-info">
                     <td colspan="6" class="text-end"><strong>Итого:</strong></td>
-                    <td><strong><?= number_format($totalRepairCost, 2, ',', ' ') ?> руб.</strong></td>
+                    <td><strong><?= number_format($reportTotalRepairCost, 2, ',', ' ') ?> руб.</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -94,16 +92,10 @@ foreach ($groupedItems as $item) {
 
 <script>
 function printReport() {
-    // Создаем новое окно для печати
     const printWindow = window.open('', '_blank');
-    
-    // Получаем содержимое отчета
     const reportContent = document.getElementById('reportContent').innerHTML;
-    
-    // Удаляем кнопки из содержимого для печати
     const contentWithoutButtons = reportContent.replace(/<div class="mt-4 no-print">[\s\S]*?<\/div>/, '');
-    
-    // Записываем в новое окно стили и содержимое
+
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -116,11 +108,11 @@ function printReport() {
                     .no-print { display: none; }
                 }
                 .report-modal { display: block !important; }
-                .report-content { 
-                    width: 100% !important; 
-                    margin: 0 !important; 
-                    padding: 0 !important; 
-                    border: none !important; 
+                .report-content {
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
                 }
             </style>
         </head>
@@ -129,10 +121,9 @@ function printReport() {
         </body>
         </html>
     `);
-    
+
     printWindow.document.close();
-    
-    // Запускаем печать после загрузки контента
+
     setTimeout(() => {
         printWindow.print();
         printWindow.close();
@@ -143,8 +134,7 @@ function exportToPDF() {
     alert('Функция экспорта в PDF будет реализована в будущем');
 }
 
-// Закрытие модального окна
-document.querySelector('.close').addEventListener('click', function() {
+document.querySelector('#reportModal .close')?.addEventListener('click', function() {
     document.getElementById('reportModal').style.display = 'none';
 });
 
