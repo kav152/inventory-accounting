@@ -5,11 +5,11 @@
 # ЧТО КУДА:
 #   Источник  — ветка main на GitHub
 #   Куда      — /var/www/inventory-accounting  (это git-clone, не «копипаста»)
-#   Как       — git pull --ff-only  (файлы обновляются на месте)
+#   Как       — git fetch + reset --hard origin/main
 #
 # ЧТО НЕ ТРОГАЕМ:
 #   .env                    — секреты БД только на сервере
-#   src/storage/logs/*      — логи деплоя/приложения
+#   src/storage/logs/*      — логи деплоя/приложения (append в deploy.log)
 #
 # ПРАВА:
 #   владелец  www-data:www-data
@@ -20,7 +20,7 @@
 #   scripts/*.sh  +x
 #
 # ЛОГИ:
-#   GitHub Actions UI  — вкладка Actions → Deploy to server
+#   GitHub Actions UI  — Actions → Deploy to server
 #   На сервере         — /var/www/inventory-accounting/src/storage/logs/deploy.log
 #   Метка успеха       — /var/www/inventory-accounting/DEPLOY_STAMP.txt
 #
@@ -42,7 +42,6 @@ concurrency:
 
 jobs:
   deploy:
-    # runner должен быть на том же сервере, где сайт
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
 
@@ -66,8 +65,7 @@ jobs:
           test -d "$APP_DIR" || { echo "Нет $APP_DIR" | tee -a "$DEPLOY_LOG"; exit 1; }
           test -d "$APP_DIR/.git" || { echo "Нет .git в $APP_DIR — сделайте git clone" | tee -a "$DEPLOY_LOG"; exit 1; }
 
-      # --- обновление кода (вместо копирования) ---
-      - name: "Update code → $APP_DIR (git pull main)"
+      - name: Update code in APP_DIR (git pull main)
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
@@ -78,7 +76,6 @@ jobs:
             echo "Commit: $(git rev-parse --short HEAD) $(git log -1 --pretty=%s)"
           } 2>&1 | tee -a "$DEPLOY_LOG"
 
-      # --- зависимости PHP ---
       - name: Composer install (vendor/)
         working-directory: ${{ env.APP_DIR }}
         run: |
@@ -93,8 +90,7 @@ jobs:
             fi
           } 2>&1 | tee -a "$DEPLOY_LOG"
 
-      # --- права ---
-      - name: "Permissions → www-data, .env 640, logs 775"
+      - name: Permissions www-data, env 640, logs 775
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
@@ -114,8 +110,7 @@ jobs:
             fi
           } 2>&1 | tee -a "$DEPLOY_LOG"
 
-      # --- метка + лог успеха ---
-      - name: "Write stamp + append deploy.log"
+      - name: Write stamp and append deploy.log
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
