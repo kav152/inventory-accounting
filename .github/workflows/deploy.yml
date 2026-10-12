@@ -1,9 +1,33 @@
-# Автодеплой на сервер через self-hosted runner.
-# Runner ставьте НА Linux-сервере с /var/www/inventory-accounting
-# (это git-clone того же репозитория).
+# =============================================================================
+# Deploy inventory-accounting на Linux-сервер (self-hosted runner)
+# =============================================================================
 #
-# Регистрация: Settings → Actions → Runners → New self-hosted runner
-# Токен в командах GitHub живёт ~1 час — выполнять сразу после копирования.
+# ЧТО КУДА:
+#   Источник  — ветка main на GitHub
+#   Куда      — /var/www/inventory-accounting  (это git-clone, не «копипаста»)
+#   Как       — git pull --ff-only  (файлы обновляются на месте)
+#
+# ЧТО НЕ ТРОГАЕМ:
+#   .env                    — секреты БД только на сервере
+#   src/storage/logs/*      — логи деплоя/приложения
+#
+# ПРАВА:
+#   владелец  www-data:www-data
+#   каталоги  755
+#   файлы     644
+#   .env      640
+#   logs/     775
+#   scripts/*.sh  +x
+#
+# ЛОГИ:
+#   GitHub Actions UI  — вкладка Actions → Deploy to server
+#   На сервере         — /var/www/inventory-accounting/src/storage/logs/deploy.log
+#   Метка успеха       — /var/www/inventory-accounting/DEPLOY_STAMP.txt
+#
+# НУЖНО ДО ЭТОГО:
+#   1) Self-hosted runner Online (Settings → Actions → Runners)
+#   2) Каталог /var/www/inventory-accounting — clone этого репо
+# =============================================================================
 
 name: Deploy to server
 
@@ -18,6 +42,7 @@ concurrency:
 
 jobs:
   deploy:
+    # runner должен быть на том же сервере, где сайт
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
 
@@ -26,65 +51,85 @@ jobs:
       WEB_USER: www-data
       WEB_GROUP: www-data
       DEPLOY_BRANCH: main
+      DEPLOY_LOG: /var/www/inventory-accounting/src/storage/logs/deploy.log
 
     steps:
+      - name: Log start
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$DEPLOY_LOG")"
+          echo "======== $(date '+%Y-%m-%d %H:%M:%S %z') START job=${{ github.run_id }} sha=${{ github.sha }} ========" | tee -a "$DEPLOY_LOG"
+
       - name: Check app directory
         run: |
           set -euo pipefail
-          test -d "$APP_DIR" || { echo "Нет каталога $APP_DIR"; exit 1; }
-          test -d "$APP_DIR/.git" || { echo "В $APP_DIR нет .git — сделайте clone репозитория сюда"; exit 1; }
+          test -d "$APP_DIR" || { echo "Нет $APP_DIR" | tee -a "$DEPLOY_LOG"; exit 1; }
+          test -d "$APP_DIR/.git" || { echo "Нет .git в $APP_DIR — сделайте git clone" | tee -a "$DEPLOY_LOG"; exit 1; }
 
-      - name: Pull latest main
+      # --- обновление кода (вместо копирования) ---
+      - name: "Update code → $APP_DIR (git pull main)"
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
-          git fetch origin --prune
-          git checkout "$DEPLOY_BRANCH"
-          git pull --ff-only origin "$DEPLOY_BRANCH"
-          echo "Commit: $(git rev-parse --short HEAD)"
+          {
+            git fetch origin --prune
+            git checkout "$DEPLOY_BRANCH"
+            git reset --hard "origin/$DEPLOY_BRANCH"
+            echo "Commit: $(git rev-parse --short HEAD) $(git log -1 --pretty=%s)"
+          } 2>&1 | tee -a "$DEPLOY_LOG"
 
-      - name: Composer install
+      # --- зависимости PHP ---
+      - name: Composer install (vendor/)
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
-          if command -v composer >/dev/null 2>&1; then
-            composer install --no-dev --optimize-autoloader --no-interaction
-          elif [[ -f composer.phar ]]; then
-            php composer.phar install --no-dev --optimize-autoloader --no-interaction
-          else
-            echo "WARNING: composer не найден"
-          fi
+          {
+            if command -v composer >/dev/null 2>&1; then
+              composer install --no-dev --optimize-autoloader --no-interaction
+            elif [[ -f composer.phar ]]; then
+              php composer.phar install --no-dev --optimize-autoloader --no-interaction
+            else
+              echo "WARNING: composer не найден — vendor не обновлён"
+            fi
+          } 2>&1 | tee -a "$DEPLOY_LOG"
 
-      - name: Permissions (.env не затираем)
+      # --- права ---
+      - name: "Permissions → www-data, .env 640, logs 775"
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
-          mkdir -p src/storage/logs
-          chown -R "${WEB_USER}:${WEB_GROUP}" .
-          find . -type d -exec chmod 755 {} \;
-          find . -type f -exec chmod 644 {} \;
-          chmod 775 src/storage/logs || true
-          chmod +x scripts/*.sh 2>/dev/null || true
-          if [[ -f .env ]]; then
-            chmod 640 .env
-            chown "${WEB_USER}:${WEB_GROUP}" .env
-          else
-            echo "::warning::Нет .env — создайте из .env.example (только DB_*_SQL)"
-          fi
+          {
+            mkdir -p src/storage/logs
+            chown -R "${WEB_USER}:${WEB_GROUP}" .
+            find . -type d -exec chmod 755 {} \;
+            find . -type f -exec chmod 644 {} \;
+            chmod 775 src/storage/logs
+            chmod +x scripts/*.sh 2>/dev/null || true
+            if [[ -f .env ]]; then
+              chmod 640 .env
+              chown "${WEB_USER}:${WEB_GROUP}" .env
+              echo ".env: ok (не перезаписывали)"
+            else
+              echo "WARNING: нет .env — скопируйте из .env.example (только DB_*_SQL)"
+            fi
+          } 2>&1 | tee -a "$DEPLOY_LOG"
 
-      - name: Write deploy stamp + log
+      # --- метка + лог успеха ---
+      - name: "Write stamp + append deploy.log"
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
           STAMP="$(date '+%Y-%m-%dT%H:%M:%S%z') $(git rev-parse --short HEAD)"
           echo "$STAMP" > DEPLOY_STAMP.txt
-          mkdir -p src/storage/logs
-          echo "$(date '+%Y-%m-%d %H:%M:%S %z') OK $STAMP" >> src/storage/logs/deploy.log
-          chown "${WEB_USER}:${WEB_GROUP}" DEPLOY_STAMP.txt src/storage/logs/deploy.log || true
+          echo "$(date '+%Y-%m-%d %H:%M:%S %z') OK $STAMP run=${{ github.run_id }}" | tee -a "$DEPLOY_LOG"
+          chown "${WEB_USER}:${WEB_GROUP}" DEPLOY_STAMP.txt "$DEPLOY_LOG" || true
 
-      - name: Smoke check
+      - name: Smoke check setting.php
         working-directory: ${{ env.APP_DIR }}
         run: |
           set -euo pipefail
-          php -r "require 'setting.php'; echo 'setting.php OK', PHP_EOL;" \
-            || echo "::warning::setting.php не загрузился — проверьте .env / расширения PHP"
+          if php -r "require 'setting.php'; echo 'setting.php OK', PHP_EOL;"; then
+            echo "smoke OK" | tee -a "$DEPLOY_LOG"
+          else
+            echo "WARNING: setting.php не загрузился (.env / PHP PDO)" | tee -a "$DEPLOY_LOG"
+          fi
