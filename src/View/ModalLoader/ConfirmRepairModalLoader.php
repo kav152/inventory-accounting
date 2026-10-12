@@ -11,7 +11,12 @@ class ConfirmRepairModalLoader extends ModalLoader
         $container = new ItemController();
         $confirmRepairItems = $container->getConfirmRepairItems($_SESSION["Status"], $_SESSION["IDUser"]) ?? [];
         $confirmRepairCount = count($confirmRepairItems);
-        $locationRepairs = $container->getLocations(true);
+        try {
+            $locationRepairs = $container->getLocations(true) ?? [];
+        } catch (Throwable $e) {
+            error_log('ConfirmRepairModalLoader locations: ' . $e->getMessage());
+            $locationRepairs = [];
+        }
 
         ob_start();
         include __DIR__ . '/../Modal/confirmRepair_modal.php';

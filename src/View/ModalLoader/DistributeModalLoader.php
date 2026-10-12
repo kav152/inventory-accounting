@@ -9,10 +9,20 @@ class DistributeModalLoader extends ModalLoader
     {
         DatabaseFactory::setConfig();
         $controller = new ItemController();
-        $locations = $controller->getLocations() ?? [];
+        try {
+            $locations = $controller->getLocations() ?? [];
+        } catch (Throwable $e) {
+            error_log('DistributeModalLoader locations: ' . $e->getMessage());
+            $locations = [];
+        }
 
         $settingController = new SettingController();
-        $users = $settingController->getUsers();
+        try {
+            $users = $settingController->getUsers();
+        } catch (Throwable $e) {
+            error_log('DistributeModalLoader users: ' . $e->getMessage());
+            $users = [];
+        }
 
         $legalEntities = [];
         try {

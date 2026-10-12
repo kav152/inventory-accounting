@@ -9,7 +9,7 @@ class ConfirmModalLoader extends ModalLoader
         DatabaseFactory::setConfig();
         $container = new ItemController();
 
-        $confirmItems = $container->getConfirmItems($_SESSION["Status"], $_SESSION["IDUser"]);
+        $confirmItems = $container->getConfirmItems($_SESSION["Status"], $_SESSION["IDUser"]) ?? [];
         $confirmCount = count($confirmItems);
 
         //  if ($confirmCount > 0) {

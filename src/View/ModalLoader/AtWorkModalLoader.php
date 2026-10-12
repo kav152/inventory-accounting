@@ -10,11 +10,23 @@ class AtWorkModalLoader extends ModalLoader
         $controller = new ItemController();
 
         $brigadesToItems = $controller->getBrigadesToItems($_SESSION["Status"], $_SESSION["IDUser"]);
+        $brigadesToItemsCount = 0;
+        $atWorkGroups = [];
         if ($brigadesToItems != null) {
             $brigadesToItemsCount = count($brigadesToItems);
-            $atWorkGroups = $controller->getAtWorkItemsGrouped($_SESSION["Status"], $_SESSION["IDUser"]);
+            try {
+                $atWorkGroups = $controller->getAtWorkItemsGrouped($_SESSION["Status"], $_SESSION["IDUser"]) ?? [];
+            } catch (Throwable $e) {
+                error_log('AtWorkModalLoader groups: ' . $e->getMessage());
+                $atWorkGroups = [];
+            }
         }
-        $locationRepairs = $controller->getLocations(true);
+        try {
+            $locationRepairs = $controller->getLocations(true) ?? [];
+        } catch (Throwable $e) {
+            error_log('AtWorkModalLoader locations: ' . $e->getMessage());
+            $locationRepairs = [];
+        }
 
         //if ($brigadesToItemsCount > 0) {
         ob_start();

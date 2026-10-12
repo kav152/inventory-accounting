@@ -6,6 +6,8 @@ ini_set('error_log', __DIR__ . '/../../storage/logs/CardItemLoader.log');
 require_once __DIR__ . '/../ModalLoader/ModalLoader.php';
 require_once __DIR__ . '/../../BusinessLogic/ItemController.php';
 require_once __DIR__ . '/../../BusinessLogic/PropertyController.php';
+require_once __DIR__ . '/../../Repositories/Collection.php';
+require_once __DIR__ . '/../../Entity/TypesTMC.php';
 require_once __DIR__ . '/../../Logging/Logger.php';
 
 class CardItemLoader extends ModalLoader
@@ -21,9 +23,24 @@ class CardItemLoader extends ModalLoader
         //$statusItem = $params['statusEntity'] == null ? '' : (string)$params['statusEntity'];
         $currentID = $params['id'] == null ? 0 : (int)$params['id'];        
 
-        $inventoryItem = $controller->getInventoryItem($currentID);
-        $typeTMCs = $propertyController->getTypeTMC();
-        $locations = $controller->getLocations(false) ?? [];
+        try {
+            $inventoryItem = $controller->getInventoryItem($currentID);
+        } catch (Throwable $e) {
+            error_log('CardItemLoader getInventoryItem: ' . $e->getMessage());
+            $inventoryItem = (new ItemController())->getInventoryItem(0);
+        }
+        try {
+            $typeTMCs = $propertyController->getTypeTMC();
+        } catch (Throwable $e) {
+            error_log('CardItemLoader getTypeTMC: ' . $e->getMessage());
+            $typeTMCs = new Collection(TypesTMC::class, []);
+        }
+        try {
+            $locations = $controller->getLocations(false) ?? [];
+        } catch (Throwable $e) {
+            error_log('CardItemLoader getLocations: ' . $e->getMessage());
+            $locations = [];
+        }
 
         require_once __DIR__ . '/../../BusinessLogic/LegalEntityController.php';
         $legalEntities = [];
