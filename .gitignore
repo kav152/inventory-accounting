@@ -7,3 +7,6 @@
 vendor/
 *.log
 /src/storage/logs/
+
+# Метка деплоя только на сервере/локально, не в репозитории
+DEPLOY_STAMP.txt
