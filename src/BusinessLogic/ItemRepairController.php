@@ -1538,7 +1538,11 @@ class ItemRepairController
         $locationRepository = $this->container->get(LocationRepository::class);
         $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
 
-        $statusWrittenOff = (int) StatusItem::WrittenOff;
+        // Только текущие «в ремонте / согласование / предложение списания» —
+        // не тащим старые RepairItem у ТМЦ, уже вернувшихся на объект.
+        $statusRepair = (int) StatusItem::Repair;
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+        $statusPropose = (int) StatusItem::ProposeWriteOff;
 
         // Только колонки RepairItem — иначе PDO FETCH_ASSOC затирает Status/IDLocation
         // чужими одноимёнными полями из JOIN (User.Status, Location.IDLocation и т.д.).
@@ -1546,7 +1550,7 @@ class ItemRepairController
         FROM RepairItem
         INNER JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
         WHERE RepairItem.inBasket = 0
-          AND InventoryItem.Status <> {$statusWrittenOff}
+          AND InventoryItem.Status IN ({$statusRepair}, {$statusConfirm}, {$statusPropose})
         ORDER BY RepairItem.ID_TMC, RepairItem.ID_Repair";
 
         $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
@@ -1559,6 +1563,159 @@ class ItemRepairController
         );
 
         return $repairItemRepository->getAll($query);
+    }
+
+    /**
+     * Реестр «Списание / ремонт»: строго ТМЦ в ремонте / согласовании / предложении списания.
+     * Включает позиции без записи RepairItem (только статус на InventoryItem).
+     */
+    public function getRepairArchiveGroupedItems(): array
+    {
+        $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
+        $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        $locationRepository = $this->container->get(LocationRepository::class);
+
+        $statusRepair = (int) StatusItem::Repair;
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+        $statusPropose = (int) StatusItem::ProposeWriteOff;
+
+        $sql = "
+            SELECT
+                ii.ID_TMC,
+                ii.NameTMC,
+                ii.SerialNumber,
+                ii.Status,
+                ii.IDBrandTMC,
+                ii.IDLocation,
+                l.NameLocation,
+                l.FormsJointStockCompanies AS LocationLegalEntity,
+                b.NameBrand,
+                r.IDRegItem,
+                r.CurrentUser,
+                u.Surname,
+                u.Name,
+                u.Patronymic
+            FROM InventoryItem ii
+            LEFT JOIN Location l ON ii.IDLocation = l.IDLocation
+            LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
+            LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
+            LEFT JOIN [User] u ON r.CurrentUser = u.IDUser
+            WHERE ii.Status IN ({$statusRepair}, {$statusConfirm}, {$statusPropose})
+            ORDER BY
+              CASE
+                WHEN ii.Status = {$statusPropose} THEN 0
+                WHEN ii.Status = {$statusConfirm} THEN 1
+                ELSE 2
+              END,
+              ii.ID_TMC DESC
+        ";
+
+        $rows = $inventoryItemRepository->getAll_array($sql) ?? [];
+        if (!$rows) {
+            return [];
+        }
+
+        $ids = array_values(array_filter(array_map(
+            static fn($row) => (int) ($row['ID_TMC'] ?? 0),
+            $rows
+        )));
+        $idsList = implode(',', $ids);
+
+        $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+        $repairsByTmc = [];
+        if ($idsList !== '') {
+            $repairQuery = "
+                SELECT RepairItem.*
+                FROM RepairItem
+                WHERE RepairItem.inBasket = 0
+                  AND RepairItem.ID_TMC IN ({$idsList})
+                ORDER BY RepairItem.ID_Repair DESC
+            ";
+            $repairItems = $repairItemRepository->getAll($repairQuery);
+            if ($repairItems) {
+                foreach ($repairItems as $repair) {
+                    $repairsByTmc[(int) $repair->ID_TMC][] = $repair;
+                }
+            }
+        }
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $tmcId = (int) ($row['ID_TMC'] ?? 0);
+            if ($tmcId <= 0 || isset($grouped[$tmcId])) {
+                continue;
+            }
+
+            $inventoryItem = new InventoryItem([
+                'ID_TMC' => $tmcId,
+                'NameTMC' => $row['NameTMC'] ?? '',
+                'SerialNumber' => $row['SerialNumber'] ?? null,
+                'Status' => (int) ($row['Status'] ?? 0),
+                'IDBrandTMC' => (int) ($row['IDBrandTMC'] ?? 0),
+                'IDLocation' => (int) ($row['IDLocation'] ?? 0),
+                'LocationLegalEntity' => $row['LocationLegalEntity'] ?? '',
+            ]);
+            $inventoryItem->Location = new Location([
+                'IDLocation' => (int) ($row['IDLocation'] ?? 0),
+                'NameLocation' => $row['NameLocation'] ?? '',
+                'FormsJointStockCompanies' => $row['LocationLegalEntity'] ?? '',
+            ]);
+            $inventoryItem->BrandTMC = new BrandTMC([
+                'IDBrandTMC' => (int) ($row['IDBrandTMC'] ?? 0),
+                'NameBrand' => $row['NameBrand'] ?? '',
+            ]);
+
+            $user = new User([
+                'IDUser' => (int) ($row['CurrentUser'] ?? 0),
+                'Surname' => $row['Surname'] ?? '',
+                'Name' => $row['Name'] ?? '',
+                'Patronymic' => $row['Patronymic'] ?? '',
+                'Status' => 0,
+            ]);
+            $currentUserId = (int) ($row['CurrentUser'] ?? 0);
+            $registration = new RegistrationInventoryItem([
+                'IDRegItem' => (int) ($row['IDRegItem'] ?? $tmcId),
+                'CreatedUser' => $currentUserId,
+                'CurrentUser' => $currentUserId,
+            ]);
+            $registration->User = $user;
+
+            $repairs = $repairsByTmc[$tmcId] ?? [];
+            if ($repairs) {
+                $main = $repairs[0];
+                foreach ($repairs as $repair) {
+                    $repair->InventoryItem = $inventoryItem;
+                    $repair->RegistrationInventoryItem = $registration;
+                    if (empty($repair->Location)) {
+                        $repair->Location = $inventoryItem->Location;
+                    }
+                }
+                $main->InventoryItem = $inventoryItem;
+                $main->RegistrationInventoryItem = $registration;
+            } else {
+                $main = new RepairItem([
+                    'ID_Repair' => 0,
+                    'ID_TMC' => $tmcId,
+                    'IDLocation' => (int) ($row['IDLocation'] ?? 0),
+                    'RepairCost' => 0,
+                    'InvoiceNumber' => '',
+                    'RepairDescription' => '',
+                    'DateToService' => date('Y-m-d H:i:s'),
+                    'inBasket' => 0,
+                ]);
+                $main->InventoryItem = $inventoryItem;
+                $main->RegistrationInventoryItem = $registration;
+                $main->Location = $inventoryItem->Location;
+                $repairs = [$main];
+            }
+
+            $grouped[$tmcId] = [
+                'main' => $main,
+                'repairs' => $repairs,
+            ];
+        }
+
+        return $grouped;
     }
 
     /**
@@ -1876,7 +2033,8 @@ class ItemRepairController
                 error_log('getWrittenOffGroupedItems reasons: ' . $e->getMessage());
             }
 
-            // fallback: примечание ремонта со словом «списан»
+            // fallback: только примечание ремонта, где явно речь о списании
+            // (не подставляем обычные заметки ремонта как «основание списания»)
             foreach ($grouped as $tid => &$group) {
                 if ($group['writeOffReason'] !== '') {
                     continue;
@@ -1886,15 +2044,6 @@ class ItemRepairController
                     if ($note !== '' && mb_stripos($note, 'списан') !== false) {
                         $group['writeOffReason'] = $note;
                         break;
-                    }
-                }
-                if ($group['writeOffReason'] === '') {
-                    foreach ($group['repairs'] as $repair) {
-                        $note = trim((string) ($repair->RepairDescription ?? ''));
-                        if ($note !== '' && (int) ($repair->ID_Repair ?? 0) > 0) {
-                            $group['writeOffReason'] = $note;
-                            break;
-                        }
                     }
                 }
             }

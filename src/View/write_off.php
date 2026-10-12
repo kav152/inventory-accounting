@@ -107,16 +107,18 @@ function repairsAreVerified(array $repairs): bool
     return true;
 }
 
+// Списанные — только Status=Списано; остальное — только ремонт / согласование / предложение
 if ($onlyWrittenOff) {
     $groupedItems = $repairContainer->getWrittenOffGroupedItems();
-    $repairItems = [];
-    foreach ($groupedItems as $group) {
-        foreach ($group['repairs'] as $repair) {
-            $repairItems[] = $repair;
-        }
-    }
 } else {
-    $repairItems = $repairContainer->writeOffItems() ?? [];
+    $groupedItems = $repairContainer->getRepairArchiveGroupedItems();
+}
+
+$repairItems = [];
+foreach ($groupedItems as $group) {
+    foreach ($group['repairs'] as $repair) {
+        $repairItems[] = $repair;
+    }
 }
 
 /*
@@ -146,21 +148,6 @@ foreach ($repairItems as $item) {
 
 sort($uniqueNames);
 sort($uniqueLocations);
-
-// Группируем данные по ID_TMC для основной таблицы
-if (!$onlyWrittenOff) {
-    $groupedItems = [];
-    foreach ($repairItems as $item) {
-        $id = $item->ID_TMC;
-        if (!isset($groupedItems[$id])) {
-            $groupedItems[$id] = [
-                'main' => $item,
-                'repairs' => []
-            ];
-        }
-        $groupedItems[$id]['repairs'][] = $item;
-    }
-}
 
 $pendingCount = 0;
 $verifiedCount = 0;
@@ -466,16 +453,8 @@ error_log("Время группировки данных по ID_TMC для о�
                                 $repairs,
                                 static fn($r) => (int) ($r->ID_Repair ?? 0) > 0
                             )));
+                            // Основание — только из истории списания / явной пометки, не из обычных заметок ремонта
                             $writeOffReason = trim((string) ($itemData['writeOffReason'] ?? ''));
-                            if ($writeOffReason === '') {
-                                foreach ($repairs as $repair) {
-                                    $note = trim((string) ($repair->RepairDescription ?? ''));
-                                    if ($note !== '') {
-                                        $writeOffReason = $note;
-                                        break;
-                                    }
-                                }
-                            }
                             $writtenOffSum = isset($itemData['totalCost'])
                                 ? (float) $itemData['totalCost']
                                 : (float) $totalCost;
