@@ -10,3 +10,6 @@ vendor/
 
 # Метка деплоя только на сервере/локально, не в репозитории
 DEPLOY_STAMP.txt
+
+# Self-hosted GitHub Actions runner (локально / на сервере)
+actions-runner/
