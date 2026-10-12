@@ -26,7 +26,7 @@ class Database
             case 'sqlsrv':
                 $host = $this->config['host'];
                 $dbname = $this->config['dbname'];
-                $dsn = "sqlsrv:Server=tcp:{$host},1433;Database={$dbname};LoginTimeout=15;TrustServerCertificate=yes";
+                $dsn = "sqlsrv:Server=tcp:{$host},1433;Database={$dbname};LoginTimeout=5;TrustServerCertificate=yes";
                 $options = [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
