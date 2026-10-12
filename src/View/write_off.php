@@ -624,6 +624,12 @@ error_log("Время группировки данных по ID_TMC для о�
                                             onclick="returnToWorkTMC(<?= $tmcId ?>)">
                                             <i class="bi bi-arrow-counterclockwise"></i>
                                         </button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn-action btn-writeoff repair-writeoff-btn"
+                                            title="Списать ТМЦ"
+                                            data-tmc-id="<?= $tmcId ?>">
+                                            <i class="bi bi-x-octagon"></i>
+                                        </button>
                                     <?php endif; ?>
                                     <button type="button" class="btn-action btn-history history-btn"
                                         title="История сдачи/приёма и затраты" data-id="<?= $tmcId ?>">
@@ -721,6 +727,12 @@ error_log("Время группировки данных по ID_TMC для о�
                                                         <td class="action-buttons repair-actions" onclick="event.stopPropagation()">
                                                             <?php if ($isPropose): ?>
                                                                 <button type="button"
+                                                                    class="btn-action btn-writeoff repair-writeoff-btn"
+                                                                    title="Списать ТМЦ"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
+                                                                    <i class="bi bi-x-octagon"></i>
+                                                                </button>
+                                                                <button type="button"
                                                                     class="btn-action btn-delete repair-delete-btn"
                                                                     title="В корзину"
                                                                     data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
@@ -742,6 +754,14 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                     data-repair-id="<?= $lineRepairId ?>">
                                                                     Отказать
                                                                 </button>
+                                                                <?php if ($statusValue !== StatusItem::WrittenOff): ?>
+                                                                <button type="button"
+                                                                    class="btn-action btn-writeoff repair-writeoff-btn"
+                                                                    title="Списать ТМЦ"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
+                                                                    <i class="bi bi-x-octagon"></i>
+                                                                </button>
+                                                                <?php endif; ?>
                                                                 <button type="button"
                                                                     class="btn-action btn-delete repair-delete-btn"
                                                                     title="В корзину"
@@ -757,6 +777,14 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                     data-repair-id="<?= $lineRepairId ?>">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
+                                                                <?php if ($statusValue !== StatusItem::WrittenOff): ?>
+                                                                <button type="button"
+                                                                    class="btn-action btn-writeoff repair-writeoff-btn"
+                                                                    title="Списать ТМЦ"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
+                                                                    <i class="bi bi-x-octagon"></i>
+                                                                </button>
+                                                                <?php endif; ?>
                                                                 <button type="button"
                                                                     class="btn-action btn-delete repair-delete-btn"
                                                                     title="В корзину"
@@ -1120,6 +1148,16 @@ error_log("Время группировки данных по ID_TMC для о�
                     const repairId = this.getAttribute('data-repair-id');
                     const tmcId = this.getAttribute('data-tmc-id');
                     deleteRepairLine(repairId, tmcId);
+                });
+            });
+
+            document.querySelectorAll('.repair-writeoff-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const tmcId = this.getAttribute('data-tmc-id');
+                    if (typeof window.writeOffTmcById === 'function') {
+                        window.writeOffTmcById(tmcId);
+                    }
                 });
             });
 

@@ -676,6 +676,19 @@ button.btn-delete:hover {
   transform: translateY(-1px);
 }
 
+.btn-writeoff,
+button.btn-writeoff {
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  border-color: #fed7aa !important;
+}
+
+.btn-writeoff:hover,
+button.btn-writeoff:hover {
+  background: #ffedd5 !important;
+  transform: translateY(-1px);
+}
+
 .cost-cell {
   font-weight: 800;
   white-space: nowrap;

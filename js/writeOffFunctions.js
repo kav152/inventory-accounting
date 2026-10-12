@@ -534,11 +534,7 @@ async function writeOffToolDirect() {
     return;
   }
 
-  const blocked = [
-    StatusItem.WrittenOff,
-    StatusItem.Repair,
-    StatusItem.ConfirmRepairTMC,
-  ];
+  const blocked = [StatusItem.WrittenOff];
   const ids = [];
   const proposeIds = [];
   const skipped = [];
@@ -560,7 +556,7 @@ async function writeOffToolDirect() {
   if (ids.length === 0) {
     showNotification(
       TypeMessage.notification,
-      "Среди выбранных нет ТМЦ для списания (уже списаны или в ремонте)",
+      "Среди выбранных нет ТМЦ для списания (уже списаны)",
     );
     return;
   }
@@ -639,6 +635,55 @@ async function writeOffToolDirect() {
 }
 
 window.writeOffToolDirect = writeOffToolDirect;
+
+/** Списать один ТМЦ из архива ремонтов (кнопка рядом с карандашом/корзиной). */
+async function writeOffTmcById(tmcId) {
+  const id = parseInt(tmcId, 10);
+  if (!id) {
+    showNotification(TypeMessage.notification, "Не указан ТМЦ");
+    return;
+  }
+  if (!confirm(`Списать инструмент №${id}?`)) {
+    return;
+  }
+  const reason =
+    prompt("Причина списания", "Списание из архива ремонтов") ||
+    "Списание из архива ремонтов";
+
+  try {
+    const response = await fetch(
+      "/src/BusinessLogic/ActionsTMC/processDirectWriteOff.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tmc_ids: [id], reason: reason.trim() }),
+      },
+    );
+    const data = await response.json();
+    if (!data.success) {
+      showNotification(TypeMessage.error, data.message || "Ошибка списания");
+      return;
+    }
+    showNotification(TypeMessage.success, data.message || "ТМЦ списано");
+    const row = document.querySelector(`#writeOffTable tr.main-row[data-id="${id}"]`);
+    if (row) {
+      row.setAttribute("data-status", String(StatusItem.WrittenOff));
+      const statusBadge = row.querySelector(".status-badge");
+      if (statusBadge) {
+        statusBadge.className = "status-badge status-written-off";
+        statusBadge.textContent = "Списано";
+      }
+      row.querySelectorAll(".repair-writeoff-btn, .btn-writeoff").forEach((b) => b.remove());
+    } else {
+      location.reload();
+    }
+  } catch (error) {
+    console.error(error);
+    showNotification(TypeMessage.error, error.message || String(error));
+  }
+}
+
+window.writeOffTmcById = writeOffTmcById;
 
 async function proposeWriteOff() {
   const rows = document.querySelectorAll("#inventoryTable tr.row-container.selected");

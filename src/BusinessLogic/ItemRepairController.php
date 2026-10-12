@@ -737,10 +737,9 @@ class ItemRepairController
         $reason = trim($reason) !== '' ? trim($reason) : 'Списание без отправки в сервис';
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $repairItemRepository = $this->container->get(RepairItemRepository::class);
+        // Уже списанные нельзя повторно; из ремонта/согласования — можно (кнопка «Списать» в архиве)
         $blocked = [
             StatusItem::WrittenOff,
-            StatusItem::Repair,
-            StatusItem::ConfirmRepairTMC,
         ];
 
         foreach ($tmcIds as $rawId) {
@@ -757,7 +756,7 @@ class ItemRepairController
 
             $status = (int) ($item->Status ?? -1);
             if (in_array($status, $blocked, true)) {
-                $errors[] = "ТМЦ {$id}: нельзя списать из статуса «" . (StatusItem::getDescription($status) ?? $status) . "»";
+                $errors[] = "ТМЦ {$id}: уже списан";
                 continue;
             }
 
