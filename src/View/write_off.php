@@ -336,7 +336,20 @@ error_log("Время группировки данных по ID_TMC для о�
                         placeholder="Поиск: id, наименование, серийный, бренд, локация…"
                         autocomplete="off">
                 </div>
-                <?php // вкладки всегда видны — «Списанные» как на главной ?>
+                <div class="toolbar-hint" style="display:flex;gap:8px;align-items:center;">
+                    <?php if ($onlyWrittenOff): ?>
+                        <span>Как «Все списанные» на главной</span>
+                    <?php else: ?>
+                        <span>Клик по строке — детали</span>
+                    <?php endif; ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnOpenRepairHistory"
+                        title="История выбранного ТМЦ" disabled>
+                        <i class="bi bi-clock-history"></i> История
+                    </button>
+                </div>
+            </div>
+            <?php // отдельная строка — вкладки не обрезаются в узком окне ?>
+            <div class="archive-tabs-bar">
                 <div class="archive-tabs" data-archive-filter="<?= htmlspecialchars($onlyWrittenOff ? 'written-off' : $archiveFilter) ?>">
                     <a href="write_off.php" class="archive-tab<?= !$onlyWrittenOff && $archiveFilter === '' ? ' active' : '' ?>" data-filter="">Все</a>
                     <a href="write_off.php?filter=confirm" class="archive-tab<?= $archiveFilter === 'confirm' ? ' active' : '' ?>" data-filter="confirm">
@@ -350,17 +363,6 @@ error_log("Время группировки данных по ID_TMC для о�
                     <a href="write_off.php?filter=written-off" class="archive-tab<?= $onlyWrittenOff ? ' active' : '' ?>" data-filter="written-off">
                         Списанные<?= $writtenOffCount > 0 ? ' (' . (int) $writtenOffCount . ')' : '' ?>
                     </a>
-                </div>
-                <div class="toolbar-hint" style="display:flex;gap:8px;align-items:center;">
-                    <?php if ($onlyWrittenOff): ?>
-                        <span>Тот же список, что «Все списанные» на главной — по ID ТМЦ ↓</span>
-                    <?php else: ?>
-                        <span>Клик по строке — детали; «История» — сдача/приём и затраты</span>
-                    <?php endif; ?>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnOpenRepairHistory"
-                        title="История выбранного ТМЦ" disabled>
-                        <i class="bi bi-clock-history"></i> История
-                    </button>
                 </div>
             </div>
             <div class="table-responsive" id="idTableResponsive">
