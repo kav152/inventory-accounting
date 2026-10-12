@@ -114,6 +114,22 @@ if ($inventoryItems) {
         ];
     }
 }
+// списанные отдельно — иначе график «Списанные» пустой (парк их не грузит)
+try {
+    require_once __DIR__ . '/../BusinessLogic/StatusItem.php';
+    $writtenOffSummary = $repairContainer->getWrittenOffSummary(500);
+    foreach ($writtenOffSummary as $wo) {
+        $parkRows[] = [
+            'name' => (string) ($wo['name'] ?? $wo['NameTMC'] ?? ''),
+            'brand' => (string) ($wo['brand'] ?? $wo['NameBrand'] ?? ''),
+            'model' => '',
+            'location' => (string) ($wo['location'] ?? $wo['NameLocation'] ?? ''),
+            'status' => (int) StatusItem::WrittenOff,
+        ];
+    }
+} catch (Throwable $e) {
+    error_log('analytics written-off park: ' . $e->getMessage());
+}
 
 $defaultDateTo = date('Y-m-d');
 $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
@@ -585,15 +601,19 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
         <div class="analytics-panel" id="panel-finance">
             <div class="finance-kpis">
                 <div class="finance-kpi accent">
-                    <span class="label">Сумма ремонта за период</span>
+                    <span class="label">Ремонт (в парке)</span>
                     <span class="value" id="kpiTotalSpend">0,00 ₽</span>
+                </div>
+                <div class="finance-kpi" style="background:linear-gradient(145deg,#9f1239,#e11d48);border:none;color:#fff;">
+                    <span class="label" style="color:rgba(255,255,255,.85)">Ушло в списание</span>
+                    <span class="value" id="kpiWriteOffSpend" style="color:#fff">0,00 ₽</span>
                 </div>
                 <div class="finance-kpi">
                     <span class="label">Записей ремонта</span>
                     <span class="value" id="kpiRepairCount">0</span>
                 </div>
                 <div class="finance-kpi">
-                    <span class="label">Средний чек</span>
+                    <span class="label">Средний чек (ремонт)</span>
                     <span class="value" id="kpiAvgSpend">0,00 ₽</span>
                 </div>
                 <div class="finance-kpi">
@@ -642,6 +662,7 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
                                         <th>Бренд</th>
                                         <th>Локация</th>
                                         <th>Поставщик</th>
+                                        <th>Куда</th>
                                         <th>Счёт</th>
                                         <th class="text-end">Сумма</th>
                                     </tr>
@@ -737,31 +758,47 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
 
         function updateFinanceDashboard() {
             const rows = getFilteredSpendData();
-            const total = rows.reduce((sum, r) => sum + (Number(r.cost) || 0), 0);
+            const repairRows = rows.filter(r => r.bucket !== 'written_off');
+            const writeOffRows = rows.filter(r => r.bucket === 'written_off');
+            const repairTotal = repairRows.reduce((sum, r) => sum + (Number(r.cost) || 0), 0);
+            const writeOffTotal = writeOffRows.reduce((sum, r) => sum + (Number(r.cost) || 0), 0);
             const withInvoice = rows.filter(r => (r.invoice || '').trim() !== '').length;
-            const avg = rows.length ? total / rows.length : 0;
+            const avg = repairRows.length ? repairTotal / repairRows.length : 0;
 
-            document.getElementById('kpiTotalSpend').textContent = formatMoney(total);
-            document.getElementById('kpiRepairCount').textContent = String(rows.length);
+            document.getElementById('kpiTotalSpend').textContent = formatMoney(repairTotal);
+            const woEl = document.getElementById('kpiWriteOffSpend');
+            if (woEl) woEl.textContent = formatMoney(writeOffTotal);
+            document.getElementById('kpiRepairCount').textContent = String(repairRows.length);
             document.getElementById('kpiAvgSpend').textContent = formatMoney(avg);
             document.getElementById('kpiWithInvoice').textContent = String(withInvoice);
-            document.getElementById('spendTableCount').textContent = rows.length + ' записей';
+            document.getElementById('spendTableCount').textContent =
+                rows.length + ' записей (ремонт: ' + repairRows.length + ', списание: ' + writeOffRows.length + ')';
 
             updateSpendByMonthChart(rows);
-            updateSpendBySupplierChart(rows);
+            updateSpendBySupplierChart(repairRows);
             updateSpendTable(rows);
         }
 
         function updateSpendByMonthChart(rows) {
             if (!ensureChartLib()) return;
-            const byMonth = {};
+            const byMonthRepair = {};
+            const byMonthWriteOff = {};
             rows.forEach(row => {
                 if (!row.date) return;
                 const key = row.date.slice(0, 7); // YYYY-MM
-                byMonth[key] = (byMonth[key] || 0) + (Number(row.cost) || 0);
+                const cost = Number(row.cost) || 0;
+                if (row.bucket === 'written_off') {
+                    byMonthWriteOff[key] = (byMonthWriteOff[key] || 0) + cost;
+                } else {
+                    byMonthRepair[key] = (byMonthRepair[key] || 0) + cost;
+                }
             });
-            const labels = Object.keys(byMonth).sort();
-            const values = labels.map(k => byMonth[k]);
+            const labels = Array.from(new Set([
+                ...Object.keys(byMonthRepair),
+                ...Object.keys(byMonthWriteOff),
+            ])).sort();
+            const repairValues = labels.map(k => byMonthRepair[k] || 0);
+            const writeOffValues = labels.map(k => byMonthWriteOff[k] || 0);
             const labelRu = labels.map(k => {
                 const [y, m] = k.split('-');
                 return m + '.' + y;
@@ -774,20 +811,31 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
                 type: 'bar',
                 data: {
                     labels: labelRu,
-                    datasets: [{
-                        label: 'Сумма ремонта, ₽',
-                        data: values,
-                        backgroundColor: 'rgba(15, 118, 110, 0.7)',
-                        borderColor: '#0f766e',
-                        borderWidth: 1
-                    }]
+                    datasets: [
+                        {
+                            label: 'Ремонт (в парке), ₽',
+                            data: repairValues,
+                            backgroundColor: 'rgba(15, 118, 110, 0.75)',
+                            borderColor: '#0f766e',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Ушло в списание, ₽',
+                            data: writeOffValues,
+                            backgroundColor: 'rgba(225, 29, 72, 0.7)',
+                            borderColor: '#e11d48',
+                            borderWidth: 1
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { legend: { display: true, position: 'bottom' } },
                     scales: {
+                        x: { stacked: true },
                         y: {
+                            stacked: true,
                             beginAtZero: true,
                             ticks: {
                                 callback: (v) => Number(v).toLocaleString('ru-RU')
@@ -847,10 +895,14 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
             if (!tbody) return;
             const sorted = [...rows].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
             if (sorted.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Нет трат за выбранный период / фильтры</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Нет трат за выбранный период / фильтры</td></tr>';
                 return;
             }
-            tbody.innerHTML = sorted.map(row => `
+            tbody.innerHTML = sorted.map(row => {
+                const isWriteOff = row.bucket === 'written_off';
+                const bucketLabel = isWriteOff ? 'Списание' : 'Ремонт';
+                const bucketClass = isWriteOff ? 'text-danger' : 'text-success';
+                return `
                 <tr>
                     <td>${formatDateRu(row.date)}</td>
                     <td>${row.idTmc || '—'}</td>
@@ -858,10 +910,11 @@ $defaultDateFrom = date('Y-m-d', strtotime('-12 months'));
                     <td>${escapeHtml(row.brand || '—')}</td>
                     <td>${escapeHtml(row.location || '—')}</td>
                     <td>${escapeHtml(row.supplier || '—')}</td>
+                    <td class="${bucketClass} fw-semibold">${bucketLabel}</td>
                     <td>${escapeHtml(row.invoice || '—')}</td>
                     <td class="text-end fw-semibold">${formatMoney(row.cost)}</td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
 
         function escapeHtml(str) {

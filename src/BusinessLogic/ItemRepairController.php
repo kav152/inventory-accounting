@@ -1455,6 +1455,7 @@ class ItemRepairController
     {
         // Один SQL вместо ORM + вложенных связей (Location/Brand/Model на каждую строку)
         $pdo = $this->container->get(Database::class)->getConnection();
+        $statusWrittenOff = (int) StatusItem::WrittenOff;
         $sql = "SELECT
                 ri.ID_Repair,
                 ri.ID_TMC,
@@ -1464,6 +1465,7 @@ class ItemRepairController
                 ri.DateReturnService,
                 ii.NameTMC,
                 ii.SerialNumber,
+                ii.Status AS ItemStatus,
                 b.NameBrand,
                 m.NameModel,
                 objLoc.NameLocation AS ObjectLocationName,
@@ -1506,6 +1508,10 @@ class ItemRepairController
                 $locationName = trim((string) ($row['RepairLocationName'] ?? ''));
             }
 
+            $itemStatus = (int) ($row['ItemStatus'] ?? -1);
+            // Списанный ТМЦ — его затраты «уходят» в корзину списания, не в активный ремонт
+            $bucket = ($itemStatus === $statusWrittenOff) ? 'written_off' : 'repair';
+
             $rows[] = [
                 'idRepair' => (int) ($row['ID_Repair'] ?? 0),
                 'idTmc' => (int) ($row['ID_TMC'] ?? 0),
@@ -1518,6 +1524,8 @@ class ItemRepairController
                 'location' => $locationName,
                 'supplier' => $supplierName,
                 'serial' => (string) ($row['SerialNumber'] ?? ''),
+                'status' => $itemStatus,
+                'bucket' => $bucket,
             ];
         }
 
