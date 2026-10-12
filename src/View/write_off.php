@@ -279,11 +279,29 @@ error_log("Время группировки данных по ID_TMC для о�
                 <span>Архив ремонтов</span>
             </div>
         </div>
+        <div class="sidebar-label">Разделы</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="write_off.php"
+                   class="<?= !$onlyWrittenOff ? 'is-active' : '' ?>">
+                    <i class="bi bi-journal-text"></i><span>Архив ремонтов</span>
+                </a>
+            </li>
+            <li>
+                <a href="write_off.php?filter=written-off"
+                   class="<?= $onlyWrittenOff ? 'is-active' : '' ?>"
+                   title="Только ТМЦ со статусом «Списано» — как «Все списанные» на главной">
+                    <i class="bi bi-trash3"></i><span>Списанные<?= $writtenOffCount > 0 ? ' (' . (int) $writtenOffCount . ')' : '' ?></span>
+                </a>
+            </li>
+        </ul>
         <div class="sidebar-label">Действия</div>
         <ul class="sidebar-menu">
+            <?php if (!$onlyWrittenOff): ?>
             <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil-square"></i><span>Редактировать</span></a></li>
             <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-bar-graph"></i><span>Сформировать отчет</span></a></li>
             <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart3"></i><span>Корзина</span></a></li>
+            <?php endif; ?>
             <li><a href="#" onclick="event.preventDefault(); returnToWorkTMC();"><i class="bi bi-arrow-counterclockwise"></i><span>Вернуть в работу</span></a></li>
         </ul>
         <div class="sidebar-footer">

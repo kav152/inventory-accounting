@@ -131,6 +131,16 @@ body.writeoff-page {
   transform: translateX(2px);
 }
 
+.sidebar-menu a.is-active {
+  background: rgba(13, 148, 136, 0.38);
+  color: #ecfdf5 !important;
+  box-shadow: inset 3px 0 0 #2dd4bf;
+}
+
+.sidebar-menu a.is-active i {
+  color: #99f6e4;
+}
+
 .sidebar-footer {
   padding: 14px 12px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
