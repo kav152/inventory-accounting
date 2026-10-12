@@ -8,6 +8,7 @@ ini_set('memory_limit', '1024M');
 
 
 require __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../config/routes.php';
 require_once __DIR__ . '/../Repositories/GenericRepository.php';
 require_once __DIR__ . '/../Repositories/UserRepository.php';
 require_once __DIR__ . '/../BusinessLogic/CsvImporter.php';
@@ -21,7 +22,8 @@ $isAdmin = false;
 $errorMessage = '';
 $successMessage = '';
 $users = null;
-$router = new Routes();
+// Routes только для index.php; на странице логина не нужен
+
 
 try {
     DatabaseFactory::setConfig();
