@@ -1827,12 +1827,28 @@ class ItemRepairController
     }
 
     /**
+     * Сколько ТМЦ со статусом «Списано» (для вкладки / бейджа).
+     */
+    public function countWrittenOff(): int
+    {
+        $statusWrittenOff = (int) StatusItem::WrittenOff;
+        $pdo = $this->container->get(Database::class)->getConnection();
+        $stmt = $pdo->query(
+            "SELECT COUNT(*) FROM InventoryItem WHERE Status = {$statusWrittenOff}"
+        );
+        if ($stmt === false) {
+            return 0;
+        }
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Краткий список списанных для модалки на home.
      * Берём по Status=Списано, без истории ремонтов.
      */
     public function getWrittenOffSummary(int $limit = 50): array
     {
-        $limit = max(1, min(200, (int) $limit));
+        $limit = max(1, min(500, (int) $limit));
         $statusWrittenOff = (int) StatusItem::WrittenOff;
         $sql = "
             SELECT TOP {$limit}

@@ -26,7 +26,7 @@ if (!isset($_SESSION['IDUser'])) {
 try {
     DatabaseFactory::setConfig();
     $controller = new ItemRepairController();
-    $items = $controller->getWrittenOffSummary(80);
+    $items = $controller->getWrittenOffSummary(500);
     echo json_encode([
         'success' => true,
         'items' => $items,

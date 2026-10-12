@@ -166,6 +166,9 @@ $pendingCount = 0;
 $verifiedCount = 0;
 $proposeCount = 0;
 $confirmRepairCount = 0;
+$writtenOffCount = $onlyWrittenOff
+    ? count($groupedItems)
+    : $repairContainer->countWrittenOff();
 // счётчики для шапки — считаем до фильтра вкладок
 foreach ($groupedItems as $item) {
     $st = (int) ($item['main']->InventoryItem->Status ?? -1);
@@ -292,11 +295,11 @@ error_log("Время группировки данных по ID_TMC для о�
         <header class="page-hero">
             <div class="hero-copy">
                 <p class="hero-kicker">Архив ремонтов</p>
-                <h1 class="page-title"><?= $onlyWrittenOff ? 'Все списанные' : 'Списание / ремонт' ?></h1>
+                <h1 class="page-title"><?= $onlyWrittenOff ? 'Списанные' : 'Списание / ремонт' ?></h1>
                 <p class="page-subtitle">
                     <?= $onlyWrittenOff
-                        ? 'Только ТМЦ со статусом «Списано» — счета и история ремонтов'
-                        : 'Очередь согласования ремонта, счета и история сервиса. Статус на объекте всегда совпадает с открытой записью ремонта. Списанные — отдельный реестр.' ?>
+                        ? 'Список совпадает с «Все списанные» на главной: ID ТМЦ, наименование, серийный номер, бренд, локация, юр. лицо'
+                        : 'Очередь согласования ремонта, счета и история сервиса. Вкладка «Списанные» — тот же список, что на главной.' ?>
                 </p>
             </div>
             <div class="hero-stats">
@@ -325,7 +328,7 @@ error_log("Время группировки данных по ID_TMC для о�
             <div class="table-toolbar">
                 <div class="toolbar-title">
                     <i class="bi bi-table"></i>
-                    <span><?= $onlyWrittenOff ? 'Реестр списанных' : 'Реестр ТМЦ' ?></span>
+                    <span><?= $onlyWrittenOff ? 'Списанные' : 'Реестр ТМЦ' ?></span>
                 </div>
                 <div class="toolbar-search">
                     <i class="bi bi-search"></i>
@@ -333,10 +336,9 @@ error_log("Время группировки данных по ID_TMC для о�
                         placeholder="Поиск: id, наименование, серийный, бренд, локация…"
                         autocomplete="off">
                 </div>
-                <?php if (!$onlyWrittenOff): ?>
-                <?php // быстрый отбор для админа ?>
-                <div class="archive-tabs" data-archive-filter="<?= htmlspecialchars($archiveFilter) ?>">
-                    <a href="write_off.php" class="archive-tab<?= $archiveFilter === '' ? ' active' : '' ?>" data-filter="">Все</a>
+                <?php // вкладки всегда видны — «Списанные» как на главной ?>
+                <div class="archive-tabs" data-archive-filter="<?= htmlspecialchars($onlyWrittenOff ? 'written-off' : $archiveFilter) ?>">
+                    <a href="write_off.php" class="archive-tab<?= !$onlyWrittenOff && $archiveFilter === '' ? ' active' : '' ?>" data-filter="">Все</a>
                     <a href="write_off.php?filter=confirm" class="archive-tab<?= $archiveFilter === 'confirm' ? ' active' : '' ?>" data-filter="confirm">
                         Согласование ремонта<?= $confirmRepairCount > 0 ? ' (' . $confirmRepairCount . ')' : '' ?>
                     </a>
@@ -345,12 +347,13 @@ error_log("Время группировки данных по ID_TMC для о�
                     <a href="write_off.php?filter=propose" class="archive-tab<?= $archiveFilter === 'propose' ? ' active' : '' ?>" data-filter="propose">
                         Согласование списания<?= $proposeCount > 0 ? ' (' . $proposeCount . ')' : '' ?>
                     </a>
-                    <a href="write_off.php?filter=written-off" class="archive-tab<?= $onlyWrittenOff ? ' active' : '' ?>" data-filter="written-off">Списанные</a>
+                    <a href="write_off.php?filter=written-off" class="archive-tab<?= $onlyWrittenOff ? ' active' : '' ?>" data-filter="written-off">
+                        Списанные<?= $writtenOffCount > 0 ? ' (' . (int) $writtenOffCount . ')' : '' ?>
+                    </a>
                 </div>
-                <?php endif; ?>
                 <div class="toolbar-hint" style="display:flex;gap:8px;align-items:center;">
                     <?php if ($onlyWrittenOff): ?>
-                        <a href="/src/View/write_off.php" style="color:inherit;text-decoration:none;">← Все записи</a>
+                        <span>Тот же список, что «Все списанные» на главной — по ID ТМЦ ↓</span>
                     <?php else: ?>
                         <span>Клик по строке — детали; «История» — сдача/приём и затраты</span>
                     <?php endif; ?>
@@ -363,6 +366,17 @@ error_log("Время группировки данных по ID_TMC для о�
             <div class="table-responsive" id="idTableResponsive">
                 <table class="table write-off-table" id="writeOffTable">
                     <thead>
+                        <?php if ($onlyWrittenOff): ?>
+                        <tr>
+                            <th>ИД</th>
+                            <th>Наименование</th>
+                            <th>Сер. номер</th>
+                            <th>Бренд</th>
+                            <th>Локация</th>
+                            <th>Юр. лицо</th>
+                            <th>Действия</th>
+                        </tr>
+                        <?php else: ?>
                         <tr>
                             <th>Регистр</th>
                             <th>Наименование</th>
@@ -373,9 +387,11 @@ error_log("Время группировки данных по ID_TMC для о�
                             <th>Проверка</th>
                             <th>Локация</th>
                             <th>№ счета</th>
+                            <th>№ УПД</th>
                             <th>Сумма ремонта</th>
                             <th>Действия</th>
                         </tr>
+                        <?php endif; ?>
                     </thead>
                     <tbody>
                         <?php
@@ -414,27 +430,72 @@ error_log("Время группировки данных по ID_TMC для о�
                             $statusClass = archiveObjectStatusClass($statusValue);
                             $brand = (string) ($mainItem->InventoryItem->BrandTMC?->NameBrand ?? '');
                             $locName = (string) ($mainItem->InventoryItem->Location?->NameLocation ?? '');
+                            $legalEntity = trim((string) (
+                                $mainItem->InventoryItem->LocationLegalEntity
+                                ?? $mainItem->InventoryItem->Location?->FormsJointStockCompanies
+                                ?? ''
+                            ));
                             $fio = (string) ($mainItem->RegistrationInventoryItem?->User?->FIO ?? '');
+                            $tmcId = (int) ($mainItem->InventoryItem->ID_TMC ?? $mainItem->ID_TMC ?? $id);
                             $searchBlob = mb_strtolower(trim(implode(' ', [
-                                (string) ($mainItem->ID_TMC ?? $id),
+                                (string) $tmcId,
                                 (string) ($mainItem->InventoryItem->NameTMC ?? ''),
                                 (string) ($mainItem->InventoryItem->SerialNumber ?? ''),
                                 $brand,
                                 $locName,
+                                $legalEntity,
                                 (string) ($statusText ?? ''),
                                 (string) $verificationText,
                                 implode(' ', $invoices),
                                 implode(' ', $updList),
                             ])));
+
+                            // Вкладка «Списанные» — тот же набор полей, что «Все списанные» на главной
+                            if ($onlyWrittenOff):
                         ?>
-                            <tr class="main-row" data-id="<?= (int) ($mainItem->ID_TMC ?? $id) ?>"
+                            <tr class="main-row" data-id="<?= $tmcId ?>"
+                                data-status="<?= $statusValue ?>"
+                                data-verified="1"
+                                data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?>"
+                                data-location="<?= htmlspecialchars($locName) ?>"
+                                data-total-cost="<?= $totalCost ?>"
+                                data-search="<?= htmlspecialchars($searchBlob) ?>">
+                                <td><span class="id-chip"><?= $tmcId ?></span></td>
+                                <td class="col-name"><?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?></td>
+                                <td class="col-serial"><?= htmlspecialchars($mainItem->InventoryItem->SerialNumber ?? '') ?: '—' ?></td>
+                                <td>
+                                    <?php if ($brand !== ''): ?>
+                                        <span class="brand-chip"><?= htmlspecialchars($brand) ?></span>
+                                    <?php else: ?>
+                                        <span class="empty-cell">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= htmlspecialchars($locName) ?: '—' ?></td>
+                                <td><?= $legalEntity !== '' ? htmlspecialchars($legalEntity) : 'не указано' ?></td>
+                                <td class="action-buttons" onclick="event.stopPropagation()">
+                                    <button type="button" class="btn btn-sm btn-outline-success restore-btn"
+                                        title="Вернуть из списания" data-id="<?= $tmcId ?>"
+                                        onclick="returnToWorkTMC(<?= $tmcId ?>)">
+                                        Вернуть
+                                    </button>
+                                    <button type="button" class="btn-action btn-history history-btn"
+                                        title="История" data-id="<?= $tmcId ?>">
+                                        <i class="bi bi-clock-history"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php
+                            continue;
+                            endif;
+                        ?>
+                            <tr class="main-row" data-id="<?= $tmcId ?>"
                                 data-status="<?= $statusValue ?>"
                                 data-verified="<?= $isVerified ? '1' : '0' ?>"
                                 data-name="<?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?>"
                                 data-location="<?= htmlspecialchars($locName) ?>"
                                 data-total-cost="<?= $totalCost ?>"
                                 data-search="<?= htmlspecialchars($searchBlob) ?>">
-                                <td><span class="id-chip"><?= (int) ($mainItem->ID_TMC ?? $id) ?></span></td>
+                                <td><span class="id-chip"><?= $tmcId ?></span></td>
                                 <td class="col-name"><?= htmlspecialchars($mainItem->InventoryItem->NameTMC ?? '') ?></td>
                                 <td>
                                     <?php if ($brand !== ''): ?>
@@ -496,29 +557,29 @@ error_log("Время группировки данных по ID_TMC для о�
                                         ?>
                                         <button type="button" class="btn btn-sm btn-success propose-approve-btn"
                                             title="Утвердить списание"
-                                            data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                            data-tmc-id="<?= $tmcId ?>"
                                             data-repair-id="<?= $latestRepairId ?>">
                                             Утвердить
                                         </button>
                                         <button type="button" class="btn btn-sm btn-outline-danger propose-reject-btn"
                                             title="Отклонить предложение"
-                                            data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
+                                            data-tmc-id="<?= $tmcId ?>">
                                             Отклонить
                                         </button>
                                     <?php endif; ?>
                                     <?php if ($statusValue === StatusItem::WrittenOff): ?>
                                         <button type="button" class="btn-action btn-restore restore-btn"
-                                            title="Вернуть из списания" data-id="<?= $mainItem->ID_TMC ?>"
-                                            onclick="returnToWorkTMC(<?= (int) $mainItem->ID_TMC ?>)">
+                                            title="Вернуть из списания" data-id="<?= $tmcId ?>"
+                                            onclick="returnToWorkTMC(<?= $tmcId ?>)">
                                             <i class="bi bi-arrow-counterclockwise"></i>
                                         </button>
                                     <?php endif; ?>
                                     <button type="button" class="btn-action btn-history history-btn"
-                                        title="История сдачи/приёма и затраты" data-id="<?= (int) $mainItem->ID_TMC ?>">
+                                        title="История сдачи/приёма и затраты" data-id="<?= $tmcId ?>">
                                         <i class="bi bi-clock-history"></i>
                                     </button>
                                     <button type="button" class="btn-action btn-edit edit-btn"
-                                        title="Редактировать" data-id="<?= $mainItem->ID_TMC ?>">
+                                        title="Редактировать" data-id="<?= $tmcId ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                 </td>
