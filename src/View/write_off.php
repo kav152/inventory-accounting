@@ -285,8 +285,8 @@ error_log("Время группировки данных по ID_TMC для о�
             </ul>
             <div class="sidebar-label">Действия</div>
             <ul class="sidebar-menu sidebar-menu-actions">
-                <?php if (!$onlyWrittenOff): ?>
                 <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil-square"></i><span>Редактировать</span></a></li>
+                <?php if (!$onlyWrittenOff): ?>
                 <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-bar-graph"></i><span>Сформировать отчет</span></a></li>
                 <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart3"></i><span>Корзина</span></a></li>
                 <?php endif; ?>
@@ -384,6 +384,8 @@ error_log("Время группировки данных по ID_TMC для о�
                             <th>Локация</th>
                             <th>Юр. лицо</th>
                             <th title="Количество записей ремонта">Ремонтов</th>
+                            <th>№ счета</th>
+                            <th>№ УПД</th>
                             <th title="Основание / причина списания">Основание списания</th>
                             <th title="Сумма затрат на ремонт">Сумма</th>
                             <th>Действия</th>
@@ -473,8 +475,12 @@ error_log("Время группировки данных по ID_TMC для о�
                                 (string) $repairCount,
                             ])));
 
-                            // Вкладка «Списанные» — расширенный реестр с ремонтами / основанием / суммой
+                            // Вкладка «Списанные» — реестр + счёт / УПД / редактирование
                             if ($onlyWrittenOff):
+                                $realRepairs = array_values(array_filter(
+                                    $repairs,
+                                    static fn($r) => (int) ($r->ID_Repair ?? 0) > 0
+                                ));
                         ?>
                             <tr class="main-row" data-id="<?= $tmcId ?>"
                                 data-status="<?= $statusValue ?>"
@@ -498,6 +504,34 @@ error_log("Время группировки данных по ID_TMC для о�
                                 <td class="text-center">
                                     <span class="id-chip" title="Записей ремонта"><?= $repairCount ?></span>
                                 </td>
+                                <td class="col-doc">
+                                    <?php if ($invoices): ?>
+                                        <div class="doc-stack">
+                                            <span class="doc-chip" title="<?= htmlspecialchars(implode(', ', $invoices)) ?>">
+                                                <?= htmlspecialchars($invoices[0]) ?>
+                                            </span>
+                                            <?php if (count($invoices) > 1): ?>
+                                                <span class="doc-more">+<?= count($invoices) - 1 ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="empty-cell">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="col-doc">
+                                    <?php if ($updList): ?>
+                                        <div class="doc-stack">
+                                            <span class="doc-chip" title="<?= htmlspecialchars(implode(', ', $updList)) ?>">
+                                                <?= htmlspecialchars($updList[0]) ?>
+                                            </span>
+                                            <?php if (count($updList) > 1): ?>
+                                                <span class="doc-more">+<?= count($updList) - 1 ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="empty-cell">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="col-reason" title="<?= htmlspecialchars($writeOffReason) ?>">
                                     <?= $writeOffReason !== '' ? htmlspecialchars($writeOffReason) : '<span class="empty-cell">—</span>' ?>
                                 </td>
@@ -508,12 +542,86 @@ error_log("Время группировки данных по ID_TMC для о�
                                         onclick="returnToWorkTMC(<?= $tmcId ?>)">
                                         Вернуть
                                     </button>
+                                    <?php if ($repairCount > 0): ?>
+                                    <button type="button" class="btn-action btn-edit edit-btn"
+                                        title="Редактировать счёт / УПД" data-id="<?= $tmcId ?>">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <?php endif; ?>
                                     <button type="button" class="btn-action btn-history history-btn"
                                         title="История" data-id="<?= $tmcId ?>">
                                         <i class="bi bi-clock-history"></i>
                                     </button>
                                 </td>
                             </tr>
+                            <?php if ($realRepairs): ?>
+                            <tr class="repair-details-row" id="details-<?= $tmcId ?>" style="display: none;">
+                                <td colspan="12">
+                                    <div class="repair-details">
+                                        <div class="repair-details-head">
+                                            <h6>Счёт и УПД по ремонтам</h6>
+                                            <span class="details-count"><?= count($realRepairs) ?> записей</span>
+                                        </div>
+                                        <table class="table table-sm repair-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>№ счета</th>
+                                                    <th>№ УПД</th>
+                                                    <th>Стоимость</th>
+                                                    <th>Примечания</th>
+                                                    <th>Сервис</th>
+                                                    <th>Действия</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($realRepairs as $repair):
+                                                    $lineRepairId = (int) $repair->ID_Repair;
+                                                    $lineLocationId = (int) ($repair->IDLocation ?? $repair->Location?->IDLocation ?? 0);
+                                                    $lineUpd = trim((string) ($repair->UPD ?? ''));
+                                                    $lineInvoice = trim((string) ($repair->InvoiceNumber ?? ''));
+                                                ?>
+                                                    <tr class="repair-line" data-repair-id="<?= $lineRepairId ?>"
+                                                        data-tmc-id="<?= $tmcId ?>"
+                                                        data-location-id="<?= $lineLocationId ?>"
+                                                        data-saved-invoice="<?= htmlspecialchars($lineInvoice) ?>"
+                                                        data-saved-upd="<?= htmlspecialchars($lineUpd) ?>"
+                                                        data-saved-cost="<?= htmlspecialchars((string) (float) ($repair->RepairCost ?? 0)) ?>">
+                                                        <td>
+                                                            <input type="text"
+                                                                class="form-control form-control-sm repair-invoice-input"
+                                                                placeholder="№ счёта"
+                                                                value="<?= htmlspecialchars($lineInvoice) ?>">
+                                                        </td>
+                                                        <td>
+                                                            <input type="text"
+                                                                class="form-control form-control-sm repair-upd-input"
+                                                                placeholder="№ УПД"
+                                                                value="<?= htmlspecialchars($lineUpd) ?>">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" step="0.01" min="0"
+                                                                class="form-control form-control-sm repair-cost-input"
+                                                                value="<?= (float) ($repair->RepairCost ?? 0) ?>">
+                                                        </td>
+                                                        <td><?= htmlspecialchars($repair->RepairDescription ?? '') ?: '—' ?></td>
+                                                        <td><?= htmlspecialchars($repair->Location?->NameLocation ?? '') ?: '—' ?></td>
+                                                        <td class="action-buttons repair-actions" onclick="event.stopPropagation()">
+                                                            <button type="button"
+                                                                class="btn-action btn-edit repair-edit-btn"
+                                                                title="Изменить запись"
+                                                                data-tmc-id="<?= $tmcId ?>"
+                                                                data-repair-id="<?= $lineRepairId ?>">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
                         <?php
                             continue;
                             endif;
