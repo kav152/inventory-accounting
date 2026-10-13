@@ -423,7 +423,7 @@ class ItemRepairController
 
     /**
      * ТМЦ в ремонте / на согласовании — кнопка «Согласование ремонта» на главной.
-     * Включает и «Подтвердить ремонт» (21), и «В ремонте» (2).
+     * Источник истины: InventoryItem.Status (2 / 21) — как в таблице на главной.
      * @return array<int, object|RepairItem>
      */
     public function getItemsAwaitingRepairApproval(): array
@@ -435,51 +435,72 @@ class ItemRepairController
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
 
+        $statusRepair = (int) StatusItem::Repair;
+        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
+
+        $inventoryItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
+
+        // Сначала все ТМЦ со статусом согласования/ремонта (совпадает с бейджем и главной таблицей)
+        $pending = $inventoryItemRepository->findBy(
+            "WHERE Status IN ({$statusRepair}, {$statusConfirm}) ORDER BY NameTMC"
+        );
+        if (!$pending) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($pending as $inv) {
+            $id = (int) ($inv->ID_TMC ?? 0);
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+        $ids = array_values(array_unique($ids));
+        if ($ids === []) {
+            return [];
+        }
+
         $repairItemRepository->addRelationship('InventoryItem', $inventoryItemRepository, 'ID_TMC', 'ID_TMC');
         $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
 
-        $statusRepair = (int) StatusItem::Repair;
-        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
-        $query = "SELECT RepairItem.*
+        $idsList = implode(',', $ids);
+        $openByTmc = [];
+        $repairQuery = "SELECT RepairItem.*
             FROM RepairItem
-            INNER JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
             WHERE RepairItem.inBasket = 0
               AND RepairItem.DateReturnService IS NULL
-              AND InventoryItem.Status IN ({$statusRepair}, {$statusConfirm})
-            ORDER BY
-              CASE WHEN InventoryItem.Status = {$statusConfirm} THEN 0 ELSE 1 END,
-              RepairItem.DateToService DESC";
-
-        $repairs = $repairItemRepository->getAll($query);
-        if ($repairs) {
-            foreach ($repairs as $repair) {
-                $id = (int) ($repair->ID_TMC ?? 0);
-                if ($id <= 0 || isset($seenTmc[$id])) {
-                    continue;
+              AND RepairItem.ID_TMC IN ({$idsList})
+            ORDER BY RepairItem.ID_Repair DESC";
+        $openRepairs = $repairItemRepository->getAll($repairQuery);
+        if ($openRepairs) {
+            foreach ($openRepairs as $repair) {
+                $tid = (int) ($repair->ID_TMC ?? 0);
+                if ($tid > 0 && !isset($openByTmc[$tid])) {
+                    $openByTmc[$tid] = $repair;
                 }
-                $seenTmc[$id] = true;
-                $items[] = $repair;
             }
         }
 
-        // Устаревшие ТМЦ в статусах ремонта без открытой записи RepairItem
-        $legacy = $inventoryItemRepository->findBy(
-            "WHERE Status IN ({$statusRepair}, {$statusConfirm}) ORDER BY NameTMC"
-        );
-        if ($legacy) {
-            foreach ($legacy as $inv) {
-                $id = (int) ($inv->ID_TMC ?? 0);
-                if ($id > 0 && !isset($seenTmc[$id])) {
-                    $seenTmc[$id] = true;
-                    $items[] = (object) [
-                        'ID_Repair' => 0,
-                        'ID_TMC' => $id,
-                        'isLegacyConfirm' => true,
-                        'InventoryItem' => $inv,
-                        'RepairDescription' => '',
-                        'InvoiceNumber' => '',
-                    ];
-                }
+        foreach ($pending as $inv) {
+            $id = (int) ($inv->ID_TMC ?? 0);
+            if ($id <= 0 || isset($seenTmc[$id])) {
+                continue;
+            }
+            $seenTmc[$id] = true;
+
+            if (isset($openByTmc[$id])) {
+                $repair = $openByTmc[$id];
+                $repair->InventoryItem = $inv;
+                $items[] = $repair;
+            } else {
+                $items[] = (object) [
+                    'ID_Repair' => 0,
+                    'ID_TMC' => $id,
+                    'isLegacyConfirm' => true,
+                    'InventoryItem' => $inv,
+                    'RepairDescription' => '',
+                    'InvoiceNumber' => '',
+                ];
             }
         }
 
@@ -487,29 +508,16 @@ class ItemRepairController
     }
 
     /**
-     * Лёгкий счётчик для бейджа на главной (без reconcile и полной выборки).
+     * Счётчик бейджа = число ТМЦ со статусом ремонта/согласования (как список и таблица).
      */
     public function countItemsAwaitingRepairApproval(): int
     {
         $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
         $pdo = $this->container->get(Database::class)->getConnection();
-        // только реально открытые ремонты или legacy без записи RepairItem
-        $sql = "SELECT COUNT(DISTINCT ii.ID_TMC)
-            FROM InventoryItem ii
-            WHERE ii.Status IN ({$statusRepair}, {$statusConfirm})
-              AND (
-                EXISTS (
-                    SELECT 1 FROM RepairItem r
-                    WHERE r.ID_TMC = ii.ID_TMC
-                      AND r.inBasket = 0
-                      AND r.DateReturnService IS NULL
-                )
-                OR NOT EXISTS (
-                    SELECT 1 FROM RepairItem r2
-                    WHERE r2.ID_TMC = ii.ID_TMC AND r2.inBasket = 0
-                )
-              )";
+        $sql = "SELECT COUNT(*)
+            FROM InventoryItem
+            WHERE Status IN ({$statusRepair}, {$statusConfirm})";
         $stmt = $pdo->query($sql);
         return $stmt ? (int) $stmt->fetchColumn() : 0;
     }
