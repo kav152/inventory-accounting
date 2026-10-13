@@ -575,7 +575,9 @@ class ItemRepairController
             error_log('healStuckRepairStatuses close: ' . $e->getMessage());
         }
 
-        // 2) Нет открытого ремонта — статус не может оставаться 2/21
+        // 2) Сбрасывать 2/21 → «Выдано» ТОЛЬКО если последнее сервис-событие — возврат.
+        // Раньше сбрасывали всех без открытого RepairItem — с главной «пропадали»
+        // ТМЦ на согласовании без записи ремонта (или с уже закрытой).
         $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
         $released = (int) StatusItem::Released;
@@ -583,7 +585,26 @@ class ItemRepairController
         $sqlStatus = "
             UPDATE ii SET ii.Status = {$released}
             FROM InventoryItem ii
+            INNER JOIN (
+                SELECT h.ID_TMC, MAX(h.HistoryData) AS HistoryData
+                FROM HistoryOperations h
+                INNER JOIN CommentsHistory ch ON h.IDComment = ch.IDComment
+                WHERE ch.ValueComment LIKE N'%отправлено в сервис%'
+                   OR ch.ValueComment LIKE N'%возвращено из сервис%'
+                   OR ch.ValueComment LIKE N'%вернуто из сервис%'
+                   OR ch.ValueComment LIKE N'%вернули из сервис%'
+                GROUP BY h.ID_TMC
+            ) lastSvc ON lastSvc.ID_TMC = ii.ID_TMC
+            INNER JOIN HistoryOperations hLast
+                ON hLast.ID_TMC = lastSvc.ID_TMC
+               AND hLast.HistoryData = lastSvc.HistoryData
+            INNER JOIN CommentsHistory chLast ON hLast.IDComment = chLast.IDComment
             WHERE ii.Status IN ({$statusRepair}, {$statusConfirm})
+              AND (
+                chLast.ValueComment LIKE N'%возвращено из сервис%'
+                OR chLast.ValueComment LIKE N'%вернуто из сервис%'
+                OR chLast.ValueComment LIKE N'%вернули из сервис%'
+              )
               AND NOT EXISTS (
                   SELECT 1 FROM RepairItem r
                   WHERE r.ID_TMC = ii.ID_TMC
@@ -597,6 +618,35 @@ class ItemRepairController
             }
         } catch (Throwable $e) {
             error_log('healStuckRepairStatuses status: ' . $e->getMessage());
+        }
+
+        // 2b) Вернуть ошибочно сброшенных: статус «Выдано», а последнее событие — отправка в сервис
+        $sqlRestoreConfirm = "
+            UPDATE ii SET ii.Status = {$statusConfirm}
+            FROM InventoryItem ii
+            INNER JOIN (
+                SELECT h.ID_TMC, MAX(h.HistoryData) AS HistoryData
+                FROM HistoryOperations h
+                INNER JOIN CommentsHistory ch ON h.IDComment = ch.IDComment
+                WHERE ch.ValueComment LIKE N'%отправлено в сервис%'
+                   OR ch.ValueComment LIKE N'%возвращено из сервис%'
+                   OR ch.ValueComment LIKE N'%вернуто из сервис%'
+                   OR ch.ValueComment LIKE N'%вернули из сервис%'
+                GROUP BY h.ID_TMC
+            ) lastSvc ON lastSvc.ID_TMC = ii.ID_TMC
+            INNER JOIN HistoryOperations hLast
+                ON hLast.ID_TMC = lastSvc.ID_TMC
+               AND hLast.HistoryData = lastSvc.HistoryData
+            INNER JOIN CommentsHistory chLast ON hLast.IDComment = chLast.IDComment
+            WHERE ii.Status = {$released}
+              AND chLast.ValueComment LIKE N'%отправлено в сервис%'";
+        try {
+            $n = $pdo->exec($sqlRestoreConfirm);
+            if ($n !== false) {
+                $fixed += (int) $n;
+            }
+        } catch (Throwable $e) {
+            error_log('healStuckRepairStatuses restore→confirm: ' . $e->getMessage());
         }
 
         // 3) Есть открытый ремонт, а статус ещё «Выдано»/«В работе» —
