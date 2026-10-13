@@ -689,6 +689,25 @@ button.btn-writeoff:hover {
   transform: translateY(-1px);
 }
 
+.action-buttons .repair-writeoff-btn.btn-outline-warning {
+  width: auto !important;
+  min-width: auto !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  color: #c2410c !important;
+  border-color: #fdba74 !important;
+  background: #fff7ed !important;
+}
+
+.action-buttons .repair-writeoff-btn.btn-outline-warning:hover {
+  background: #ffedd5 !important;
+  color: #9a3412 !important;
+}
+
 .cost-cell {
   font-weight: 800;
   white-space: nowrap;

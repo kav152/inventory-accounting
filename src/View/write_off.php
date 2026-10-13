@@ -710,12 +710,6 @@ error_log("Время группировки данных по ID_TMC для о�
                                             onclick="returnToWorkTMC(<?= $tmcId ?>)">
                                             <i class="bi bi-arrow-counterclockwise"></i>
                                         </button>
-                                    <?php else: ?>
-                                        <button type="button" class="btn-action btn-writeoff repair-writeoff-btn"
-                                            title="Списать ТМЦ"
-                                            data-tmc-id="<?= $tmcId ?>">
-                                            <i class="bi bi-x-octagon"></i>
-                                        </button>
                                     <?php endif; ?>
                                     <button type="button" class="btn-action btn-history history-btn"
                                         title="История сдачи/приёма и затраты" data-id="<?= $tmcId ?>">
@@ -725,6 +719,14 @@ error_log("Время группировки данных по ID_TMC для о�
                                         title="Редактировать" data-id="<?= $tmcId ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
+                                    <?php if ($statusValue !== StatusItem::WrittenOff): ?>
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-warning repair-writeoff-btn"
+                                            title="Списать ТМЦ"
+                                            data-tmc-id="<?= $tmcId ?>">
+                                            Списать ТМЦ
+                                        </button>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr class="repair-details-row" id="details-<?= $mainItem->ID_TMC ?>" style="display: none;">
