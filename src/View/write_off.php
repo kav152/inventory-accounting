@@ -288,7 +288,6 @@ error_log("Время группировки данных по ID_TMC для о�
                 <li><a href="#" onclick="editSelected()"><i class="bi bi-pencil-square"></i><span>Редактировать</span></a></li>
                 <?php if (!$onlyWrittenOff): ?>
                 <li><a href="#" onclick="generateReport()"><i class="bi bi-file-earmark-bar-graph"></i><span>Сформировать отчет</span></a></li>
-                <li><a href="#" onclick="openRepairBasketModal(Action.CREATE)"><i class="bi bi-cart3"></i><span>Корзина</span></a></li>
                 <?php endif; ?>
                 <li><a href="#" onclick="event.preventDefault(); returnToWorkTMC();"><i class="bi bi-arrow-counterclockwise"></i><span>Вернуть в работу</span></a></li>
             </ul>
@@ -819,13 +818,6 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                     data-tmc-id="<?= (int) $mainItem->ID_TMC ?>">
                                                                     <i class="bi bi-x-octagon"></i>
                                                                 </button>
-                                                                <button type="button"
-                                                                    class="btn-action btn-delete repair-delete-btn"
-                                                                    title="В корзину"
-                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
-                                                                    data-repair-id="<?= $lineRepairId ?>">
-                                                                    <i class="bi bi-trash3"></i>
-                                                                </button>
                                                             <?php elseif (!$lineVerified): ?>
                                                                 <button type="button"
                                                                     class="btn btn-sm btn-success repair-approve-btn"
@@ -849,13 +841,6 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                     <i class="bi bi-x-octagon"></i>
                                                                 </button>
                                                                 <?php endif; ?>
-                                                                <button type="button"
-                                                                    class="btn-action btn-delete repair-delete-btn"
-                                                                    title="В корзину"
-                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
-                                                                    data-repair-id="<?= $lineRepairId ?>">
-                                                                    <i class="bi bi-trash3"></i>
-                                                                </button>
                                                             <?php else: ?>
                                                                 <button type="button"
                                                                     class="btn-action btn-edit repair-edit-btn"
@@ -872,13 +857,6 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                     <i class="bi bi-x-octagon"></i>
                                                                 </button>
                                                                 <?php endif; ?>
-                                                                <button type="button"
-                                                                    class="btn-action btn-delete repair-delete-btn"
-                                                                    title="В корзину"
-                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
-                                                                    data-repair-id="<?= $lineRepairId ?>">
-                                                                    <i class="bi bi-trash3"></i>
-                                                                </button>
                                                             <?php endif; ?>
                                                         </td>
                                                     </tr>
@@ -1229,15 +1207,6 @@ error_log("Время группировки данных по ID_TMC для о�
                 });
             });
 
-            document.querySelectorAll('.repair-delete-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const repairId = this.getAttribute('data-repair-id');
-                    const tmcId = this.getAttribute('data-tmc-id');
-                    deleteRepairLine(repairId, tmcId);
-                });
-            });
-
             document.querySelectorAll('.repair-writeoff-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1333,7 +1302,6 @@ error_log("Время группировки данных по ID_TMC для о�
     </script>
 
     <script type="module" src="/js/modals/modalLoader.js"></script>
-    <script type="module" src="/js/modals/repairBasketModal.js"></script>
 
     <div class="modal fade" id="repairHistoryModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
