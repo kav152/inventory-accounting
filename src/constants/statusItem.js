@@ -27,7 +27,7 @@ export class StatusItem {
         [StatusItem.CreateItems]: 'Создание объекта',
         [StatusItem.NotDistributed]: 'Не распределено',
         [StatusItem.Released]: 'Выдано на объект',
-        [StatusItem.Repair]: 'Подтвердить ремонт',
+        [StatusItem.Repair]: 'В ремонте',
         [StatusItem.WrittenOff]: 'Списано',
         [StatusItem.ConfirmItem]: 'Подтвердить ТМЦ',
         [StatusItem.AtWorkTMC]: 'В работе',

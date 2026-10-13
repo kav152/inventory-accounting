@@ -8,7 +8,7 @@ class StatusItem {
      */
     const Released = 1;
     /**
-     * Подтвердить ремонт
+     * В ремонте (уже согласовано, есть счёт)
      * @var int
      */
     const Repair = 2;
@@ -60,7 +60,7 @@ class StatusItem {
         self::CreateItems => 'Создание объекта',
         self::NotDistributed => 'Не распределено',
         self::Released => 'Выдано на объект',
-        self::Repair => 'Подтвердить ремонт',
+        self::Repair => 'В ремонте',
         self::WrittenOff => 'Списано',
         self::ConfirmItem => 'Подтвердить ТМЦ',
         self::AtWorkTMC => 'В работе',

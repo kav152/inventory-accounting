@@ -63,7 +63,7 @@ function repairHasInvoice($repair): bool
 function archiveObjectStatusLabel(int $status): string
 {
     $map = [
-        StatusItem::Repair => 'Подтвердить ремонт',
+        StatusItem::Repair => 'В ремонте',
         StatusItem::ConfirmRepairTMC => 'Подтвердить ремонт',
         StatusItem::ProposeWriteOff => 'Предложение списания',
         StatusItem::Released => 'На объекте',
@@ -162,8 +162,8 @@ foreach ($groupedItems as $item) {
     if ($st === StatusItem::ProposeWriteOff) {
         $proposeCount++;
     }
-    // «В ремонте» + «Подтвердить ремонт»
-    if ($st === StatusItem::Repair || $st === StatusItem::ConfirmRepairTMC) {
+    // вкладка «Согласование ремонта» — только ожидающие (21), не уже согласованные (2)
+    if ($st === StatusItem::ConfirmRepairTMC) {
         $confirmRepairCount++;
     }
     if (repairsAreVerified($item['repairs'])) {
@@ -185,7 +185,7 @@ if ($archiveFilter === 'verified') {
         $groupedItems,
         static function ($item) {
             $st = (int) ($item['main']->InventoryItem->Status ?? -1);
-            return $st === StatusItem::Repair || $st === StatusItem::ConfirmRepairTMC;
+            return $st === StatusItem::ConfirmRepairTMC;
         }
     );
 } elseif ($archiveFilter === 'propose') {
@@ -933,7 +933,7 @@ error_log("Время группировки данных по ID_TMC для о�
                     visible = false;
                 } else if (archiveFilter === 'confirm') {
                     const st = parseInt(row.getAttribute('data-status') || '-1', 10);
-                    if (st !== 2 && st !== 21) visible = false; // «В ремонте» + «Подтвердить ремонт»
+                    if (st !== 21) visible = false; // только «Подтвердить ремонт» (ожидает согласования)
                 } else if (archiveFilter === 'propose') {
                     const st = parseInt(row.getAttribute('data-status') || '-1', 10);
                     if (st !== 22) visible = false;

@@ -422,8 +422,8 @@ class ItemRepairController
     }
 
     /**
-     * ТМЦ в ремонте / на согласовании — кнопка «Согласование ремонта» на главной.
-     * Источник истины: InventoryItem.Status (2 / 21) — как в таблице на главной.
+     * Очередь «Согласование ремонта» на главной — только Status=21 (ещё не согласованы).
+     * Уже согласованные (Status=2 «В ремонте») сюда не входят.
      * @return array<int, object|RepairItem>
      */
     public function getItemsAwaitingRepairApproval(): array
@@ -435,14 +435,12 @@ class ItemRepairController
         $inventoryItemRepository = $this->container->get(InventoryItemRepository::class);
         $locationRepository = $this->container->get(LocationRepository::class);
 
-        $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
 
         $inventoryItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
 
-        // Сначала все ТМЦ со статусом согласования/ремонта (совпадает с бейджем и главной таблицей)
         $pending = $inventoryItemRepository->findBy(
-            "WHERE Status IN ({$statusRepair}, {$statusConfirm}) ORDER BY NameTMC"
+            "WHERE Status = {$statusConfirm} ORDER BY NameTMC"
         );
         if (!$pending) {
             return [];
@@ -508,16 +506,13 @@ class ItemRepairController
     }
 
     /**
-     * Счётчик бейджа = число ТМЦ со статусом ремонта/согласования (как список и таблица).
+     * Бейдж «Согласование ремонта» = только ожидающие согласования (Status=21).
      */
     public function countItemsAwaitingRepairApproval(): int
     {
-        $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
         $pdo = $this->container->get(Database::class)->getConnection();
-        $sql = "SELECT COUNT(*)
-            FROM InventoryItem
-            WHERE Status IN ({$statusRepair}, {$statusConfirm})";
+        $sql = "SELECT COUNT(*) FROM InventoryItem WHERE Status = {$statusConfirm}";
         $stmt = $pdo->query($sql);
         return $stmt ? (int) $stmt->fetchColumn() : 0;
     }
@@ -649,8 +644,28 @@ class ItemRepairController
             error_log('healStuckRepairStatuses restore→confirm: ' . $e->getMessage());
         }
 
-        // 3) Есть открытый ремонт, а статус ещё «Выдано»/«В работе» —
-        // типичный баг: в истории «отправлено в сервис», Status не обновился
+        // 3) Открытый ремонт со счётом → «В ремонте» (уже согласовано), без счёта → «Подтвердить ремонт»
+        $sqlOpenToRepair = "
+            UPDATE ii SET ii.Status = {$statusRepair}
+            FROM InventoryItem ii
+            WHERE ii.Status IN ({$statusConfirm}, {$released}, {$atWork})
+              AND EXISTS (
+                  SELECT 1 FROM RepairItem r
+                  WHERE r.ID_TMC = ii.ID_TMC
+                    AND r.inBasket = 0
+                    AND r.DateReturnService IS NULL
+                    AND NULLIF(LTRIM(RTRIM(CAST(r.InvoiceNumber AS nvarchar(200)))), N'') IS NOT NULL
+                    AND LTRIM(RTRIM(CAST(r.InvoiceNumber AS nvarchar(200)))) NOT IN (N'-', N'0')
+              )";
+        try {
+            $n = $pdo->exec($sqlOpenToRepair);
+            if ($n !== false) {
+                $fixed += (int) $n;
+            }
+        } catch (Throwable $e) {
+            error_log('healStuckRepairStatuses open→repair: ' . $e->getMessage());
+        }
+
         $sqlOpenToConfirm = "
             UPDATE ii SET ii.Status = {$statusConfirm}
             FROM InventoryItem ii
@@ -664,6 +679,10 @@ class ItemRepairController
                   WHERE r.ID_TMC = ii.ID_TMC
                     AND r.inBasket = 0
                     AND r.DateReturnService IS NULL
+                    AND (
+                        NULLIF(LTRIM(RTRIM(CAST(r.InvoiceNumber AS nvarchar(200)))), N'') IS NULL
+                        OR LTRIM(RTRIM(CAST(r.InvoiceNumber AS nvarchar(200)))) IN (N'-', N'0')
+                    )
               )";
         try {
             $n = $pdo->exec($sqlOpenToConfirm);
