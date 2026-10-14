@@ -28,11 +28,13 @@ import { showNotification } from './setting.js';
  * @throws {Error} если конфигурация для сущности не найдена
  */
 export function openEntityModal(action, entityType) {
-  const config = modalRegistry.getByModalType(entityType);
+  const config =
+    modalRegistry.getByModalType(entityType) ||
+    modalRegistry.getByEntityType(entityType);
 
   if (!config) {
-    const errorMsg = `Конфигурация для сущности '${entityType}' не найдена. Зарегистрированные типы: ${modalRegistry
-      .getRegisteredEntityTypes()
+    const errorMsg = `Конфигурация для сущности '${entityType}' не найдена. Зарегистрированные modalType: ${modalRegistry
+      .getRegisteredModalTypes()
       .join(", ")}`;
     console.error(errorMsg);
     showNotification(TypeMessage.error, errorMsg);

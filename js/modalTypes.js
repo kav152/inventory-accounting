@@ -1,16 +1,18 @@
-import { initUserModalHandlers } from "../js/modals/userModal.js";
-import { initCardTMCModalHandlers } from "../js/modals/cardItemModal.js";
-import { initDistributeModalHandlers } from "../js/modals/distributeModal.js";
-import { initWorkModalHandlers } from "../js/modals/workModal.js";
-import { initSendToServiceModalHandlers } from "../js/modals/serviceModal.js";
-import { initLocationModalHandlers } from "../js/modals/locationModal.js";
-import { initLegalEntityModalHandlers } from "../js/modals/legalEntityModal.js";
-import { EntityModalConfig, ModalConfigRegistry } from "../js/index.js";
-import { initRepairBasketModalHandlers } from "../js/modals/repairBasketModal.js";
-import { initCardWriteOffHandlers } from "../js/writeOffFunctions.js";
-import { initAtWorkModalModalHandlers } from "../js/modals/atWorkModal.js";
-import { initСonfirmModalHandlers } from '../js/modals/confirmModal.js';
-import { initConfirmRepairModalHandlers } from '../js/modals/confirmRepairModal.js';
+import { initUserModalHandlers } from "./modals/userModal.js";
+import { initCardTMCModalHandlers } from "./modals/cardItemModal.js";
+import { initDistributeModalHandlers } from "./modals/distributeModal.js";
+import { initWorkModalHandlers } from "./modals/workModal.js";
+import { initSendToServiceModalHandlers } from "./modals/serviceModal.js";
+import { initLocationModalHandlers } from "./modals/locationModal.js";
+import { initLegalEntityModalHandlers } from "./modals/legalEntityModal.js";
+// Прямой импорт — без js/index.js (циклическая зависимость ломала legalEntityModal)
+import { EntityModalConfig } from "./modals/EntityModalConfig.js";
+import { ModalConfigRegistry } from "./modals/ModalConfigRegistry.js";
+import { initRepairBasketModalHandlers } from "./modals/repairBasketModal.js";
+import { initCardWriteOffHandlers } from "./writeOffFunctions.js";
+import { initAtWorkModalModalHandlers } from "./modals/atWorkModal.js";
+import { initСonfirmModalHandlers } from "./modals/confirmModal.js";
+import { initConfirmRepairModalHandlers } from "./modals/confirmRepairModal.js";
 
 /**
  * Глобальный реестр конфигураций модальных окон

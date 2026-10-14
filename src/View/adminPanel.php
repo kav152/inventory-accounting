@@ -547,11 +547,12 @@ $importResults = null;
     <script type="module" src="/js/templates/expandableSection.js"></script>
     <script type="module" src="/js/templates/entityCreationTemplate.js"></script>
     <script type="module" src="/js/templates/entityActionTemplate.js"></script>
-    <script type="module" src="/js/modals/modalLoader.js"></script>
+    <script type="module" src="/js/modals/modalLoader.js?v=<?= @filemtime(__DIR__ . '/../../js/modals/modalLoader.js') ?: time() ?>"></script>
     <script type="module" src="/js/modals/userModal.js"></script>
     <script type="module" src="/js/modals/locationModal.js"></script>
+    <script type="module" src="/js/modals/legalEntityModal.js?v=<?= @filemtime(__DIR__ . '/../../js/modals/legalEntityModal.js') ?: time() ?>"></script>
     <script type="module" src="/js/modals/setting.js"></script>
-    <script type="module" src="/js/modalTypes.js"></script>
+    <script type="module" src="/js/modalTypes.js?v=<?= @filemtime(__DIR__ . '/../../js/modalTypes.js') ?: time() ?>"></script>
     <script type="module" src="/js/updateFunctions.js"></script>
 
     <div id="modalContainer"></div>

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../src/View/ModalLoader/UserModalLoader.php';
 require_once __DIR__ . '/../src/View/ModalLoader/CardItemLoader.php';
+require_once __DIR__ . '/../src/View/ModalLoader/LegalEntityModalLoader.php';
 
 return [
     'userModal' => [
