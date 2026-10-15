@@ -1615,11 +1615,9 @@ class ItemRepairController
         $locationRepository = $this->container->get(LocationRepository::class);
         $registrationInventoryItemRepository = $this->container->get(RegistrationInventoryItemRepository::class);
 
-        // Только текущие «в ремонте / согласование / предложение списания» —
-        // не тащим старые RepairItem у ТМЦ, уже вернувшихся на объект.
-        $statusRepair = (int) StatusItem::Repair;
-        $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
-        $statusPropose = (int) StatusItem::ProposeWriteOff;
+        // Архив затрат: все RepairItem (кроме списанных ТМЦ), чтобы после возврата
+        // из сервиса можно было дописать УПД / счёт.
+        $statusWrittenOff = (int) StatusItem::WrittenOff;
 
         // Только колонки RepairItem — иначе PDO FETCH_ASSOC затирает Status/IDLocation
         // чужими одноимёнными полями из JOIN (User.Status, Location.IDLocation и т.д.).
@@ -1627,7 +1625,7 @@ class ItemRepairController
         FROM RepairItem
         INNER JOIN InventoryItem ON RepairItem.ID_TMC = InventoryItem.ID_TMC
         WHERE RepairItem.inBasket = 0
-          AND InventoryItem.Status IN ({$statusRepair}, {$statusConfirm}, {$statusPropose})
+          AND InventoryItem.Status <> {$statusWrittenOff}
         ORDER BY RepairItem.ID_TMC, RepairItem.ID_Repair";
 
         $repairItemRepository->addRelationship('Location', $locationRepository, 'IDLocation', 'IDLocation');
@@ -1643,8 +1641,9 @@ class ItemRepairController
     }
 
     /**
-     * Реестр «Списание / ремонт»: строго ТМЦ в ремонте / согласовании / предложении списания.
-     * Включает позиции без записи RepairItem (только статус на InventoryItem).
+     * Реестр «Списание / ремонт»: ТМЦ с историей ремонта (не списанные).
+     * Включает уже вернувшиеся с сервиса — чтобы дописать УПД/счёт.
+     * Плюс позиции только со статусом согласования/ремонта/предложения без RepairItem.
      */
     public function getRepairArchiveGroupedItems(): array
     {
@@ -1655,6 +1654,7 @@ class ItemRepairController
         $statusRepair = (int) StatusItem::Repair;
         $statusConfirm = (int) StatusItem::ConfirmRepairTMC;
         $statusPropose = (int) StatusItem::ProposeWriteOff;
+        $statusWrittenOff = (int) StatusItem::WrittenOff;
 
         $sql = "
             SELECT
@@ -1677,12 +1677,20 @@ class ItemRepairController
             LEFT JOIN BrandTMC b ON ii.IDBrandTMC = b.IDBrandTMC
             LEFT JOIN RegistrationInventoryItem r ON ii.ID_TMC = r.IDRegItem
             LEFT JOIN [User] u ON r.CurrentUser = u.IDUser
-            WHERE ii.Status IN ({$statusRepair}, {$statusConfirm}, {$statusPropose})
+            WHERE ii.Status <> {$statusWrittenOff}
+              AND (
+                ii.Status IN ({$statusRepair}, {$statusConfirm}, {$statusPropose})
+                OR EXISTS (
+                    SELECT 1 FROM RepairItem ri
+                    WHERE ri.ID_TMC = ii.ID_TMC AND ri.inBasket = 0
+                )
+              )
             ORDER BY
               CASE
                 WHEN ii.Status = {$statusPropose} THEN 0
                 WHEN ii.Status = {$statusConfirm} THEN 1
-                ELSE 2
+                WHEN ii.Status = {$statusRepair} THEN 2
+                ELSE 3
               END,
               ii.ID_TMC DESC
         ";
