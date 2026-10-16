@@ -612,6 +612,15 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                 data-repair-id="<?= $lineRepairId ?>">
                                                                 <i class="bi bi-pencil"></i>
                                                             </button>
+                                                            <?php if ($lineRepairId > 0): ?>
+                                                            <button type="button"
+                                                                class="btn-action btn-delete repair-delete-btn"
+                                                                title="Удалить запись ремонта"
+                                                                data-tmc-id="<?= $tmcId ?>"
+                                                                data-repair-id="<?= $lineRepairId ?>">
+                                                                <i class="bi bi-trash3"></i>
+                                                            </button>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -859,6 +868,15 @@ error_log("Время группировки данных по ID_TMC для о�
                                                                     <i class="bi bi-x-octagon"></i>
                                                                 </button>
                                                                 <?php endif; ?>
+                                                            <?php endif; ?>
+                                                            <?php if ($lineRepairId > 0): ?>
+                                                                <button type="button"
+                                                                    class="btn-action btn-delete repair-delete-btn"
+                                                                    title="Удалить запись ремонта"
+                                                                    data-tmc-id="<?= (int) $mainItem->ID_TMC ?>"
+                                                                    data-repair-id="<?= $lineRepairId ?>">
+                                                                    <i class="bi bi-trash3"></i>
+                                                                </button>
                                                             <?php endif; ?>
                                                         </td>
                                                     </tr>
@@ -1215,6 +1233,17 @@ error_log("Время группировки данных по ID_TMC для о�
                     const tmcId = this.getAttribute('data-tmc-id');
                     if (typeof window.writeOffTmcById === 'function') {
                         window.writeOffTmcById(tmcId);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.repair-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const repairId = this.getAttribute('data-repair-id');
+                    const tmcId = this.getAttribute('data-tmc-id');
+                    if (typeof window.deleteRepairLine === 'function') {
+                        window.deleteRepairLine(repairId, tmcId);
                     }
                 });
             });

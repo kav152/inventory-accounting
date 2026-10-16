@@ -78,7 +78,7 @@ function removeWriteOffRow(id) {
   }
 
   async function deleteRepairLine(repairId, tmcId) {
-    if (!confirm("Удалить эту запись ремонта (в корзину)?")) {
+    if (!confirm("Удалить эту запись ремонта? Дубликат или ошибочную строку можно убрать.")) {
       return;
     }
 
