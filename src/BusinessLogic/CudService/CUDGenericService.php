@@ -42,19 +42,25 @@ class CUDGenericService
 
             $result = $this->repository->save($entityObject);
             if ($result === null) {
+                $dbError = method_exists($this->repository, 'getLastError')
+                    ? (string) ($this->repository->getLastError() ?? '')
+                    : '';
+                $hint = $dbError !== '' ? ': ' . $dbError : '';
                 throw new ValidationException(
-                    "Не удалось создать {$this->entityName} в базе данных",
+                    "Не удалось создать {$this->entityName}{$hint}",
                     500,
                     null,
-                    [$this->entityName => $entityObject->name ?? 'Unknown']
+                    [$this->entityName => $entityObject->name ?? 'Unknown', 'dbError' => $dbError]
                 );
             }
             // $this->logger->info("{$this->entityName} создан: " . $entityObject->name);
             return $result;
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Exception $e) {
             $this->logger->log("error", "Ошибка создания {$this->entityName}: " . $e->getMessage());
             throw new ValidationException(
-                "Не удалось создать {$this->entityName}",
+                "Не удалось создать {$this->entityName}: " . $e->getMessage(),
                 $e->getCode(),
                 $e,
                 [$this->entityName => $entityObject->name ?? 'Unknown']
@@ -98,10 +104,12 @@ class CUDGenericService
 
             // $this->logger->info("{$this->entityName} обновлен: " . $existingEntity->name);
             return $result;
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Exception $e) {
             $this->logger->log("error", "Ошибка обновления {$this->entityName}: " . $e->getMessage());
             throw new ValidationException(
-                "Не удалось обновить {$this->entityName}",
+                "Не удалось обновить {$this->entityName}: " . $e->getMessage(),
                 $e->getCode(),
                 $e,
                 ['id' => $entityObject->getID()]

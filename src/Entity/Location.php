@@ -3,15 +3,16 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../storage/logs/Location.log');
 require_once __DIR__.'/../Repositories/BaseEntity.php';
+require_once __DIR__.'/City.php';
 class Location extends BaseEntity
 {
-    public int $IDLocation;
+    public int $IDLocation = 0;
     public $NameLocation;
     public $IDCity;
     public $Address;
     public $isMainWarehouse;
     public $FormsJointStockCompanies;
-    public bool $IsRepair;
+    public bool $IsRepair = false;
     public $Phone;
     public $Contacts;
     public $Email;

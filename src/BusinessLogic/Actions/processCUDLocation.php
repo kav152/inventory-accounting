@@ -21,8 +21,6 @@ class processCUDLocation extends CUDHandler
 
     protected function prepareData($postData)
     {
-        //error_log("Данные Location: " . print_r($postData, true));
-
         return [
             'IDLocation' => (int) ($postData['id'] ?? 0),
             'NameLocation' => $postData['NameLocation'] ?? null,
@@ -35,7 +33,9 @@ class processCUDLocation extends CUDHandler
             'isMainWarehouse' => isset($postData['isMainWarehouse']) ? (int) $postData['isMainWarehouse'] : 0,
             'FormsJointStockCompanies' => trim((string) ($postData['FormsJointStockCompanies'] ?? '')),
             'IsRepair' => isset($postData['IsRepair']) ? (int) $postData['IsRepair'] : 0,
-            'IDCity' => isset($postData['IDCity']) ? (int) $postData['IDCity'] : null,
+            'IDCity' => isset($postData['IDCity']) && $postData['IDCity'] !== ''
+                ? (int) $postData['IDCity']
+                : null,
         ];
     }
 
@@ -100,6 +100,18 @@ class processCUDLocation extends CUDHandler
     }
 }
 
-// Использование
-$handler = new processCUDLocation();
-$handler->handleRequest();
+try {
+    $handler = new processCUDLocation();
+    $handler->handleRequest();
+} catch (Throwable $e) {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode([
+        'success' => false,
+        'message' => 'Ошибка сохранения локации: ' . $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
+}

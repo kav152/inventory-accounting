@@ -6,7 +6,9 @@ class ValidationException extends \Exception
 
     public function __construct($message = "", $code = 0, ?\Throwable $previous = null, array $errors = [])
     {
-        parent::__construct($message, $code, $previous);
+        // PDOException::getCode() returns string (e.g. "42S02") — Exception requires int
+        $intCode = is_numeric($code) ? (int) $code : 0;
+        parent::__construct((string) $message, $intCode, $previous);
         $this->errors = $errors;
     }
 

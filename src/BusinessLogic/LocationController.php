@@ -34,6 +34,25 @@ class LocationController
         $this->logger = $this->container->get(Logger::class);
 
         $this->cudFactory = new CUDFactory($this->container->get(Database::class), $this->logger, $this->container);
+        $this->ensureSchema();
+    }
+
+    /**
+     * Колонки, которые код уже использует, но миграции могли не накатить на прод.
+     */
+    private function ensureSchema(): void
+    {
+        try {
+            $pdo = $this->container->get(Database::class)->getConnection();
+            $pdo->exec(
+                "IF COL_LENGTH('dbo.Location', 'FormsJointStockCompanies') IS NULL
+                     ALTER TABLE dbo.Location ADD FormsJointStockCompanies NVARCHAR(500) NULL;
+                 IF COL_LENGTH('dbo.Location', 'Location2') IS NULL
+                     ALTER TABLE dbo.Location ADD Location2 NVARCHAR(500) NULL;"
+            );
+        } catch (Throwable $e) {
+            error_log('Location ensureSchema: ' . $e->getMessage());
+        }
     }
 
     public function getLocations(bool $IsRepair)
@@ -84,9 +103,8 @@ class LocationController
         }
 
         $cityRepository = $this->container->get(CityRepository::class);
-        $city = $cityRepository->findById($result->IDCity, "IDCity");
-
-        $result->City = $city;
+        $cityId = (int) ($result->IDCity ?? 0);
+        $result->City = $cityId > 0 ? $cityRepository->findById($cityId, "IDCity") : null;
         return $result;
     }
     /**
@@ -102,9 +120,8 @@ class LocationController
         }
 
         $cityRepository = $this->container->get(CityRepository::class);
-        $city = $cityRepository->findById($result->IDCity, "IDCity");
-
-        $result->City = $city;
+        $cityId = (int) ($result->IDCity ?? 0);
+        $result->City = $cityId > 0 ? $cityRepository->findById($cityId, "IDCity") : null;
 
         return $result;
     }

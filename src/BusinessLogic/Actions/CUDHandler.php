@@ -60,11 +60,13 @@ abstract class CUDHandler
         while (ob_get_level() > 0) {
             $stray = ob_get_clean();
             if (is_string($stray) && trim($stray) !== '') {
-                error_log('CUDHandler stray output: ' . substr($stray, 0, 500));
+                @error_log('CUDHandler stray output: ' . substr($stray, 0, 500));
             }
         }
 
-        header('Content-Type: application/json; charset=utf-8');
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
     }
 
     /**

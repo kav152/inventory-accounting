@@ -36,6 +36,29 @@ class LegalEntityController
             $this->logger,
             $this->container
         );
+        $this->ensureSchema();
+    }
+
+    /**
+     * Таблица LegalEntity могла не быть создана на проде — создаём при первом обращении.
+     */
+    private function ensureSchema(): void
+    {
+        try {
+            $pdo = $this->container->get(Database::class)->getConnection();
+            $pdo->exec(
+                "IF OBJECT_ID(N'dbo.LegalEntity', N'U') IS NULL
+                 BEGIN
+                     CREATE TABLE dbo.LegalEntity (
+                         IDLegalEntity INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                         NameLegalEntity NVARCHAR(500) NOT NULL,
+                         isActive BIT NOT NULL CONSTRAINT DF_LegalEntity_isActive DEFAULT 1
+                     );
+                 END"
+            );
+        } catch (Throwable $e) {
+            error_log('LegalEntity ensureSchema: ' . $e->getMessage());
+        }
     }
 
     public function getLegalEntities(bool $onlyActive = false)
