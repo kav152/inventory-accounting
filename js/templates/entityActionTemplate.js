@@ -7,9 +7,19 @@ async function parseJsonResponse(response) {
   try {
     return JSON.parse(text);
   } catch {
-    const preview = text.replace(/\s+/g, " ").trim().slice(0, 160);
+    const preview = text.replace(/\s+/g, " ").trim().slice(0, 240);
     if (preview.startsWith("<")) {
-      throw new Error("Сервер вернул HTML вместо JSON. Проверьте лог на сервере.");
+      // Часто это PHP Fatal/Warning в HTML — показываем фрагмент, чтобы было видно причину
+      const stripped = preview
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 180);
+      throw new Error(
+        stripped
+          ? `Ошибка сервера: ${stripped}`
+          : "Сервер вернул HTML вместо JSON. Проверьте лог на сервере.",
+      );
     }
     throw new Error(preview || "Ответ сервера не является JSON");
   }

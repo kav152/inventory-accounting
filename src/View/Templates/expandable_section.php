@@ -48,8 +48,9 @@ function renderExpandableSection($sectionId, $selectId, $fields, $entityName = '
                     <label for="<?= $fieldIds[$field['name']] ?>" class="form-label">
                         <?= htmlspecialchars($field['label']) ?>
                     </label>
+                    <?php /* без name — иначе FormData основной формы перетирает одноимённые поля (Address и т.п.) */ ?>
                     <input type="<?= $field['type'] ?? 'text' ?>" class="form-control" id="<?= $fieldIds[$field['name']] ?>"
-                        name="<?= $field['name'] ?>" data-section="<?= $sectionId ?>">
+                        data-field-name="<?= htmlspecialchars($field['name']) ?>" data-section="<?= $sectionId ?>">
                 </div>
             <?php endforeach; ?>
         </div>

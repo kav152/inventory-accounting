@@ -117,10 +117,10 @@ if ($currentLocLegal !== '' && !in_array($currentLocLegal, $legalEntities, true)
                                 <?php renderExpandableSection(
                                     'citySection',
                                     'citySelect',
-                                    [
-                                        ['name' => 'NameCity', 'label' => 'Город', 'type' => 'text'],
-                                        ['name' => 'Address', 'label' => 'Адрес города', 'type' => 'text'],
-                                    ],
+                    [
+                        ['name' => 'NameCity', 'label' => 'Город', 'type' => 'text'],
+                        ['name' => 'Address', 'label' => 'Адрес города', 'type' => 'text'],
+                    ],
                                     'город',
                                     'Добавить город'
                                 ); ?>

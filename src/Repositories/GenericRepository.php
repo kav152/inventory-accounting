@@ -271,7 +271,11 @@ class GenericRepository implements RepositoryInterface
             json_encode($context, JSON_UNESCAPED_UNICODE)
         );
 
-        error_log($logMessage, 3, __DIR__ . '/../storage/logs/GenericRepository.log');
+        $logDir = __DIR__ . '/../storage/logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0775, true);
+        }
+        @error_log($logMessage, 3, $logDir . '/GenericRepository.log');
     }
 
     public function save(object $entity, ?string $status = null): ?object
@@ -389,11 +393,24 @@ class GenericRepository implements RepositoryInterface
 
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $stmt = $pdo->prepare($sql);
+            // SQL Server: PDO lastInsertId() часто пустой — id через SCOPE_IDENTITY()
+            $sqlWithId = $sql . " SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;";
+            $stmt = $pdo->prepare($sqlWithId);
             $stmt->execute($params);
-            $id = $pdo->lastInsertId();
+            $id = 0;
+            do {
+                if ($stmt->columnCount() > 0) {
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if (is_array($row) && isset($row['NewId'])) {
+                        $id = (int) $row['NewId'];
+                    }
+                }
+            } while ($stmt->nextRowset());
+            if ($id <= 0) {
+                $id = (int) $pdo->lastInsertId();
+            }
 
-            if ($id != null) {
+            if ($id > 0) {
                 $entity->setId($id);
             }
             /* $this->logAction('insert', 'Объект сохранен', [

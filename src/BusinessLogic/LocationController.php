@@ -44,10 +44,13 @@ class LocationController
     {
         try {
             $pdo = $this->container->get(Database::class)->getConnection();
+            // По одному ALTER — надёжнее для sqlsrv, чем два IF в одном batch
             $pdo->exec(
                 "IF COL_LENGTH('dbo.Location', 'FormsJointStockCompanies') IS NULL
-                     ALTER TABLE dbo.Location ADD FormsJointStockCompanies NVARCHAR(500) NULL;
-                 IF COL_LENGTH('dbo.Location', 'Location2') IS NULL
+                     ALTER TABLE dbo.Location ADD FormsJointStockCompanies NVARCHAR(500) NULL;"
+            );
+            $pdo->exec(
+                "IF COL_LENGTH('dbo.Location', 'Location2') IS NULL
                      ALTER TABLE dbo.Location ADD Location2 NVARCHAR(500) NULL;"
             );
         } catch (Throwable $e) {
