@@ -58,6 +58,7 @@ try {
     class processCUDLocation extends CUDHandler
     {
         private LocationController $locationController;
+        private ?int $lastDeletedId = null;
 
         public function __construct()
         {
@@ -115,24 +116,42 @@ try {
             return $location;
         }
 
-        protected function delete($data)
+        protected function delete($data): bool
         {
-            $entity = new Location($data);
-            $id = (int) $entity->getId();
+            $entity = new Location(is_array($data) ? $data : []);
+            $id = (int) ($entity->getId() ?: ($data['IDLocation'] ?? $data['id'] ?? 0));
             if ($id <= 0) {
                 throw new Exception('Не указан ID локации для удаления');
             }
+            $entity->setId($id);
 
             $ok = $this->locationController->delete($entity);
             if (!$ok) {
                 throw new Exception('Не удалось удалить локацию');
             }
 
-            return new Location(['IDLocation' => $id]);
+            $this->lastDeletedId = $id;
+            return true;
         }
 
         protected function prepareResultEntity($location)
         {
+            // После delete() CUDHandler отдаёт bool
+            if ($location === true || $location === false) {
+                return [
+                    'id' => $this->lastDeletedId ?? 0,
+                    'NameLocation' => '',
+                    'Address' => '',
+                    'Location2' => '',
+                    'Phone' => '',
+                    'Contacts' => '',
+                    'Email' => '',
+                    'FormsJointStockCompanies' => '',
+                    'isMainWarehouse' => 0,
+                    'City' => ['NameCity' => '', 'Address' => ''],
+                ];
+            }
+
             if (!$location) {
                 throw new Exception('Локация не найдена');
             }
