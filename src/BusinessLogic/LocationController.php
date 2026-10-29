@@ -6,6 +6,7 @@ ini_set('error_log', __DIR__ . '/../storage/logs/LocationController.log');
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../Logging/Logger.php';
 require_once __DIR__ . '/../Database/DatabaseFactory.php';
+require_once __DIR__ . '/../Database/SchemaEnsure.php';
 require_once __DIR__ . '/../Container.php';
 require_once __DIR__ . '/../Repositories/LocationRepository.php';
 require_once __DIR__ . '/../Repositories/CityRepository.php';
@@ -44,15 +45,7 @@ class LocationController
     {
         try {
             $pdo = $this->container->get(Database::class)->getConnection();
-            // По одному ALTER — надёжнее для sqlsrv, чем два IF в одном batch
-            $pdo->exec(
-                "IF COL_LENGTH('dbo.Location', 'FormsJointStockCompanies') IS NULL
-                     ALTER TABLE dbo.Location ADD FormsJointStockCompanies NVARCHAR(500) NULL;"
-            );
-            $pdo->exec(
-                "IF COL_LENGTH('dbo.Location', 'Location2') IS NULL
-                     ALTER TABLE dbo.Location ADD Location2 NVARCHAR(500) NULL;"
-            );
+            SchemaEnsure::ensureLocationColumns($pdo);
         } catch (Throwable $e) {
             error_log('Location ensureSchema: ' . $e->getMessage());
         }
@@ -105,9 +98,12 @@ class LocationController
             return null;
         }
 
-        $cityRepository = $this->container->get(CityRepository::class);
-        $cityId = (int) ($result->IDCity ?? 0);
-        $result->City = $cityId > 0 ? $cityRepository->findById($cityId, "IDCity") : null;
+        // City создаётся через тот же controller — не трогаем City->City
+        if ($result instanceof Location) {
+            $cityRepository = $this->container->get(CityRepository::class);
+            $cityId = (int) ($result->IDCity ?? 0);
+            $result->City = $cityId > 0 ? $cityRepository->findById($cityId, "IDCity") : null;
+        }
         return $result;
     }
     /**
@@ -122,9 +118,11 @@ class LocationController
             throw new Exception('Не удалось сохранить локацию в базе данных');
         }
 
-        $cityRepository = $this->container->get(CityRepository::class);
-        $cityId = (int) ($result->IDCity ?? 0);
-        $result->City = $cityId > 0 ? $cityRepository->findById($cityId, "IDCity") : null;
+        if ($result instanceof Location) {
+            $cityRepository = $this->container->get(CityRepository::class);
+            $cityId = (int) ($result->IDCity ?? 0);
+            $result->City = $cityId > 0 ? $cityRepository->findById($cityId, "IDCity") : null;
+        }
 
         return $result;
     }

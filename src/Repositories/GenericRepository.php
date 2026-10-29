@@ -5,6 +5,7 @@ ini_set('error_log', __DIR__ . '/../storage/logs/GenericRepository.log');
 require __DIR__ . '/../Repositories/RepositoryInterface.php';
 require __DIR__ . '/Collection.php';
 require_once __DIR__ . '/../BusinessLogic/Action.php';
+require_once __DIR__ . '/../Database/SchemaEnsure.php';
 
 class GenericRepository implements RepositoryInterface
 {
@@ -13,6 +14,8 @@ class GenericRepository implements RepositoryInterface
     private array $relationships = [];
     private array $cache = []; // Кэш для связанных сущностей
     private ?string $lastError = null;
+    /** @var array<string, string>|null */
+    private ?array $existingColumns = null;
 
     public function __construct(
         private Database $database,
@@ -341,12 +344,43 @@ class GenericRepository implements RepositoryInterface
             $sql
         );
     }
+    /**
+     * Оставляем только колонки, которые реально есть в таблице (прод может отставать от кода).
+     * @param string[] $props
+     * @return string[]
+     */
+    private function filterExistingColumns(array $props): array
+    {
+        try {
+            $pdo = $this->database->getConnection();
+            if ($this->existingColumns === null) {
+                $this->existingColumns = SchemaEnsure::tableColumns($pdo, $this->tableName);
+            }
+            if ($this->existingColumns === []) {
+                return $props;
+            }
+            $filtered = [];
+            foreach ($props as $prop) {
+                if (isset($this->existingColumns[strtolower($prop)])) {
+                    $filtered[] = $prop;
+                }
+            }
+            return $filtered;
+        } catch (Throwable $e) {
+            return $props;
+        }
+    }
+
     private function insert(BaseEntity $entity): ?object
     {
         $properties = [];
-        $persistableProps = $entity->getPersistableProperties(); // перечень полей
+        $persistableProps = $this->filterExistingColumns($entity->getPersistableProperties());
         $autoDateFields = $entity->getAutoDateFields(); // Получаем поля для авто-дат
 
+        if ($persistableProps === []) {
+            $this->lastError = "Нет доступных колонок для INSERT в {$this->tableName}";
+            return null;
+        }
 
         $columns = [];
         $placeholders = [];
@@ -439,7 +473,7 @@ class GenericRepository implements RepositoryInterface
         $params = [];
         $readOnlyFields = $entity->getReadOnlyFields();
 
-        $persistableProps = $entity->getPersistableProperties();
+        $persistableProps = $this->filterExistingColumns($entity->getPersistableProperties());
         $autoDateFields = $entity->getAutoDateFields();
         $idField = $entity->getIdFieldName(); // Получаем имя ID-поля
 

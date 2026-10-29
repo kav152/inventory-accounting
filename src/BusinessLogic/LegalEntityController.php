@@ -7,6 +7,7 @@ ini_set('error_log', __DIR__ . '/../storage/logs/LegalEntityController.log');
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../Logging/Logger.php';
 require_once __DIR__ . '/../Database/DatabaseFactory.php';
+require_once __DIR__ . '/../Database/SchemaEnsure.php';
 require_once __DIR__ . '/../Container.php';
 require_once __DIR__ . '/../Repositories/LegalEntityRepository.php';
 require_once __DIR__ . '/../Entity/LegalEntity.php';
@@ -46,16 +47,7 @@ class LegalEntityController
     {
         try {
             $pdo = $this->container->get(Database::class)->getConnection();
-            $pdo->exec(
-                "IF OBJECT_ID(N'dbo.LegalEntity', N'U') IS NULL
-                 BEGIN
-                     CREATE TABLE dbo.LegalEntity (
-                         IDLegalEntity INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-                         NameLegalEntity NVARCHAR(500) NOT NULL,
-                         isActive BIT NOT NULL CONSTRAINT DF_LegalEntity_isActive DEFAULT 1
-                     );
-                 END"
-            );
+            SchemaEnsure::ensureLegalEntityTable($pdo);
         } catch (Throwable $e) {
             error_log('LegalEntity ensureSchema: ' . $e->getMessage());
         }

@@ -1,7 +1,9 @@
 <?php
+ob_start();
 date_default_timezone_set('Europe/Moscow');
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
+ini_set('display_errors', '0');
+ini_set('html_errors', '0');
+ini_set('log_errors', '1');
 ini_set('error_log', __DIR__ . '/../../storage/logs/processCUDUsers.log');
 
 require_once __DIR__ . '/CUDHandler.php';
@@ -81,6 +83,18 @@ class processCUDUsers extends CUDHandler
     }
 }
 
-// Использование
-$handler = new processCUDUsers();
-$handler->handleRequest();
+try {
+    $handler = new processCUDUsers();
+    $handler->handleRequest();
+} catch (Throwable $e) {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode([
+        'success' => false,
+        'message' => 'Ошибка сохранения пользователя: ' . $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
+}
