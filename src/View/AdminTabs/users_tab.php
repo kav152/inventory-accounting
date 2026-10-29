@@ -41,7 +41,10 @@ ini_set('error_log', __DIR__ . '/../../storage/logs/users_tab.log');
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($users as $user): ?>
+                            <?php
+                            $usersList = $users ?? [];
+                            if ($usersList instanceof Traversable || is_array($usersList)):
+                            foreach ($usersList as $user): ?>
                                 <tr class="row-user" data-id="<?= $user->IDUser?>"
                                     data-surname="<?= htmlspecialchars($user->Surname) ?>"
                                     data-name="<?= htmlspecialchars($user->Name) ?>"
@@ -74,14 +77,14 @@ ini_set('error_log', __DIR__ . '/../../storage/logs/users_tab.log');
 
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endforeach; endif; ?>
                         </tbody>
                     </table>
                 </div>
             </form>
         </div>
         <div class="card-header d-flex justify-content-between align-items-center flex-shrink-0">
-            <span class="badge bg-primary">Всего: <?= count($users) ?></span>
+            <span class="badge bg-primary">Всего: <?= is_countable($usersList ?? null) ? count($usersList) : 0 ?></span>
         </div>
     </div>
 </div>

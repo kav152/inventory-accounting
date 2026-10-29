@@ -1,7 +1,9 @@
 <?php
+ob_start();
 date_default_timezone_set('Europe/Moscow');
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
+ini_set('display_errors', '0');
+ini_set('html_errors', '0');
+ini_set('log_errors', '1');
 ini_set('error_log', __DIR__ . '/../../storage/logs/processCUDBrigades.log');
 
 require_once __DIR__ . '/CUDHandler.php';
@@ -18,10 +20,7 @@ class processCUDBrigades extends CUDHandler
 
     protected function prepareData($postData)
     {
-        //error_log("Данные Brigades: " . print_r($postData, true));
-
         return [
-            // НАСТРОИТЬ ПОЛЯ ПОД КОНКРЕТНУЮ СУЩНОСТЬ
             'IDBrigade' => $postData['id'] ?? 0,
             'NameBrigade' => $postData['brigade_name'] ?? null,
             'IDResponsibleIssuing' => $postData['responsible'] ?? 0,
@@ -31,32 +30,45 @@ class processCUDBrigades extends CUDHandler
 
     protected function create($data, ?int $patofID = null)
     {
-        $brigades = parent::create($data);
-        return $brigades;
+        return parent::create($data);
     }
-    protected function delete($data):bool
+
+    protected function delete($data): bool
     {
-        //error_log('delete');
-        //error_log(print_r($data));
-
-        //$brigadesRepository = new BrigadesRepository(DatabaseFactory::create());
-        //$brigades = $brigadesRepository->findById($id, 'IDBrigade');
-
-        $brigades = parent::delete($data);
-        return $brigades;
+        return parent::delete($data);
     }
 
     protected function prepareResultEntity($brigades)
     {
+        if ($brigades === true || $brigades === false) {
+            return [
+                'id' => 0,
+                'NameBrigade' => '',
+                'IDResponsibleIssuing' => 0,
+                'NameBrigadir' => '',
+            ];
+        }
         return [
             'id' => $brigades->IDBrigade ?? 0,
-            'NameBrigade' => $brigades->NameBrigade ?? "",
+            'NameBrigade' => $brigades->NameBrigade ?? '',
             'IDResponsibleIssuing' => $brigades->IDResponsibleIssuing ?? 0,
-            'NameBrigadir' => $brigades->NameBrigadir ?? "",
+            'NameBrigadir' => $brigades->NameBrigadir ?? '',
         ];
     }
 }
 
-// Использование
-$handler = new processCUDBrigades();
-$handler->handleRequest();
+try {
+    $handler = new processCUDBrigades();
+    $handler->handleRequest();
+} catch (Throwable $e) {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode([
+        'success' => false,
+        'message' => 'Ошибка сохранения бригады: ' . $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
+}

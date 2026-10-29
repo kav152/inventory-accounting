@@ -59,14 +59,21 @@ class processCUDUsers extends CUDHandler
     {
         //error_log("Данные для массового обновления пользователей: " . print_r($postData, true));
 
+        $isActiveRaw = $postData['isActive'] ?? 1;
+        if (is_bool($isActiveRaw)) {
+            $isActive = $isActiveRaw ? 1 : 0;
+        } else {
+            $isActive = (int) $isActiveRaw ? 1 : 0;
+        }
+
         return [
-            'IDUser' => (int)$postData['id'],
-            'Surname' => $postData['Surname'] ?? '',
-            'Name' => $postData['Name'] ?? '',
-            'Patronymic' => $postData['Patronymic'] ?? '',
-            'Password' => $postData['Password'] ?? '', // Пароль не меняется при массовом обновлении
-            'Status' => isset($postData['Status']) ? (int)$postData['Status'] : 1,
-            'isActive' => $postData['isActive']
+            'IDUser' => (int) ($postData['id'] ?? $postData['IDUser'] ?? 0),
+            'Surname' => trim((string) ($postData['Surname'] ?? '')),
+            'Name' => trim((string) ($postData['Name'] ?? '')),
+            'Patronymic' => trim((string) ($postData['Patronymic'] ?? '')),
+            'Password' => $postData['Password'] ?? '',
+            'Status' => isset($postData['Status']) ? (int) $postData['Status'] : 1,
+            'isActive' => $isActive,
         ];
     }
 

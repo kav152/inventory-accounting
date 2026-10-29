@@ -4,30 +4,32 @@ require_once __DIR__ . '/../Repositories/BaseEntity.php';
 // Модели - нужно перенсти их в другой класс
 class User extends BaseEntity
 {
-    public int $IDUser;
-    public $Surname;
-    public $Name;
-    public $Patronymic;
-    public $Password;
-    public int $Status;
-    public bool $isActive;
-    public string $FIO;
+    public int $IDUser = 0;
+    public $Surname = '';
+    public $Name = '';
+    public $Patronymic = '';
+    public $Password = '';
+    public int $Status = 1;
+    public bool $isActive = true;
+    public string $FIO = '';
 
     // Конструктор для гидратации данных из массива
     public function __construct(array $data = [])
     {
         if (!empty($data)) {
-            $this->IDUser = (int)($data['IDUser'] ?? 0);
+            $this->IDUser = (int) ($data['IDUser'] ?? $data['idUser'] ?? 0);
             $this->Surname = $data['Surname'] ?? '';
             $this->Name = $data['Name'] ?? '';
             $this->Patronymic = $data['Patronymic'] ?? '';
             $this->Password = $data['Password'] ?? '';
-            $this->Status = (int)$data['Status'] ?? 0;
-            $this->isActive = (bool)($data['isActive'] ?? false);
+            $this->Status = (int) ($data['Status'] ?? 0);
+            $this->isActive = (bool) (is_string($data['isActive'] ?? null)
+                ? (int) $data['isActive']
+                : ($data['isActive'] ?? false));
 
-            $nameInitial = substr($this->Name, 0, 2);
-            $patronymicInitial = substr($this->Patronymic, 0, 2);
-            $this->FIO = "{$this->Surname} {$nameInitial}.{$patronymicInitial}.";
+            $nameInitial = mb_substr((string) $this->Name, 0, 1);
+            $patronymicInitial = mb_substr((string) $this->Patronymic, 0, 1);
+            $this->FIO = trim("{$this->Surname} {$nameInitial}.{$patronymicInitial}.");
         }
     }
     public function getId(): int
@@ -114,9 +116,15 @@ class User extends BaseEntity
     {
         return password_needs_rehash($this->Password, PASSWORD_DEFAULT);
     }
-    public function mountEmptyDocument() 
+    public function mountEmptyDocument()
     {
         $this->IDUser = 0;
         $this->Status = 1;
+        $this->isActive = true;
+        $this->Surname = '';
+        $this->Name = '';
+        $this->Patronymic = '';
+        $this->Password = '';
+        $this->FIO = '';
     }
 }

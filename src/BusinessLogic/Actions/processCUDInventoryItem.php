@@ -120,13 +120,21 @@ class processCUDInventoryItem extends CUDHandler
     protected function delete($data): bool
     {
         try {
-            $existingItem = $this->itemController->getInventoryItem($data->getId());
+            $entity = $data instanceof InventoryItem
+                ? $data
+                : new InventoryItem(is_array($data) ? $data : []);
+            $id = (int) ($entity->getId() ?: ($data['ID_TMC'] ?? $data['id'] ?? 0));
+            if ($id <= 0) {
+                throw new Exception('Не указан ID ТМЦ для удаления');
+            }
+            $entity->setId($id);
+
+            $existingItem = $this->itemController->getInventoryItem($id);
             if (!$existingItem) {
-                throw new Exception("InventoryItem с ID {$data->getId()} не найден");
+                throw new Exception("InventoryItem с ID {$id} не найден");
             }
 
-            return $this->itemController->delete($data);
-
+            return $this->itemController->delete($entity);
         } catch (Exception $e) {
             error_log("Ошибка при удалении InventoryItem: " . $e->getMessage());
             throw $e;
@@ -200,5 +208,15 @@ class processCUDInventoryItem extends CUDHandler
     }
 }
 
-$handler = new processCUDInventoryItem();
-$handler->handleRequest();
+try {
+    $handler = new processCUDInventoryItem();
+    $handler->handleRequest();
+} catch (Throwable $e) {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode([
+        'success' => false,
+        'message' => 'Ошибка сохранения ТМЦ: ' . $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
+}

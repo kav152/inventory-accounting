@@ -55,12 +55,12 @@ try {
     $handler = new processCUDTypesTMC();
     $handler->handleRequest();
 } catch (Throwable $e) {
-    error_log("ERROR in processCUDBrandTMC.php: " . $e->getMessage());
-
-    http_response_code(500);
+    error_log("ERROR in processCUDTypesTMC.php: " . $e->getMessage());
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
     echo json_encode([
         'success' => false,
-        'message' => 'Внутренняя ошибка сервера при обработке бренда ТМЦ'
-    ]);
-    exit;
+        'message' => 'Ошибка сохранения типа ТМЦ: ' . $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
 }

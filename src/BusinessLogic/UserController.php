@@ -4,6 +4,8 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../storage/logs/UserController.log');
 require_once __DIR__ . '/../Repositories/UserRepository.php';
+require_once __DIR__ . '/../Repositories/Collection.php';
+require_once __DIR__ . '/../Entity/User.php';
 require_once __DIR__ . '/CudService/CUDFactory.php';
 
 require_once __DIR__ . '/../Logging/Logger.php';
@@ -36,7 +38,8 @@ class UserController
     public function getUsers(): Collection
     {
         $userRepository = $this->container->get(UserRepository::class);
-        return $userRepository->findBy(' where idUser > 0');
+        return $userRepository->findBy(' WHERE IDUser > 0')
+            ?? new Collection(User::class, []);
     }
 
     /**

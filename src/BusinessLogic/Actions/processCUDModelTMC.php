@@ -59,16 +59,15 @@ try {
             ];
         }
     }
+    $handler = new processCUDModelTMC();
+    $handler->handleRequest();
 } catch (Throwable $e) {
     error_log("ERROR in processCUDModelTMC.php: " . $e->getMessage());
-
-    http_response_code(500);
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
     echo json_encode([
         'success' => false,
-        'message' => 'Внутренняя ошибка сервера при обработке модели ТМЦ'
-    ]);
-    exit;
+        'message' => 'Ошибка сохранения модели: ' . $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
 }
-
-$handler = new processCUDModelTMC();
-$handler->handleRequest();
